@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#3B82F6")
+  icon        String   @default("📚")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  lists       List[]
+
+  @@map("topics")
+}
+
+model List {
+  id        String     @id @default(cuid())
+  topicId   String     @map("topic_id")
+  name      String
+  version   Int        @default(1)
+  tags      String?    // JSON serialized tags array
+  source    ListSource @default(UPLOAD)
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  topic     Topic       @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  items     ListItem[]
+  puzzles   Puzzle[]
+
+  @@map("lists")
+}
+
+model ListItem {
+  id         String      @id @default(cuid())
+  listId     String      @map("list_id")
+  answer     String      // UPPERCASE, A-Z only
+  clue       String
+  note       String?
+  difficulty Difficulty? @default(MEDIUM)
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  list       List        @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  @@map("list_items")
+}
+
+model Puzzle {
+  id         String   @id @default(cuid())
+  listId     String   @map("list_id")
+  seed       String
+  grid       String   // JSON serialized grid data
+  numbering  String   // JSON serialized numbering data
+  settings   String   // JSON serialized settings
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  list       List     @relation(fields: [listId], references: [id], onDelete: Cascade)
+  solves     Solve[]
+
+  @@map("puzzles")
+}
+
+model Solve {
+  id          String    @id @default(cuid())
+  puzzleId    String    @map("puzzle_id")
+  userId      String?   @map("user_id") // nullable for v1 single-user mode
+  state       String    // JSON serialized solve state
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  puzzle      Puzzle    @relation(fields: [puzzleId], references: [id], onDelete: Cascade)
+
+  @@unique([puzzleId, userId])
+  @@map("solves")
+}
+
+enum ListSource {
+  UPLOAD
+  PASTE
+  API
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
