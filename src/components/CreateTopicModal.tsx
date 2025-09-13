@@ -28,12 +28,15 @@ export default function CreateTopicModal({ isOpen, onClose, onSubmit }: CreateTo
     e.preventDefault()
     if (!name.trim()) return
     
-    onSubmit({
+    const topicData = {
       name: name.trim(),
       description: description.trim() || undefined,
       color: selectedColor,
       icon: selectedIcon
-    })
+    }
+    
+    console.log('Submitting topic data:', topicData)
+    onSubmit(topicData)
     
     // Reset form
     setName('')

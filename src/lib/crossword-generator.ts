@@ -176,8 +176,8 @@ export class CrosswordGenerator {
     
     for (const placement of this.placedWords) {
       // Try intersections with this placed word
-      for (let i = 0; i < placement.answer.length; i++) {
-        const placedLetter = placement.answer[i]
+      for (let i = 0; i < placement.word.length; i++) {
+        const placedLetter = placement.word[i]
         const positions = word.letterFreq.get(placedLetter)
         
         if (!positions) continue

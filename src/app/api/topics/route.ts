@@ -26,6 +26,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('Received topic creation request:', body)
     const validated = CreateTopicSchema.parse(body)
     
     const topic = await prisma.topic.create({
@@ -41,6 +42,13 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Failed to create topic:', error)
     
+    if (error instanceof Error && error.name === 'ZodError') {
+      return NextResponse.json(
+        { success: false, error: { message: 'Invalid topic data', details: error.message } },
+        { status: 400 }
+      )
+    }
+    
     if (error instanceof Error && error.message.includes('Unique constraint')) {
       return NextResponse.json(
         { success: false, error: { message: 'Topic name already exists' } },
@@ -49,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
     
     return NextResponse.json(
-      { success: false, error: { message: 'Failed to create topic' } },
+      { success: false, error: { message: 'Failed to create topic', details: error instanceof Error ? error.message : 'Unknown error' } },
       { status: 500 }
     )
   }

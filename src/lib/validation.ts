@@ -10,7 +10,10 @@ export const ListItemSchema = z.object({
     .min(3, 'Clue must be at least 3 characters')
     .max(200, 'Clue must be at most 200 characters'),
   note: z.string().optional(),
-  difficulty: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5)]).optional()
+  difficulty: z.union([
+    z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), // Numeric format
+    z.literal("EASY"), z.literal("MEDIUM"), z.literal("HARD") // String format
+  ]).optional()
 })
 
 export const ImportListSchema = z.object({
@@ -45,7 +48,10 @@ export const CreateListSchema = z.object({
       .min(3, 'Clue must be at least 3 characters')
       .max(200, 'Clue must be at most 200 characters'),
     note: z.string().optional(),
-    difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']).optional()
+    difficulty: z.union([
+      z.literal(1), z.literal(2), z.literal(3), z.literal(4), z.literal(5), // Numeric format
+      z.literal("EASY"), z.literal("MEDIUM"), z.literal("HARD") // String format
+    ]).optional()
   })).min(1, 'At least one item is required')
 })
 

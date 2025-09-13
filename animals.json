@@ -1,0 +1,32 @@
+{
+  "topic": "Test Topic",
+  "name": "Animal Test",
+  "version": 1,
+  "items": [
+    { "answer": "TIGER", "clue": "Striped big cat native to Asia", "difficulty": 1 },
+    { "answer": "ELEPHANT", "clue": "Largest land animal with a trunk", "difficulty": 1 },
+    { "answer": "DOLPHIN", "clue": "Smart marine mammal known for echolocation", "difficulty": 2 },
+    { "answer": "FALCON", "clue": "Fast hunting bird of prey", "difficulty": 2 },
+    { "answer": "GIRAFFE", "clue": "Very tall African mammal with a long neck", "difficulty": 1 },
+    { "answer": "KANGAROO", "clue": "Hopping marsupial that carries its young in a pouch", "difficulty": 1 },
+    { "answer": "PENGUIN", "clue": "Flightless bird adapted to cold seas", "difficulty": 1 },
+    { "answer": "OCTOPUS", "clue": "Cephalopod with eight arms; a problem solver", "difficulty": 2 },
+    { "answer": "CROCODILE", "clue": "Large reptile with armored skin and powerful jaws", "difficulty": 2 },
+    { "answer": "SQUIRREL", "clue": "Tree-dwelling rodent with a bushy tail", "difficulty": 1 },
+    { "answer": "RABBIT", "clue": "Burrowing herbivore with long ears", "difficulty": 1 },
+    { "answer": "TURTLE", "clue": "Reptile protected by a hard shell", "difficulty": 1 },
+    { "answer": "BADGER", "clue": "Stocky burrower known for digging", "difficulty": 2 },
+    { "answer": "OTTER", "clue": "Playful aquatic mammal that uses stones as tools", "difficulty": 2, "note": "Tool use behavior is common in sea otters" },
+    { "answer": "LLAMA", "clue": "Sure-footed Andean pack animal", "difficulty": 1 },
+    { "answer": "ALPACA", "clue": "Camelid farmed for soft fiber", "difficulty": 1, "note": "Related to llamas; smaller and fleece-focused" },
+    { "answer": "ZEBRA", "clue": "Striped African equid", "difficulty": 1 },
+    { "answer": "JAGUAR", "clue": "Spotted big cat native to the Americas", "difficulty": 2 },
+    { "answer": "ORANGUTAN", "clue": "Great ape from Borneo and Sumatra", "difficulty": 3 },
+    { "answer": "CHAMELEON", "clue": "Lizard that changes color and has a projectile tongue", "difficulty": 3 },
+    { "answer": "RHINOCEROS", "clue": "Horned herbivore with thick skin", "difficulty": 3, "note": "Often shortened to rhino" },
+    { "answer": "HIPPOPOTAMUS", "clue": "Massive river-dwelling herbivore of Africa", "difficulty": 3 },
+    { "answer": "AXOLOTL", "clue": "Neotenic salamander native to Mexico", "difficulty": 4, "note": "Good for testing rare letters like X" },
+    { "answer": "QUAIL", "clue": "Small ground-dwelling game bird", "difficulty": 2 },
+    { "answer": "GECKO", "clue": "Small lizard with adhesive toe pads", "difficulty": 2 }
+  ]
+}

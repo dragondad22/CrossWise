@@ -22,7 +22,21 @@ export default function TopicsPage() {
     
     try {
       const response = await fetch('/api/topics')
-      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const text = await response.text()
+      let result
+      
+      try {
+        result = JSON.parse(text)
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError)
+        console.error('Response text:', text)
+        throw new Error('Invalid JSON response from server')
+      }
       
       if (result.success) {
         setTopics(result.data)
@@ -30,7 +44,7 @@ export default function TopicsPage() {
         setError(result.error?.message || 'Failed to fetch topics')
       }
     } catch (error) {
-      setError('Network error')
+      setError(error instanceof Error ? error.message : 'Network error')
       console.error('Failed to fetch topics:', error)
     } finally {
       setLoading(false)
@@ -49,7 +63,20 @@ export default function TopicsPage() {
         body: JSON.stringify(data)
       })
       
-      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const text = await response.text()
+      let result
+      
+      try {
+        result = JSON.parse(text)
+      } catch (parseError) {
+        console.error('JSON parse error on create topic:', parseError)
+        console.error('Response text:', text)
+        throw new Error('Invalid JSON response from server')
+      }
       
       if (result.success) {
         await fetchTopics() // Refresh the list
@@ -57,7 +84,7 @@ export default function TopicsPage() {
         setError(result.error?.message || 'Failed to create topic')
       }
     } catch (error) {
-      setError('Network error')
+      setError(error instanceof Error ? error.message : 'Network error')
       console.error('Failed to create topic:', error)
     } finally {
       setLoading(false)

@@ -12,7 +12,7 @@ interface ListCardProps {
 
 export default function ListCard({ list, onNewGame, onEdit, onExport, onDuplicate }: ListCardProps) {
   const itemCount = list.items.length
-  const hasRecentPuzzle = list.puzzles.length > 0
+  const hasRecentPuzzle = list.puzzles && list.puzzles.length > 0
   
   return (
     <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">

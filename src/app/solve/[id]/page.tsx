@@ -67,11 +67,15 @@ export default function SolvePage() {
             seed: puzzleData.seed
           })
           
-          // Use saved state if available, otherwise create new
+          // Use saved state if available, otherwise use API state, otherwise create new
           if (savedState) {
             setSolveState(savedState)
+          } else if (result.data.state) {
+            // Use solve state from API
+            setSolveState(result.data.state)
           } else {
-            loadSolveState(id) // This will create a new solve state
+            // Create new solve state
+            loadSolveState(id)
           }
         } else {
           setError(result.error?.message || 'Failed to load puzzle')

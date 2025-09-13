@@ -15,6 +15,10 @@ export async function GET(request: NextRequest) {
       include: {
         topic: true,
         items: true,
+        puzzles: {
+          orderBy: { createdAt: 'desc' },
+          take: 1
+        },
         _count: {
           select: { items: true, puzzles: true }
         }
@@ -68,7 +72,9 @@ export async function POST(request: NextRequest) {
               answer: normalizeAnswer(item.answer),
               clue: item.clue,
               note: item.note,
-              difficulty: item.difficulty || 'MEDIUM'
+              difficulty: typeof item.difficulty === 'number' 
+                ? (item.difficulty <= 2 ? 'EASY' : item.difficulty <= 3 ? 'MEDIUM' : 'HARD')
+                : (item.difficulty || 'MEDIUM')
             }
           })
         )

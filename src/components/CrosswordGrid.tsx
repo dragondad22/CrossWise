@@ -66,10 +66,15 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     }
   }
   
+  const isValidLetter = (key: string): boolean => {
+    return key.length === 1 && /^[A-Za-z]$/.test(key)
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent, row: number, col: number) => {
     e.preventDefault()
     
-    if (e.key.match(/[A-Za-z]/)) {
+    // Only allow single letters A-Z (case insensitive)
+    if (isValidLetter(e.key)) {
       updateCell(row, col, e.key.toUpperCase())
       // Move to next cell in selected direction
       moveToNextCell(row, col)
@@ -86,6 +91,8 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     } else if (e.key.startsWith('Arrow')) {
       handleArrowKey(e.key, row, col)
     }
+    // Explicitly ignore all other keys (Shift, Control, Alt, etc.)
+    return
   }
   
   const moveToNextCell = (row: number, col: number) => {
@@ -101,8 +108,12 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     // Check if still within the word
     if (direction === 'across' && nextCol < clue.col + clue.length) {
       selectCell(nextRow, nextCol)
+      // Focus the next cell element
+      setTimeout(() => focusCell(nextRow, nextCol), 0)
     } else if (direction === 'down' && nextRow < clue.row + clue.length) {
       selectCell(nextRow, nextCol)
+      // Focus the next cell element
+      setTimeout(() => focusCell(nextRow, nextCol), 0)
     }
   }
   
@@ -119,8 +130,19 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     // Check if still within the word
     if (direction === 'across' && prevCol >= clue.col) {
       selectCell(prevRow, prevCol)
+      // Focus the previous cell element
+      setTimeout(() => focusCell(prevRow, prevCol), 0)
     } else if (direction === 'down' && prevRow >= clue.row) {
       selectCell(prevRow, prevCol)
+      // Focus the previous cell element
+      setTimeout(() => focusCell(prevRow, prevCol), 0)
+    }
+  }
+  
+  const focusCell = (row: number, col: number) => {
+    const cellElement = document.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
+    if (cellElement) {
+      cellElement.focus()
     }
   }
   
@@ -239,6 +261,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
           row.map((cell, colIndex) => (
             <div
               key={`${rowIndex}-${colIndex}`}
+              data-cell={`${rowIndex}-${colIndex}`}
               className={getCellClasses(rowIndex, colIndex)}
               style={{ width: cellSize, height: cellSize }}
               onClick={() => handleCellClick(rowIndex, colIndex)}

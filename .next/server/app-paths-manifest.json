@@ -1,1 +1,7 @@
-{}
+{
+  "/api/puzzles/generate/route": "app/api/puzzles/generate/route.js",
+  "/topics/[id]/lists/page": "app/topics/[id]/lists/page.js",
+  "/topics/page": "app/topics/page.js",
+  "/solve/[id]/page": "app/solve/[id]/page.js",
+  "/page": "app/page.js"
+}

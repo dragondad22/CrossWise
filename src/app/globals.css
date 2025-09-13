@@ -36,6 +36,7 @@ body {
 .crossword-cell {
   position: relative;
   background-color: white;
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,6 +72,7 @@ body {
   font-size: 10px;
   line-height: 1;
   font-weight: bold;
+  color: #000;
 }
 
 /* Mobile responsive improvements */
