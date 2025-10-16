@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { CrosswordGrid, CrosswordNumbering, SolveState } from '@/types/crossword'
+
 import { useAppStore } from '@/lib/store'
+import { cn } from '@/lib/utils'
+import { CrosswordGrid, CrosswordNumbering, SolveState } from '@/types/crossword'
 
 interface CrosswordGridProps {
   grid: CrosswordGrid
@@ -16,44 +18,44 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
   const gridRef = useRef<HTMLDivElement>(null)
   const [cellSize, setCellSize] = useState(40)
   const { updateCell, selectCell, selectClue, clearCell } = useAppStore()
-  
+
   // Calculate grid size and cell size based on container
   useEffect(() => {
     const updateSize = () => {
       if (!gridRef.current) return
-      
+
       const container = gridRef.current.parentElement
       if (!container) return
-      
+
       const containerWidth = container.clientWidth
       const containerHeight = container.clientHeight - 100 // Account for controls
-      
+
       const maxCellWidth = Math.floor((containerWidth - 20) / grid.size.cols)
       const maxCellHeight = Math.floor((containerHeight - 20) / grid.size.rows)
       const newCellSize = Math.min(maxCellWidth, maxCellHeight, 50)
-      
+
       setCellSize(Math.max(newCellSize, 25))
     }
-    
+
     updateSize()
     window.addEventListener('resize', updateSize)
     return () => window.removeEventListener('resize', updateSize)
   }, [grid.size])
-  
+
   const handleCellClick = (row: number, col: number) => {
     const cell = grid.cells[row][col]
     if (cell.type === 'block') return
-    
+
     selectCell(row, col)
-    
+
     // Find intersecting clues
-    const acrossClue = numbering.across.find(clue => 
-      clue.row === row && col >= clue.col && col < clue.col + clue.length
+    const acrossClue = numbering.across.find(
+      (clue) => clue.row === row && col >= clue.col && col < clue.col + clue.length,
     )
-    const downClue = numbering.down.find(clue => 
-      clue.col === col && row >= clue.row && row < clue.row + clue.length
+    const downClue = numbering.down.find(
+      (clue) => clue.col === col && row >= clue.row && row < clue.row + clue.length,
     )
-    
+
     // Select a clue (prefer the one that starts at this cell, otherwise alternate)
     if (acrossClue && acrossClue.row === row && acrossClue.col === col) {
       selectClue('across', acrossClue.number)
@@ -65,23 +67,30 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
       selectClue('down', downClue.number)
     }
   }
-  
+
   const isValidLetter = (key: string): boolean => {
     return key.length === 1 && /^[A-Za-z]$/.test(key)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent, row: number, col: number) => {
     e.preventDefault()
-    
+
     // Only allow single letters A-Z (case insensitive)
     if (isValidLetter(e.key)) {
       updateCell(row, col, e.key.toUpperCase())
       // Move to next cell in selected direction
       moveToNextCell(row, col)
     } else if (e.key === 'Backspace') {
-      clearCell(row, col)
-      // Move to previous cell
-      moveToPreviousCell(row, col)
+      const cellKey = `${row},${col}`
+      const currentLetter = solveState?.filledCells[cellKey]
+
+      if (currentLetter) {
+        // Current cell has content, just clear it
+        clearCell(row, col)
+      } else {
+        // Current cell is empty, move to previous cell and clear it
+        moveToPreviousCell(row, col)
+      }
     } else if (e.key === 'Delete') {
       clearCell(row, col)
     } else if (e.key === 'Tab') {
@@ -94,80 +103,94 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     // Explicitly ignore all other keys (Shift, Control, Alt, etc.)
     return
   }
-  
+
   const moveToNextCell = (row: number, col: number) => {
     if (!solveState?.selectedClue) return
-    
+
     const { direction, number } = solveState.selectedClue
-    const clue = numbering[direction].find(c => c.number === number)
+    const clue = numbering[direction].find((c) => c.number === number)
     if (!clue) return
-    
-    const nextRow = direction === 'down' ? row + 1 : row
-    const nextCol = direction === 'across' ? col + 1 : col
-    
-    // Check if still within the word
-    if (direction === 'across' && nextCol < clue.col + clue.length) {
-      selectCell(nextRow, nextCol)
-      // Focus the next cell element
-      setTimeout(() => focusCell(nextRow, nextCol), 0)
-    } else if (direction === 'down' && nextRow < clue.row + clue.length) {
-      selectCell(nextRow, nextCol)
-      // Focus the next cell element
-      setTimeout(() => focusCell(nextRow, nextCol), 0)
+
+    // Find next empty cell in the current word
+    let nextRow = direction === 'down' ? row + 1 : row
+    let nextCol = direction === 'across' ? col + 1 : col
+
+    // Keep looking for an empty cell within the word bounds
+    while (
+      (direction === 'across' && nextCol < clue.col + clue.length) ||
+      (direction === 'down' && nextRow < clue.row + clue.length)
+    ) {
+      const cellKey = `${nextRow},${nextCol}`
+      const hasLetter = solveState?.filledCells[cellKey]
+
+      if (!hasLetter) {
+        // Found empty cell, select it
+        selectCell(nextRow, nextCol)
+        setTimeout(() => focusCell(nextRow, nextCol), 0)
+        return
+      }
+
+      // Move to next cell
+      nextRow = direction === 'down' ? nextRow + 1 : nextRow
+      nextCol = direction === 'across' ? nextCol + 1 : nextCol
     }
+
+    // If no empty cell found, stay at current position
   }
-  
+
   const moveToPreviousCell = (row: number, col: number) => {
     if (!solveState?.selectedClue) return
-    
+
     const { direction, number } = solveState.selectedClue
-    const clue = numbering[direction].find(c => c.number === number)
+    const clue = numbering[direction].find((c) => c.number === number)
     if (!clue) return
-    
+
     const prevRow = direction === 'down' ? row - 1 : row
     const prevCol = direction === 'across' ? col - 1 : col
-    
+
     // Check if still within the word
     if (direction === 'across' && prevCol >= clue.col) {
+      clearCell(prevRow, prevCol)
       selectCell(prevRow, prevCol)
       // Focus the previous cell element
       setTimeout(() => focusCell(prevRow, prevCol), 0)
     } else if (direction === 'down' && prevRow >= clue.row) {
+      clearCell(prevRow, prevCol)
       selectCell(prevRow, prevCol)
       // Focus the previous cell element
       setTimeout(() => focusCell(prevRow, prevCol), 0)
     }
   }
-  
+
   const focusCell = (row: number, col: number) => {
     const cellElement = document.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
     if (cellElement) {
       cellElement.focus()
     }
   }
-  
+
   const moveToNextClue = (backward: boolean = false) => {
     if (!solveState?.selectedClue) return
-    
+
     const { direction, number } = solveState.selectedClue
     const clues = numbering[direction]
-    const currentIndex = clues.findIndex(c => c.number === number)
-    
+    const currentIndex = clues.findIndex((c) => c.number === number)
+
     if (currentIndex === -1) return
-    
+
     const nextIndex = backward ? currentIndex - 1 : currentIndex + 1
-    
+
     if (nextIndex >= 0 && nextIndex < clues.length) {
       const nextClue = clues[nextIndex]
       selectClue(direction, nextClue.number)
       selectCell(nextClue.row, nextClue.col)
     }
   }
-  
+
   const handleArrowKey = (key: string, row: number, col: number) => {
     let newRow = row
     let newCol = col
-    
+
     switch (key) {
       case 'ArrowUp':
         newRow = Math.max(0, row - 1)
@@ -182,7 +205,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
         newCol = Math.min(grid.size.cols - 1, col + 1)
         break
     }
-    
+
     // Skip blocked cells
     while (grid.cells[newRow][newCol].type === 'block') {
       if (key === 'ArrowUp' && newRow > 0) newRow--
@@ -191,70 +214,66 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
       else if (key === 'ArrowRight' && newCol < grid.size.cols - 1) newCol++
       else break
     }
-    
+
     if (grid.cells[newRow][newCol].type === 'cell') {
       selectCell(newRow, newCol)
     }
   }
-  
+
   const getCellClasses = (row: number, col: number) => {
     const cell = grid.cells[row][col]
     const cellKey = `${row},${col}`
-    const classes = ['crossword-cell']
-    
+
     if (cell.type === 'block') {
-      classes.push('blocked')
-      return classes.join(' ')
+      return 'pointer-events-none bg-gray-900'
     }
-    
-    // Selection states
-    if (solveState?.selectedCell?.row === row && solveState?.selectedCell?.col === col) {
-      classes.push('selected')
-    }
-    
-    // Highlight cells in selected word
+
+    const isSelected =
+      solveState?.selectedCell?.row === row && solveState?.selectedCell?.col === col
+
+    let isHighlighted = false
     if (solveState?.selectedClue) {
       const { direction, number } = solveState.selectedClue
-      const clue = numbering[direction].find(c => c.number === number)
+      const clue = numbering[direction].find((c) => c.number === number)
       if (clue) {
-        const inWord = direction === 'across' 
-          ? row === clue.row && col >= clue.col && col < clue.col + clue.length
-          : col === clue.col && row >= clue.row && row < clue.row + clue.length
-        
-        if (inWord) {
-          classes.push('highlighted')
-        }
+        isHighlighted =
+          direction === 'across'
+            ? row === clue.row && col >= clue.col && col < clue.col + clue.length
+            : col === clue.col && row >= clue.row && row < clue.row + clue.length
       }
     }
-    
-    // Check results
-    if (solveState?.checkResults?.[cellKey] !== undefined) {
-      classes.push(solveState.checkResults[cellKey] ? 'correct' : 'incorrect')
-    }
-    
-    return classes.join(' ')
+
+    const checkState = solveState?.checkResults?.[cellKey]
+
+    return cn(
+      'relative flex items-center justify-center font-semibold uppercase tracking-wide border border-border/60 bg-card text-card-foreground transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      isHighlighted && 'bg-primary/10',
+      isSelected && 'ring-2 ring-primary',
+      checkState === true && 'bg-emerald-100 text-emerald-700',
+      checkState === false && 'bg-rose-100 text-rose-600',
+    )
   }
-  
+
   const getCellNumber = (row: number, col: number) => {
-    const acrossClue = numbering.across.find(clue => clue.row === row && clue.col === col)
-    const downClue = numbering.down.find(clue => clue.row === row && clue.col === col)
-    
+    const acrossClue = numbering.across.find((clue) => clue.row === row && clue.col === col)
+    const downClue = numbering.down.find((clue) => clue.row === row && clue.col === col)
+
     return acrossClue?.number || downClue?.number
   }
-  
+
   const getCellLetter = (row: number, col: number) => {
     const cellKey = `${row},${col}`
     return solveState?.filledCells[cellKey] || ''
   }
-  
+
   return (
     <div className="flex justify-center p-4">
       <div
         ref={gridRef}
-        className="crossword-grid select-none"
+        className="inline-grid select-none gap-px rounded-2xl border border-border bg-foreground/80 p-1 shadow-card"
         style={{
           gridTemplateColumns: `repeat(${grid.size.cols}, ${cellSize}px)`,
-          gridTemplateRows: `repeat(${grid.size.rows}, ${cellSize}px)`
+          gridTemplateRows: `repeat(${grid.size.rows}, ${cellSize}px)`,
         }}
       >
         {grid.cells.map((row, rowIndex) =>
@@ -271,17 +290,17 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
               {cell.type === 'cell' && (
                 <>
                   {getCellNumber(rowIndex, colIndex) && (
-                    <span className="cell-number">
+                    <span className="absolute left-1 top-1 text-[10px] font-semibold leading-none text-gray-500">
                       {getCellNumber(rowIndex, colIndex)}
                     </span>
                   )}
-                  <span style={{ fontSize: Math.max(cellSize * 0.5, 12) }}>
+                  <span className="font-mono" style={{ fontSize: Math.max(cellSize * 0.5, 12) }}>
                     {getCellLetter(rowIndex, colIndex)}
                   </span>
                 </>
               )}
             </div>
-          ))
+          )),
         )}
       </div>
     </div>

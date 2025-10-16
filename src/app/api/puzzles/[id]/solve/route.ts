@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { UpdateSolveStateSchema } from '@/lib/validation'
+import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    
+    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Authentication required' } },
+        { status: 401 },
+      )
+    }
+
+    const session = await getSessionForToken(token)
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Authentication required' } },
+        { status: 401 },
+      )
+    }
+
     // First, get the puzzle data
     const puzzle = await prisma.puzzle.findUnique({
       where: { id },
@@ -16,32 +31,41 @@ export async function GET(
         list: {
           include: {
             topic: true,
-            items: true
-          }
-        }
-      }
+            items: true,
+          },
+        },
+      },
     })
-    
+
     if (!puzzle) {
       return NextResponse.json(
         { success: false, error: { message: 'Puzzle not found' } },
-        { status: 404 }
+        { status: 404 },
       )
     }
-    
+
     // Try to find existing solve state
     const solve = await prisma.solve.findFirst({
-      where: { 
+      where: {
         puzzleId: id,
-        userId: null // Single-user mode for v1
-      }
+        userId: session.user.id,
+      },
     })
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    let parsedState: unknown = null
+    if (solve) {
+      try {
+        parsedState = JSON.parse(solve.state)
+      } catch (error) {
+        console.warn('Failed to parse stored solve state:', error)
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
       data: {
         id: solve?.id || null,
-        state: solve ? JSON.parse(solve.state) : null,
+        state: parsedState,
         completedAt: solve?.completedAt || null,
         puzzle: {
           id: puzzle.id,
@@ -49,74 +73,102 @@ export async function GET(
           numbering: JSON.parse(puzzle.numbering),
           settings: JSON.parse(puzzle.settings),
           seed: puzzle.seed,
-          list: puzzle.list
-        }
-      }
+          list: puzzle.list,
+        },
+      },
     })
   } catch (error) {
     console.error('Failed to fetch solve state:', error)
     return NextResponse.json(
       { success: false, error: { message: 'Failed to fetch solve state' } },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const body = await request.json()
     const validated = UpdateSolveStateSchema.parse(body)
-    
+    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Authentication required' } },
+        { status: 401 },
+      )
+    }
+
+    const session = await getSessionForToken(token)
+
+    if (!session) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Authentication required' } },
+        { status: 401 },
+      )
+    }
+
+    if (validated.puzzleId !== id) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Puzzle ID mismatch' } },
+        { status: 400 },
+      )
+    }
+
     // Check if puzzle exists
     const puzzle = await prisma.puzzle.findUnique({
-      where: { id }
+      where: { id },
     })
-    
+
     if (!puzzle) {
       return NextResponse.json(
         { success: false, error: { message: 'Puzzle not found' } },
-        { status: 404 }
+        { status: 404 },
       )
     }
-    
+
     // Find existing solve state or create new one
     const existingSolve = await prisma.solve.findFirst({
       where: {
         puzzleId: id,
-        userId: null // Single-user mode
-      }
+        userId: session.user.id,
+      },
     })
-    
+
+    const now = new Date()
+    const completedAt = validated.completed ? (existingSolve?.completedAt ?? now) : null
+
     let solve
     if (existingSolve) {
       solve = await prisma.solve.update({
         where: { id: existingSolve.id },
         data: {
           state: validated.state,
-          completedAt: validated.completed ? new Date() : null
-        }
+          completedAt,
+          userId: session.user.id,
+        },
       })
     } else {
       solve = await prisma.solve.create({
         data: {
           puzzleId: id,
-          userId: null,
+          userId: session.user.id,
           state: validated.state,
-          completedAt: validated.completed ? new Date() : null
-        }
+          completedAt,
+        },
       })
     }
-    
-    return NextResponse.json({ success: true, data: solve })
+
+    return NextResponse.json({
+      success: true,
+      data: { id: solve.id, completedAt: solve.completedAt },
+    })
   } catch (error) {
     console.error('Failed to update solve state:', error)
     return NextResponse.json(
       { success: false, error: { message: 'Failed to update solve state' } },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

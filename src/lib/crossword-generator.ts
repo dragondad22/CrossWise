@@ -1,5 +1,11 @@
 import seedrandom from 'seedrandom'
-import { CrosswordCell, CrosswordGrid, CrosswordNumbering, WordPlacement, ClueEntry } from '@/types/crossword'
+import {
+  CrosswordCell,
+  CrosswordGrid,
+  CrosswordNumbering,
+  WordPlacement,
+  ClueEntry,
+} from '@/types/crossword'
 
 export interface WordEntry {
   answer: string
@@ -59,19 +65,19 @@ export class CrosswordGenerator {
     while (attempts < this.maxAttempts) {
       this.grid = this.createEmptyGrid()
       this.placedWords = []
-      
+
       const shuffledWords = this.shuffleArray([...processedWords])
       const result = this.generateWithBacktracking(shuffledWords)
-      
+
       if (result.length > bestResult.length) {
         bestResult = [...result]
       }
-      
+
       // Success criteria: placed at least 90% of words
       if (result.length >= Math.floor(words.length * 0.9)) {
         break
       }
-      
+
       attempts++
     }
 
@@ -84,7 +90,7 @@ export class CrosswordGenerator {
         success: false,
         placedWords: bestResult.length,
         totalWords: words.length,
-        conflictingWords
+        conflictingWords,
       }
     }
 
@@ -98,19 +104,19 @@ export class CrosswordGenerator {
       grid: finalGrid,
       numbering,
       placedWords: bestResult.length,
-      totalWords: words.length
+      totalWords: words.length,
     }
   }
 
   private preprocessWords(words: { answer: string; clue: string }[]): WordEntry[] {
     return words
-      .map(word => ({
+      .map((word) => ({
         answer: word.answer.toUpperCase().replace(/[^A-Z]/g, ''),
         clue: word.clue,
         length: word.answer.length,
-        letterFreq: this.calculateLetterFrequency(word.answer)
+        letterFreq: this.calculateLetterFrequency(word.answer),
       }))
-      .filter(word => word.answer.length >= 2 && word.answer.length <= 20)
+      .filter((word) => word.answer.length >= 2 && word.answer.length <= 20)
       .sort((a, b) => b.length - a.length) // Longest words first
   }
 
@@ -131,29 +137,29 @@ export class CrosswordGenerator {
 
     const word = words[0]
     const remainingWords = words.slice(1)
-    
+
     // If this is the first word, place it in the center
     if (this.placedWords.length === 0) {
       const centerRow = Math.floor(this.gridSize.rows / 2)
       const centerCol = Math.floor((this.gridSize.cols - word.length) / 2)
-      
+
       if (this.tryPlaceWord(word, centerRow, centerCol, 'across')) {
         const result = this.generateWithBacktracking(remainingWords)
         if (result.length > 0) return result
-        
+
         // Backtrack
         this.removeWord(this.placedWords[this.placedWords.length - 1])
       }
-      
+
       return []
     }
 
     // Find all possible placements for this word
     const candidates = this.findPlacementCandidates(word)
-    
+
     // Sort by score (best first)
     candidates.sort((a, b) => b.score - a.score)
-    
+
     // Try each candidate
     for (const candidate of candidates) {
       if (this.tryPlaceWord(word, candidate.row, candidate.col, candidate.direction)) {
@@ -161,7 +167,7 @@ export class CrosswordGenerator {
         if (result.length >= remainingWords.length) {
           return result
         }
-        
+
         // Backtrack
         this.removeWord(this.placedWords[this.placedWords.length - 1])
       }
@@ -173,25 +179,25 @@ export class CrosswordGenerator {
 
   private findPlacementCandidates(word: WordEntry): PlacementCandidate[] {
     const candidates: PlacementCandidate[] = []
-    
+
     for (const placement of this.placedWords) {
       // Try intersections with this placed word
       for (let i = 0; i < placement.word.length; i++) {
         const placedLetter = placement.word[i]
         const positions = word.letterFreq.get(placedLetter)
-        
+
         if (!positions) continue
-        
+
         for (const pos of positions) {
           // Calculate intersection point
           const intersectRow = placement.direction === 'across' ? placement.row : placement.row + i
           const intersectCol = placement.direction === 'across' ? placement.col + i : placement.col
-          
+
           // Try perpendicular direction
           const newDirection = placement.direction === 'across' ? 'down' : 'across'
           const newRow = newDirection === 'across' ? intersectRow : intersectRow - pos
           const newCol = newDirection === 'across' ? intersectCol - pos : intersectCol
-          
+
           if (this.isValidPlacement(word, newRow, newCol, newDirection)) {
             const score = this.scorePlacement(word, newRow, newCol, newDirection)
             candidates.push({
@@ -200,37 +206,42 @@ export class CrosswordGenerator {
               col: newCol,
               direction: newDirection,
               score,
-              intersections: [{ row: intersectRow, col: intersectCol, letter: placedLetter }]
+              intersections: [{ row: intersectRow, col: intersectCol, letter: placedLetter }],
             })
           }
         }
       }
     }
-    
+
     return candidates
   }
 
-  private isValidPlacement(word: WordEntry, row: number, col: number, direction: 'across' | 'down'): boolean {
+  private isValidPlacement(
+    word: WordEntry,
+    row: number,
+    col: number,
+    direction: 'across' | 'down',
+  ): boolean {
     const endRow = direction === 'down' ? row + word.length - 1 : row
     const endCol = direction === 'across' ? col + word.length - 1 : col
-    
+
     // Check bounds
     if (row < 0 || col < 0 || endRow >= this.gridSize.rows || endCol >= this.gridSize.cols) {
       return false
     }
-    
+
     // Check for conflicts and adjacency rules
     for (let i = 0; i < word.length; i++) {
       const currentRow = direction === 'down' ? row + i : row
       const currentCol = direction === 'across' ? col + i : col
       const letter = word.answer[i]
-      
+
       const cellValue = this.grid[currentRow][currentCol]
-      
+
       if (cellValue !== null && cellValue !== letter) {
         return false // Conflict
       }
-      
+
       // Check adjacency (no touching words except at intersections)
       if (cellValue === null) {
         const adjacentCells = this.getAdjacentCells(currentRow, currentCol, direction)
@@ -241,70 +252,80 @@ export class CrosswordGenerator {
         }
       }
     }
-    
+
     // Check word boundaries (ensure words don't run together)
     const beforeRow = direction === 'down' ? row - 1 : row
     const beforeCol = direction === 'across' ? col - 1 : col
     const afterRow = direction === 'down' ? endRow + 1 : row
     const afterCol = direction === 'across' ? endCol + 1 : col
-    
+
     if (this.isInBounds(beforeRow, beforeCol) && this.grid[beforeRow][beforeCol] !== null) {
       return false
     }
     if (this.isInBounds(afterRow, afterCol) && this.grid[afterRow][afterCol] !== null) {
       return false
     }
-    
+
     return true
   }
 
-  private scorePlacement(word: WordEntry, row: number, col: number, direction: 'across' | 'down'): number {
+  private scorePlacement(
+    word: WordEntry,
+    row: number,
+    col: number,
+    direction: 'across' | 'down',
+  ): number {
     let score = 0
     let intersections = 0
-    
+
     for (let i = 0; i < word.length; i++) {
       const currentRow = direction === 'down' ? row + i : row
       const currentCol = direction === 'across' ? col + i : col
-      
+
       if (this.grid[currentRow][currentCol] !== null) {
         intersections++
         score += 10 // Reward intersections
       }
     }
-    
+
     // Prefer central placements
     const centerRow = this.gridSize.rows / 2
     const centerCol = this.gridSize.cols / 2
     const distanceFromCenter = Math.abs(row - centerRow) + Math.abs(col - centerCol)
     score -= distanceFromCenter * 0.5
-    
+
     // Reward more intersections exponentially
     score += intersections * intersections * 5
-    
+
     return score
   }
 
-  private tryPlaceWord(word: WordEntry, row: number, col: number, direction: 'across' | 'down'): boolean {
+  private tryPlaceWord(
+    word: WordEntry,
+    row: number,
+    col: number,
+    direction: 'across' | 'down',
+  ): boolean {
     if (!this.isValidPlacement(word, row, col, direction)) {
       return false
     }
-    
+
     // Place the word
     for (let i = 0; i < word.length; i++) {
       const currentRow = direction === 'down' ? row + i : row
       const currentCol = direction === 'across' ? col + i : col
       this.grid[currentRow][currentCol] = word.answer[i]
     }
-    
+
     this.placedWords.push({
       word: word.answer,
       clue: word.clue,
       row,
       col,
       direction,
-      number: 0 // Will be set during numbering
+      number: 0, // Will be set during numbering
     })
-    
+
     return true
   }
 
@@ -313,16 +334,16 @@ export class CrosswordGenerator {
     for (let i = 0; i < placement.word.length; i++) {
       const currentRow = placement.direction === 'down' ? placement.row + i : placement.row
       const currentCol = placement.direction === 'across' ? placement.col + i : placement.col
-      
+
       // Only remove if no other word uses this cell
       let usedByOther = false
       for (const other of this.placedWords) {
         if (other === placement) continue
-        
+
         for (let j = 0; j < other.word.length; j++) {
           const otherRow = other.direction === 'down' ? other.row + j : other.row
           const otherCol = other.direction === 'across' ? other.col + j : other.col
-          
+
           if (otherRow === currentRow && otherCol === currentCol) {
             usedByOther = true
             break
@@ -330,12 +351,12 @@ export class CrosswordGenerator {
         }
         if (usedByOther) break
       }
-      
+
       if (!usedByOther) {
         this.grid[currentRow][currentCol] = null
       }
     }
-    
+
     // Remove from placed words
     const index = this.placedWords.indexOf(placement)
     if (index > -1) {
@@ -345,7 +366,7 @@ export class CrosswordGenerator {
 
   private rebuildGrid(placements: WordPlacement[]): void {
     this.grid = this.createEmptyGrid()
-    
+
     for (const placement of placements) {
       for (let i = 0; i < placement.word.length; i++) {
         const row = placement.direction === 'down' ? placement.row + i : placement.row
@@ -357,7 +378,7 @@ export class CrosswordGenerator {
 
   private createFinalGrid(): CrosswordGrid {
     const cells: CrosswordCell[][] = []
-    
+
     for (let row = 0; row < this.gridSize.rows; row++) {
       cells[row] = []
       for (let col = 0; col < this.gridSize.cols; col++) {
@@ -366,14 +387,14 @@ export class CrosswordGenerator {
           row,
           col,
           type: letter ? 'cell' : 'block',
-          letter: letter || undefined
+          letter: letter || undefined,
         }
       }
     }
-    
+
     return {
       cells,
-      size: { rows: this.gridSize.rows, cols: this.gridSize.cols }
+      size: { rows: this.gridSize.rows, cols: this.gridSize.cols },
     }
   }
 
@@ -382,24 +403,24 @@ export class CrosswordGenerator {
     const across: ClueEntry[] = []
     const down: ClueEntry[] = []
     let currentNumber = 1
-    
+
     // Sort placements by position (top-left to bottom-right)
     const sortedPlacements = [...placements].sort((a, b) => {
       if (a.row !== b.row) return a.row - b.row
       return a.col - b.col
     })
-    
+
     for (let row = 0; row < this.gridSize.rows; row++) {
       for (let col = 0; col < this.gridSize.cols; col++) {
         if (this.grid[row][col] === null) continue
-        
-        const acrossWord = sortedPlacements.find(p => 
-          p.direction === 'across' && p.row === row && p.col === col
+
+        const acrossWord = sortedPlacements.find(
+          (p) => p.direction === 'across' && p.row === row && p.col === col,
         )
-        const downWord = sortedPlacements.find(p => 
-          p.direction === 'down' && p.row === row && p.col === col
+        const downWord = sortedPlacements.find(
+          (p) => p.direction === 'down' && p.row === row && p.col === col,
         )
-        
+
         if (acrossWord || downWord) {
           if (acrossWord) {
             acrossWord.number = currentNumber
@@ -410,10 +431,10 @@ export class CrosswordGenerator {
               row: acrossWord.row,
               col: acrossWord.col,
               length: acrossWord.word.length,
-              direction: 'across'
+              direction: 'across',
             })
           }
-          
+
           if (downWord) {
             downWord.number = currentNumber
             down.push({
@@ -423,27 +444,31 @@ export class CrosswordGenerator {
               row: downWord.row,
               col: downWord.col,
               length: downWord.word.length,
-              direction: 'down'
+              direction: 'down',
             })
           }
-          
+
           currentNumber++
         }
       }
     }
-    
+
     return { across, down }
   }
 
   private createEmptyGrid(): (string | null)[][] {
-    return Array(this.gridSize.rows).fill(null).map(() => 
-      Array(this.gridSize.cols).fill(null)
-    )
+    return Array(this.gridSize.rows)
+      .fill(null)
+      .map(() => Array(this.gridSize.cols).fill(null))
   }
 
-  private getAdjacentCells(row: number, col: number, direction: 'across' | 'down'): [number, number][] {
+  private getAdjacentCells(
+    row: number,
+    col: number,
+    direction: 'across' | 'down',
+  ): [number, number][] {
     const adjacent: [number, number][] = []
-    
+
     if (direction === 'across') {
       // Check above and below
       if (row > 0) adjacent.push([row - 1, col])
@@ -453,7 +478,7 @@ export class CrosswordGenerator {
       if (col > 0) adjacent.push([row, col - 1])
       if (col < this.gridSize.cols - 1) adjacent.push([row, col + 1])
     }
-    
+
     return adjacent.filter(([r, c]) => this.isInBounds(r, c))
   }
 
@@ -464,17 +489,17 @@ export class CrosswordGenerator {
   private shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array]
     for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(this.rng() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+      const j = Math.floor(this.rng() * (i + 1))
+      ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
     }
     return shuffled
   }
 
   private findConflictingWords(allWords: WordEntry[], placedWords: WordPlacement[]): string[] {
-    const placed = new Set(placedWords.map(p => p.word))
+    const placed = new Set(placedWords.map((p) => p.word))
     return allWords
-      .filter(w => !placed.has(w.answer))
-      .map(w => w.answer)
+      .filter((w) => !placed.has(w.answer))
+      .map((w) => w.answer)
       .slice(0, 5) // Return up to 5 conflicting words
   }
 }

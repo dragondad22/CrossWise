@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { Topic, ListWithItemsAndTopic } from '@/types/database'
+import type { AuthUser } from '@/types/auth'
 import { SolveState, CrosswordGrid, CrosswordNumbering } from '@/types/crossword'
 
 interface AppState {
@@ -9,22 +10,26 @@ interface AppState {
   lists: ListWithItemsAndTopic[]
   selectedTopic: Topic | null
   selectedList: ListWithItemsAndTopic | null
-  
+
   // Current puzzle
   currentPuzzle: {
     id: string
     grid: CrosswordGrid
     numbering: CrosswordNumbering
     seed: string
+    listId: string
   } | null
-  
+
   // Solve state
   solveState: SolveState | null
-  
+
   // UI state
   isLoading: boolean
   error: string | null
-  
+  isWon: boolean
+  user: AuthUser | null
+  sessionHydrated: boolean
+
   // Actions
   setTopics: (topics: Topic[]) => void
   setLists: (lists: ListWithItemsAndTopic[]) => void
@@ -34,7 +39,10 @@ interface AppState {
   setSolveState: (state: SolveState | null) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
-  
+  setWon: (won: boolean) => void
+  hydrateUser: (user: AuthUser | null) => void
+  setUser: (user: AuthUser | null) => void
+
   // Solve actions
   updateCell: (row: number, col: number, letter: string) => void
   selectCell: (row: number, col: number) => void
@@ -42,7 +50,8 @@ interface AppState {
   clearCell: (row: number, col: number) => void
   clearWord: (direction: 'across' | 'down', number: number) => void
   checkSolution: (mode: 'letter' | 'word' | 'puzzle') => void
-  
+  checkWin: () => boolean
+
   // Persistence actions
   saveSolveState: () => void
   loadSolveState: (puzzleId: string) => void
@@ -60,7 +69,10 @@ export const useAppStore = create<AppState>()(
       solveState: null,
       isLoading: false,
       error: null,
-      
+      isWon: false,
+      user: null,
+      sessionHydrated: false,
+
       // Basic actions
       setTopics: (topics) => set({ topics }),
       setLists: (lists) => set({ lists }),
@@ -70,118 +82,154 @@ export const useAppStore = create<AppState>()(
       setSolveState: (state) => set({ solveState: state }),
       setLoading: (loading) => set({ isLoading: loading }),
       setError: (error) => set({ error }),
-      
+      setWon: (won) => set({ isWon: won }),
+      hydrateUser: (user) =>
+        set((state) => {
+          const current = state.user
+          const isSameUser =
+            (current?.id ?? null) === (user?.id ?? null) &&
+            (current?.email ?? null) === (user?.email ?? null) &&
+            (current?.name ?? null) === (user?.name ?? null) &&
+            state.sessionHydrated
+
+          if (isSameUser) {
+            return {}
+          }
+
+          return { user, sessionHydrated: true }
+        }),
+      setUser: (user) =>
+        set((state) => {
+          const current = state.user
+          const isSameUser =
+            (current?.id ?? null) === (user?.id ?? null) &&
+            (current?.email ?? null) === (user?.email ?? null) &&
+            (current?.name ?? null) === (user?.name ?? null)
+
+          if (isSameUser && state.sessionHydrated) {
+            return {}
+          }
+
+          return { user, sessionHydrated: true }
+        }),
+
       // Solve actions
       updateCell: (row, col, letter) => {
         const state = get()
         if (!state.solveState || !state.currentPuzzle) return
-        
+
         const cellKey = `${row},${col}`
         const updatedState = {
           ...state.solveState,
           filledCells: {
             ...state.solveState.filledCells,
-            [cellKey]: letter.toUpperCase()
-          }
+            [cellKey]: letter.toUpperCase(),
+          },
         }
-        
+
         set({ solveState: updatedState })
-        
+
+        // Check for win condition
+        const isWin = get().checkWin()
+        if (isWin && !state.isWon) {
+          set({ isWon: true })
+        }
+
         // Auto-save to localStorage
         if (typeof window !== 'undefined') {
           const key = `crosswise_solve_${state.currentPuzzle.id}`
           localStorage.setItem(key, JSON.stringify(updatedState))
         }
       },
-      
+
       selectCell: (row, col) => {
         const state = get()
         if (!state.solveState) return
-        
+
         const updatedState = {
           ...state.solveState,
-          selectedCell: { row, col }
+          selectedCell: { row, col },
         }
-        
+
         set({ solveState: updatedState })
       },
-      
+
       selectClue: (direction, number) => {
         const state = get()
         if (!state.solveState) return
-        
+
         const updatedState = {
           ...state.solveState,
-          selectedClue: { direction, number }
+          selectedClue: { direction, number },
         }
-        
+
         set({ solveState: updatedState })
       },
-      
+
       clearCell: (row, col) => {
         const state = get()
         if (!state.solveState || !state.currentPuzzle) return
-        
+
         const cellKey = `${row},${col}`
         const { [cellKey]: removed, ...remainingCells } = state.solveState.filledCells
-        
+
         const updatedState = {
           ...state.solveState,
-          filledCells: remainingCells
+          filledCells: remainingCells,
         }
-        
+
         set({ solveState: updatedState })
-        
+
         // Auto-save to localStorage
         if (typeof window !== 'undefined') {
           const key = `crosswise_solve_${state.currentPuzzle.id}`
           localStorage.setItem(key, JSON.stringify(updatedState))
         }
       },
-      
+
       clearWord: (direction, number) => {
         const state = get()
         if (!state.solveState || !state.currentPuzzle) return
-        
-        const clue = state.currentPuzzle.numbering[direction].find(c => c.number === number)
+
+        const clue = state.currentPuzzle.numbering[direction].find((c) => c.number === number)
         if (!clue) return
-        
+
         const updatedCells = { ...state.solveState.filledCells }
-        
+
         for (let i = 0; i < clue.length; i++) {
           const row = direction === 'down' ? clue.row + i : clue.row
           const col = direction === 'across' ? clue.col + i : clue.col
           const cellKey = `${row},${col}`
           delete updatedCells[cellKey]
         }
-        
+
         const updatedState = {
           ...state.solveState,
-          filledCells: updatedCells
+          filledCells: updatedCells,
         }
-        
+
         set({ solveState: updatedState })
       },
-      
+
       checkSolution: (mode) => {
         const state = get()
         if (!state.solveState || !state.currentPuzzle) return
-        
+
         const checkResults: Record<string, boolean> = {}
-        
+
         if (mode === 'letter' && state.solveState.selectedCell) {
           const { row, col } = state.solveState.selectedCell
           const cellKey = `${row},${col}`
           const filledLetter = state.solveState.filledCells[cellKey]
           const correctLetter = state.currentPuzzle.grid.cells[row][col].letter
-          
+
           if (filledLetter && correctLetter) {
             checkResults[cellKey] = filledLetter === correctLetter
           }
         } else if (mode === 'word' && state.solveState.selectedClue) {
           const { direction, number } = state.solveState.selectedClue
-          const clue = state.currentPuzzle.numbering[direction].find(c => c.number === number)
-          
+          const clue = state.currentPuzzle.numbering[direction].find((c) => c.number === number)
+
           if (clue) {
             for (let i = 0; i < clue.length; i++) {
               const row = direction === 'down' ? clue.row + i : clue.row
@@ -189,7 +237,7 @@ export const useAppStore = create<AppState>()(
               const cellKey = `${row},${col}`
               const filledLetter = state.solveState.filledCells[cellKey]
               const correctLetter = state.currentPuzzle.grid.cells[row][col].letter
-              
+
               if (filledLetter && correctLetter) {
                 checkResults[cellKey] = filledLetter === correctLetter
               }
@@ -202,34 +250,62 @@ export const useAppStore = create<AppState>()(
             const row = parseInt(rowStr)
             const col = parseInt(colStr)
             const correctLetter = state.currentPuzzle!.grid.cells[row][col].letter
-            
+
             if (correctLetter) {
               checkResults[cellKey] = filledLetter === correctLetter
             }
           })
         }
-        
+
         const updatedState = {
           ...state.solveState,
-          checkResults
+          checkResults,
         }
-        
+
         set({ solveState: updatedState })
       },
-      
+
+      checkWin: () => {
+        const state = get()
+        if (!state.currentPuzzle || !state.solveState) return false
+
+        // Get all cells that should have letters (non-blocked cells)
+        const requiredCells: Array<{ row: number; col: number; letter: string }> = []
+
+        for (let row = 0; row < state.currentPuzzle.grid.size.rows; row++) {
+          for (let col = 0; col < state.currentPuzzle.grid.size.cols; col++) {
+            const cell = state.currentPuzzle.grid.cells[row][col]
+            if (cell.type === 'cell' && cell.letter) {
+              requiredCells.push({ row, col, letter: cell.letter })
+            }
+          }
+        }
+
+        // Check if all required cells are filled with correct letters
+        for (const { row, col, letter } of requiredCells) {
+          const cellKey = `${row},${col}`
+          const filledLetter = state.solveState.filledCells[cellKey]
+          if (!filledLetter || filledLetter !== letter) {
+            return false
+          }
+        }
+
+        return true
+      },
+
       saveSolveState: () => {
         const state = get()
         if (!state.currentPuzzle || !state.solveState) return
-        
+
         // Save to localStorage
         const key = `crosswise_solve_${state.currentPuzzle.id}`
         localStorage.setItem(key, JSON.stringify(state.solveState))
       },
-      
+
       loadSolveState: (puzzleId) => {
         const key = `crosswise_solve_${puzzleId}`
         const saved = localStorage.getItem(key)
-        
+
         if (saved) {
           try {
             const solveState = JSON.parse(saved)
@@ -243,11 +319,11 @@ export const useAppStore = create<AppState>()(
             solveState: {
               filledCells: {},
               startTime: new Date(),
-              checkResults: {}
-            }
+              checkResults: {},
+            },
           })
         }
-      }
+      },
     }),
     {
       name: 'crosswise-store',
@@ -256,8 +332,9 @@ export const useAppStore = create<AppState>()(
         selectedTopic: state.selectedTopic,
         selectedList: state.selectedList,
         currentPuzzle: state.currentPuzzle,
-        solveState: state.solveState
-      })
-    }
-  )
+        solveState: state.solveState,
+        user: state.user,
+      }),
+    },
+  ),
 )

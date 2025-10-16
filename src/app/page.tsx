@@ -1,81 +1,84 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 import Link from 'next/link'
 
+import { buttonClasses } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+const features = [
+  {
+    title: 'Upload Lists',
+    description: 'Import structured JSON lists and keep your topics organised and reusable.',
+    icon: '📝',
+  },
+  {
+    title: 'Generate Puzzles',
+    description: 'Spin up fresh crosswords instantly with smart placement and deterministic seeds.',
+    icon: '🎯',
+  },
+  {
+    title: 'Solve & Study',
+    description: 'Track progress, check answers, and revisit games whenever you like.',
+    icon: '🧩',
+  },
+]
+
 export default function Home() {
-  const router = useRouter()
-  
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            CrossWise
+    <main className="bg-background">
+      <section className="container mx-auto grid min-h-[calc(100vh-4rem)] items-center gap-12 px-4 py-16 md:grid-cols-[1fr_auto]">
+        <div className="mx-auto max-w-2xl text-center md:mx-0 md:text-left">
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-4 py-1 text-sm font-medium text-primary">
+            Crossword creation for every study session
+          </span>
+          <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+            Build, share, and solve crosswords that make learning memorable.
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Upload JSON lists of terms & clues to auto-generate shareable crosswords organized by topic
+          <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
+            CrossWise turns your vocabulary lists into beautiful, interactive puzzles. Create topics
+            for any subject, invite teammates, and pick up where you left off on any device.
           </p>
-        </div>
-        
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="text-center">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-                Getting Started
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Create your first topic and upload a word list to begin generating crosswords
-              </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                <div className="text-center">
-                  <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">📝</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Upload Lists</h3>
-                  <p className="text-sm text-gray-600">
-                    Import JSON files with terms and clues organized by topic
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🎯</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Generate Puzzles</h3>
-                  <p className="text-sm text-gray-600">
-                    Auto-generate crossword grids with smart word placement
-                  </p>
-                </div>
-                
-                <div className="text-center">
-                  <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🧩</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-800 mb-2">Solve & Study</h3>
-                  <p className="text-sm text-gray-600">
-                    Interactive solving with progress saving and hints
-                  </p>
-                </div>
-              </div>
-              
-              <div className="mt-8">
-                <Link
-                  href="/topics"
-                  className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 inline-flex items-center gap-2"
-                >
-                  Get Started
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-start">
+            <Link href="/topics" className={buttonClasses({ className: 'px-6 py-3 text-base' })}>
+              Browse topics
+            </Link>
+            <Link
+              href="/register"
+              className={buttonClasses({
+                variant: 'outline',
+                className: 'px-6 py-3 text-base',
+              })}
+            >
+              Create an account
+            </Link>
           </div>
         </div>
-      </div>
+
+        <Card className="w-full max-w-lg">
+          <CardHeader>
+            <CardTitle className="text-xl">Everything you need to get started</CardTitle>
+            <CardDescription>
+              Three simple steps to bring your word lists to life and keep learners engaged.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-6">
+            {features.map((feature) => (
+              <div
+                key={feature.title}
+                className="flex items-start gap-4 rounded-xl border border-border/60 bg-muted/30 px-4 py-3"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
+                  {feature.icon}
+                </span>
+                <div className="text-left">
+                  <p className="text-base font-semibold text-foreground">{feature.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    {feature.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </section>
     </main>
   )
 }

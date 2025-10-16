@@ -80,6 +80,7 @@ export interface SolveState {
   startTime: Date
   endTime?: Date
   checkResults?: Record<string, boolean> // "row,col" -> isCorrect
+  lastSaved?: string
 }
 
 // UI types
