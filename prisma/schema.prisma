@@ -72,16 +72,43 @@ model Puzzle {
 model Solve {
   id          String    @id @default(cuid())
   puzzleId    String    @map("puzzle_id")
-  userId      String?   @map("user_id") // nullable for v1 single-user mode
+  userId      String?   @map("user_id")
   state       String    // JSON serialized solve state
   completedAt DateTime? @map("completed_at")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   puzzle      Puzzle    @relation(fields: [puzzleId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([puzzleId, userId])
   @@map("solves")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String     @map("password_hash")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  solves       Solve[]
+  sessions     Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 enum ListSource {
