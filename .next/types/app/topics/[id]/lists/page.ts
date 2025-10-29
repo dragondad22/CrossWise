@@ -1,4 +1,4 @@
-// File: /media/chris/DATA/source/repos/crosswise/src/app/topics/[id]/lists/page.tsx
+// File: /media/chris/My Passport/source/repos/crosswise/src/app/topics/[id]/lists/page.tsx
 import * as entry from '../../../../../../src/app/topics/[id]/lists/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

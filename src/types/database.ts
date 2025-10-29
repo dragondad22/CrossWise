@@ -18,7 +18,7 @@ export type ListWithItems = Prisma.ListGetPayload<{
   include: { items: true; topic: true }
 }>
 
-export type ListWithItemsAndTopic = Prisma.ListGetPayload<{
+type BaseListWithItemsAndTopic = Prisma.ListGetPayload<{
   include: {
     items: true
     topic: true
@@ -28,6 +28,10 @@ export type ListWithItemsAndTopic = Prisma.ListGetPayload<{
     }
   }
 }>
+
+export type ListWithItemsAndTopic = BaseListWithItemsAndTopic & {
+  userSolves?: SolveWithPuzzle[]
+}
 
 export type PuzzleWithList = Prisma.PuzzleGetPayload<{
   include: {
@@ -41,7 +45,21 @@ export type PuzzleWithList = Prisma.PuzzleGetPayload<{
 }>
 
 export type SolveWithPuzzle = Prisma.SolveGetPayload<{
-  include: { puzzle: true }
+  select: {
+    id: true
+    puzzleId: true
+    createdAt: true
+    updatedAt: true
+    completedAt: true
+    puzzle: {
+      select: {
+        id: true
+        listId: true
+        createdAt: true
+        seed: true
+      }
+    }
+  }
 }>
 
 // Enums

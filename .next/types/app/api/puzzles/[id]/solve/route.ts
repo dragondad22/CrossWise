@@ -1,4 +1,4 @@
-// File: /media/chris/DATA/source/repos/crosswise/src/app/api/puzzles/[id]/solve/route.ts
+// File: /media/chris/My Passport/source/repos/crosswise/src/app/api/puzzles/[id]/solve/route.ts
 import * as entry from '../../../../../../../src/app/api/puzzles/[id]/solve/route.js'
 import type { NextRequest } from 'next/server.js'
 

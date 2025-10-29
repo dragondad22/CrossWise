@@ -1,5 +1,11 @@
-import Link from 'next/link'
+'use client'
 
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { format, formatDistanceToNow } from 'date-fns'
+
+import { useAppStore } from '@/lib/store'
+import { cn } from '@/lib/utils'
 import {
   Card,
   CardContent,
@@ -18,6 +24,7 @@ interface ListCardProps {
   onEdit?: () => void
   onExport?: () => void
   onDuplicate?: () => void
+  onRefresh?: () => Promise<void> | void
 }
 
 export default function ListCard({
@@ -26,10 +33,91 @@ export default function ListCard({
   onEdit,
   onExport,
   onDuplicate,
+  onRefresh,
 }: ListCardProps) {
   const itemCount = list.items.length
-  const puzzles = list.puzzles || []
-  const hasRecentPuzzle = puzzles.length > 0
+  const userSolves = list.userSolves ?? []
+  const [selectedSolveIds, setSelectedSolveIds] = useState<string[]>([])
+  const [isProcessing, setIsProcessing] = useState(false)
+  const setError = useAppStore((state) => state.setError)
+  const setLoading = useAppStore((state) => state.setLoading)
+
+  const sortedHistory = [...userSolves].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  )
+
+  const toggleSolveSelection = (solveId: string) => {
+    setSelectedSolveIds((prev) =>
+      prev.includes(solveId) ? prev.filter((id) => id !== solveId) : [...prev, solveId],
+    )
+  }
+
+  useEffect(() => {
+    setSelectedSolveIds((prev) => {
+      if (prev.length === 0) {
+        return prev
+      }
+
+      const availableIds = new Set(userSolves.map((solve) => solve.id))
+      const filtered = prev.filter((id) => availableIds.has(id))
+      return filtered.length === prev.length ? prev : filtered
+    })
+  }, [userSolves])
+
+  const clearSelection = () => setSelectedSolveIds([])
+
+  const handleBulkAction = async (action: 'reset' | 'delete') => {
+    if (selectedSolveIds.length === 0 || isProcessing) {
+      return
+    }
+
+    try {
+      setIsProcessing(true)
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch('/api/solves/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action,
+          solveIds: selectedSolveIds,
+        }),
+      })
+
+      let result: unknown = null
+      try {
+        result = await response.json()
+      } catch (parseError) {
+        console.error('Failed to parse bulk solve response:', parseError)
+      }
+
+      if (!response.ok || !result || (result as { success?: boolean }).success !== true) {
+        const message =
+          (result as { error?: { message?: string } })?.error?.message ??
+          `Failed to ${action} selected puzzles`
+        setError(message)
+        return
+      }
+
+      if (onRefresh) {
+        await onRefresh()
+      }
+
+      setSelectedSolveIds([])
+    } catch (error) {
+      console.error(`Failed to ${action} puzzles:`, error)
+      setError('Network error while updating puzzles')
+    } finally {
+      setIsProcessing(false)
+      setLoading(false)
+    }
+  }
+
+  const selectedCount = selectedSolveIds.length
+  const hasSelection = selectedCount > 0
 
   return (
     <Card className="flex h-full flex-col border border-border/70 shadow-card/20 transition hover:-translate-y-0.5 hover:shadow-card">
@@ -55,37 +143,99 @@ export default function ListCard({
       </CardHeader>
 
       <CardContent className="flex-1 space-y-4 text-sm leading-relaxed text-muted-foreground">
-        {hasRecentPuzzle ? (
-          <div className="rounded-xl border border-border/60 bg-muted/40 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-foreground/70">
-              Recent puzzles
-            </p>
-            <div className="mt-2 space-y-1.5">
-              {puzzles.slice(0, 3).map((puzzle, index) => (
-                <Link
-                  key={puzzle.id}
-                  href={`/solve/${puzzle.id}`}
-                  className="flex items-center justify-between rounded-lg px-2 py-1 text-sm text-primary transition hover:bg-primary/10"
-                >
-                  <span className="font-medium">Puzzle {index + 1}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(puzzle.createdAt).toLocaleDateString()}
-                  </span>
-                </Link>
-              ))}
-              {puzzles.length > 3 && (
-                <p className="text-xs text-muted-foreground">
-                  +{puzzles.length - 3} more saved puzzle{puzzles.length - 3 === 1 ? '' : 's'}
-                </p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <p>
-            No saved puzzles yet. Generate a new crossword anytime and your progress will appear
-            here.
+        <div className="rounded-xl border border-border/60 bg-muted/30 p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-foreground/70">
+            Your puzzles
           </p>
-        )}
+          {hasSelection && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-primary">
+                {selectedCount} selected
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearSelection}
+                  disabled={isProcessing}
+                >
+                  Clear
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleBulkAction('reset')}
+                  disabled={isProcessing}
+                >
+                  Reset selected
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleBulkAction('delete')}
+                  disabled={isProcessing}
+                  className="border-red-200 text-red-600 hover:bg-red-50"
+                >
+                  Delete selected
+                </Button>
+              </div>
+            </div>
+          )}
+          {sortedHistory.length > 0 ? (
+            <div className="mt-3 max-h-48 space-y-1.5 overflow-y-auto pr-1">
+              {sortedHistory.map((solve, index) => {
+                const puzzleCreated = new Date(solve.puzzle.createdAt)
+                const completedAt = solve.completedAt ? new Date(solve.completedAt) : null
+                const isCompleted = Boolean(completedAt)
+                const statusText = isCompleted
+                  ? `Completed ${format(completedAt as Date, 'MMM d, yyyy')}`
+                  : `Last updated ${formatDistanceToNow(new Date(solve.updatedAt), {
+                      addSuffix: true,
+                    })}`
+                const isSelected = selectedSolveIds.includes(solve.id)
+
+                return (
+                  <div
+                    key={solve.id}
+                    className={cn(
+                      'flex items-center gap-3 rounded-md border border-transparent px-2 py-2 transition',
+                      isSelected ? 'border-primary/40 bg-primary/10' : 'hover:bg-primary/10',
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleSolveSelection(solve.id)}
+                      className="h-4 w-4 cursor-pointer rounded border border-border/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                      aria-label={`Select puzzle ${index + 1}`}
+                    />
+                    <Link
+                      href={`/solve/${solve.puzzleId}`}
+                      className="flex flex-1 items-center gap-3"
+                    >
+                      <span aria-hidden="true" className="text-lg">
+                        {isCompleted ? '✅' : '🕓'}
+                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-foreground">
+                          Puzzle {index + 1} • {format(puzzleCreated, 'MMM d, yyyy')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{statusText}</span>
+                      </div>
+                    </Link>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              You haven&apos;t generated any puzzles for this list yet. Create a new game to get
+              started.
+            </p>
+          )}
+        </div>
       </CardContent>
 
       <CardFooter className="flex flex-wrap items-center justify-between gap-3 border-t border-border/70">

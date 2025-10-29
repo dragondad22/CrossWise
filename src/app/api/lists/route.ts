@@ -2,12 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { CreateListSchema } from '@/lib/validation'
 import { normalizeAnswer } from '@/lib/validation'
+import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const topicId = searchParams.get('topicId')
 
   try {
+    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
+    let userId: string | null = null
+
+    if (token) {
+      const session = await getSessionForToken(token)
+      if (session?.user) {
+        userId = session.user.id
+      }
+    }
+
     const where = topicId ? { topicId } : {}
 
     const lists = await prisma.list.findMany({
@@ -26,7 +37,60 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     })
 
-    return NextResponse.json({ success: true, data: lists })
+    if (!userId) {
+      return NextResponse.json({ success: true, data: lists })
+    }
+
+    const listIds = lists.map((list) => list.id)
+
+    if (listIds.length === 0) {
+      return NextResponse.json({ success: true, data: lists })
+    }
+
+    const userSolves = await prisma.solve.findMany({
+      where: {
+        userId,
+        puzzle: {
+          listId: {
+            in: listIds,
+          },
+        },
+      },
+      select: {
+        id: true,
+        puzzleId: true,
+        createdAt: true,
+        updatedAt: true,
+        completedAt: true,
+        puzzle: {
+          select: {
+            id: true,
+            listId: true,
+            createdAt: true,
+            seed: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    })
+
+    const solvesByList = userSolves.reduce<Record<string, typeof userSolves>>((acc, solve) => {
+      const listIdForSolve = solve.puzzle.listId
+      if (!acc[listIdForSolve]) {
+        acc[listIdForSolve] = []
+      }
+      acc[listIdForSolve].push(solve)
+      return acc
+    }, {})
+
+    const listsWithUserSolves = lists.map((list) => ({
+      ...list,
+      userSolves: solvesByList[list.id] ?? [],
+    }))
+
+    return NextResponse.json({ success: true, data: listsWithUserSolves })
   } catch (error) {
     console.error('Failed to fetch lists:', error)
     return NextResponse.json(

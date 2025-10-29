@@ -1,4 +1,4 @@
-// File: /media/chris/DATA/source/repos/crosswise/src/app/api/topics/[id]/route.ts
+// File: /media/chris/My Passport/source/repos/crosswise/src/app/api/topics/[id]/route.ts
 import * as entry from '../../../../../../src/app/api/topics/[id]/route.js'
 import type { NextRequest } from 'next/server.js'
 

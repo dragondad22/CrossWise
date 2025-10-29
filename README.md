@@ -5,14 +5,17 @@ CrossWise is a web application that allows you to upload JSON lists of terms and
 ## 🎯 Features
 
 ### Core Features
+
 - **Topic Management**: Organize word lists by subject matter with custom colors and icons
 - **JSON Import**: Upload structured word lists with automatic validation
 - **Smart Generation**: Advanced backtracking algorithm creates connected crossword grids
 - **Interactive Solving**: Full-featured puzzle solver with keyboard and touch navigation
 - **Auto-save**: Progress automatically saved to localStorage with resume capability
+- **User Accounts**: Sign in to sync puzzle progress and completion history per player
 - **Export/Import**: Export puzzles and lists for sharing or backup
 
 ### Technical Features
+
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 - **Accessibility**: Screen reader friendly with proper ARIA roles and keyboard navigation
 - **Performance**: Efficient generation algorithm with <2 second target for 25 words
@@ -22,54 +25,66 @@ CrossWise is a web application that allows you to upload JSON lists of terms and
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm or yarn
 
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd crosswise
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Set up the database:
+
 ```bash
 npm run db:push
 ```
 
 4. Seed with sample data (optional):
+
 ```bash
 npm run seed
 ```
 
 5. Start the development server:
+
 ```bash
 npm run dev
 ```
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser
 
+7. Sign in with the demo account (`demo@crosswise.dev` / `password123`) or create your own profile from the sign-in page to enable per-user progress tracking.
+
 ## 📝 Usage
 
 ### Creating Topics
+
 1. Click "New Topic" on the topics page
 2. Enter a name, description, color, and icon
 3. Click "Create Topic"
 
 ### Importing Word Lists
+
 1. Navigate to a topic
 2. Click "Import List"
 3. Upload a JSON file or paste JSON data
 4. The app will validate and import your list
 
 ### JSON Format
+
 Word lists should follow this schema:
+
 ```json
 {
   "topic": "Context Engineering",
@@ -87,17 +102,20 @@ Word lists should follow this schema:
 ```
 
 **Validation Rules:**
+
 - `answer`: 2-20 characters, A-Z only (auto-normalized)
 - `clue`: 3-200 characters
 - `items`: 5-50 items for best results (sweet spot: 10-25)
 - `difficulty`: 1-5 (optional)
 
 ### Generating Puzzles
+
 1. From a topic's list view, click "New Game" on any list
 2. The app will generate a crossword using up to 25 random words from the list
 3. Generation uses a deterministic seed for reproducible puzzles
 
 ### Solving Puzzles
+
 - **Navigation**: Arrow keys, Tab/Shift+Tab, or click/tap cells
 - **Input**: Type letters directly or use on-screen keyboard
 - **Checking**: Check individual letters, words, or the entire puzzle
@@ -106,6 +124,7 @@ Word lists should follow this schema:
 ## 🛠 Development
 
 ### Project Structure
+
 ```
 src/
 ├── app/                    # Next.js App Router pages
@@ -120,6 +139,7 @@ src/
 ```
 
 ### Key Technologies
+
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
 - **State Management**: Zustand with persistence
 - **Database**: SQLite (dev) / PostgreSQL (prod) with Prisma ORM
@@ -127,6 +147,7 @@ src/
 - **Generation**: Custom backtracking algorithm with seedrandom
 
 ### Available Scripts
+
 - `npm run dev` - Start development server
 - `npm run build` - Build for production
 - `npm run start` - Start production server
@@ -140,6 +161,7 @@ src/
 ### Testing the Generation Algorithm
 
 The crossword generator uses a backtracking algorithm with the following features:
+
 - Places longest words first for better grid utilization
 - Scores placements based on intersections and centrality
 - Ensures all words are connected in a single component
@@ -149,6 +171,7 @@ The crossword generator uses a backtracking algorithm with the following feature
 ## 📱 Mobile Support
 
 CrossWise is fully responsive with:
+
 - Touch-friendly grid cells (44px minimum touch targets)
 - Optimized typography and spacing for mobile devices
 - Swipe navigation and gesture support
@@ -166,6 +189,7 @@ CrossWise is fully responsive with:
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
+
 1. Connect your GitHub repository to Vercel
 2. Set environment variables:
    ```
@@ -174,6 +198,7 @@ CrossWise is fully responsive with:
 3. Deploy automatically on git push
 
 ### Manual Deployment
+
 1. Build the application:
    ```bash
    npm run build

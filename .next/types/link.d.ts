@@ -33,13 +33,22 @@ declare namespace __next_route_internal_types__ {
 
   type StaticRoutes = 
     | `/`
+    | `/api/auth/login`
+    | `/api/auth/logout`
+    | `/api/auth/register`
+    | `/api/auth/session`
     | `/api/lists`
     | `/api/lists/import`
     | `/api/puzzles/generate`
+    | `/api/solves/bulk`
     | `/api/topics`
+    | `/login`
+    | `/register`
     | `/topics`
   type DynamicRoutes<T extends string = string> = 
+    | `/api/lists/${SafeSlug<T>}`
     | `/api/lists/${SafeSlug<T>}/export`
+    | `/api/lists/${SafeSlug<T>}/puzzles`
     | `/api/puzzles/${SafeSlug<T>}/solve`
     | `/api/topics/${SafeSlug<T>}`
     | `/solve/${SafeSlug<T>}`

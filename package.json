@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "format": "prettier --write .",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
@@ -20,24 +21,29 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.16.1",
-    "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^24.3.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@types/seedrandom": "^3.0.8",
-    "autoprefixer": "^10.4.21",
+    "bcryptjs": "^3.0.2",
+    "date-fns": "^3.6.0",
     "eslint": "^9.35.0",
     "eslint-config-next": "^15.5.3",
     "next": "^15.5.3",
-    "postcss": "^8.5.6",
     "prisma": "^6.16.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "seedrandom": "^3.0.5",
-    "tailwindcss": "^4.1.13",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "zod": "^4.1.8",
     "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.5.14",
+    "tailwindcss": "^3.4.13"
   }
 }

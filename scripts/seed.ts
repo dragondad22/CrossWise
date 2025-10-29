@@ -4,7 +4,7 @@ import { seedSampleData, clearAllData } from '../src/lib/seed-data'
 
 async function main() {
   const action = process.argv[2]
-  
+
   switch (action) {
     case 'seed':
       console.log('🌱 Seeding sample data...')
@@ -26,7 +26,7 @@ async function main() {
       console.log('  npm run seed reset  - Clear and re-seed')
       break
   }
-  
+
   process.exit(0)
 }
 

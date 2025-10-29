@@ -26,6 +26,30 @@ export const ListItemSchema = z.object({
     .optional(),
 })
 
+const DifficultyInputSchema = z.union([
+  z.literal(1),
+  z.literal(2),
+  z.literal(3),
+  z.literal(4),
+  z.literal(5),
+  z.literal('EASY'),
+  z.literal('MEDIUM'),
+  z.literal('HARD'),
+])
+
+const ListItemInputSchema = z.object({
+  answer: z
+    .string()
+    .min(2, 'Answer must be at least 2 characters')
+    .max(20, 'Answer must be at most 20 characters'),
+  clue: z
+    .string()
+    .min(3, 'Clue must be at least 3 characters')
+    .max(200, 'Clue must be at most 200 characters'),
+  note: z.string().optional(),
+  difficulty: DifficultyInputSchema.optional(),
+})
+
 export const ImportListSchema = z.object({
   topic: z.string().min(1, 'Topic name is required'),
   name: z.string().min(1, 'List name is required'),
@@ -50,30 +74,16 @@ export const CreateTopicSchema = z.object({
 export const CreateListSchema = z.object({
   topicId: z.string().cuid('Invalid topic ID'),
   name: z.string().min(1, 'List name is required').max(100, 'List name too long'),
+  items: z.array(ListItemInputSchema).min(1, 'At least one item is required'),
+})
+
+export const UpdateListSchema = z.object({
+  name: z.string().min(1, 'List name is required').max(100, 'List name too long'),
+  version: z.number().int().positive().optional(),
   items: z
     .array(
-      z.object({
-        answer: z
-          .string()
-          .min(2, 'Answer must be at least 2 characters')
-          .max(20, 'Answer must be at most 20 characters'),
-        clue: z
-          .string()
-          .min(3, 'Clue must be at least 3 characters')
-          .max(200, 'Clue must be at most 200 characters'),
-        note: z.string().optional(),
-        difficulty: z
-          .union([
-            z.literal(1),
-            z.literal(2),
-            z.literal(3),
-            z.literal(4),
-            z.literal(5), // Numeric format
-            z.literal('EASY'),
-            z.literal('MEDIUM'),
-            z.literal('HARD'), // String format
-          ])
-          .optional(),
+      ListItemInputSchema.extend({
+        id: z.string().cuid('Invalid list item ID').optional(),
       }),
     )
     .min(1, 'At least one item is required'),

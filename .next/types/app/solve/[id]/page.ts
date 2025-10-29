@@ -1,4 +1,4 @@
-// File: /media/chris/DATA/source/repos/crosswise/src/app/solve/[id]/page.tsx
+// File: /media/chris/My Passport/source/repos/crosswise/src/app/solve/[id]/page.tsx
 import * as entry from '../../../../../src/app/solve/[id]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

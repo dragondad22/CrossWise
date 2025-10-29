@@ -6,6 +6,7 @@ import { useAppStore } from '@/lib/store'
 import { ListWithItemsAndTopic } from '@/types/database'
 import ListCard from '@/components/ListCard'
 import ImportListModal from '@/components/ImportListModal'
+import EditListModal from '@/components/EditListModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 
@@ -28,6 +29,9 @@ export default function ListsPage() {
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [filteredLists, setFilteredLists] = useState<ListWithItemsAndTopic[]>([])
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingList, setEditingList] = useState<ListWithItemsAndTopic | null>(null)
+  const [isSavingEdit, setIsSavingEdit] = useState(false)
 
   useEffect(() => {
     if (topicId) {
@@ -94,6 +98,95 @@ export default function ListsPage() {
       setError('Network error')
       console.error('Failed to import list:', error)
     } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleOpenEditModal = (list: ListWithItemsAndTopic) => {
+    setEditingList(list)
+    setIsEditModalOpen(true)
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setEditingList(null)
+  }
+
+  const handleUpdateList = async (payload: {
+    name: string
+    version?: number
+    items: Array<{
+      id?: string
+      answer: string
+      clue: string
+      note?: string
+      difficulty: 'EASY' | 'MEDIUM' | 'HARD'
+    }>
+  }): Promise<string | null> => {
+    if (!editingList) {
+      return 'No list selected'
+    }
+
+    setIsSavingEdit(true)
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/lists/${editingList.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const text = await response.text()
+      let result
+
+      try {
+        result = JSON.parse(text)
+      } catch (parseError) {
+        console.error('Failed to parse update response:', parseError, text)
+        setError('Invalid response from server')
+        return 'Invalid response from server'
+      }
+
+      if (response.ok && result.success) {
+        const updatedList = result.data as ListWithItemsAndTopic
+        const currentLists = useAppStore.getState().lists
+        const nextLists = currentLists.map((list) =>
+          list.id === updatedList.id ? updatedList : list,
+        )
+        setLists(nextLists)
+
+        const currentSelectedList = useAppStore.getState().selectedList
+        if (currentSelectedList?.id === updatedList.id) {
+          selectList(updatedList)
+        }
+
+        setIsEditModalOpen(false)
+        setEditingList(null)
+        return null
+      }
+
+      const message =
+        result?.error?.details?.length > 0
+          ? result.error.details
+              .map((detail: { field?: string; message: string }) =>
+                detail.field ? `${detail.field}: ${detail.message}` : detail.message,
+              )
+              .join(', ')
+          : result?.error?.message || 'Failed to update list'
+
+      setError(message)
+      return message
+    } catch (error) {
+      console.error('Failed to update list:', error)
+      const message = 'Network error while updating the list'
+      setError(message)
+      return message
+    } finally {
+      setIsSavingEdit(false)
       setLoading(false)
     }
   }
@@ -220,7 +313,9 @@ export default function ListsPage() {
                 key={list.id}
                 list={list}
                 onNewGame={() => handleNewGame(list)}
+                onEdit={() => handleOpenEditModal(list)}
                 onExport={() => handleExportList(list)}
+                onRefresh={() => fetchTopicAndLists(topicId)}
               />
             ))}
           </div>
@@ -231,6 +326,13 @@ export default function ListsPage() {
           onClose={() => setIsImportModalOpen(false)}
           onSubmit={(data) => handleImportList({ ...data, topicId })}
           topics={topics}
+        />
+        <EditListModal
+          isOpen={isEditModalOpen}
+          list={editingList}
+          isSaving={isSavingEdit}
+          onClose={handleCloseEditModal}
+          onSubmit={handleUpdateList}
         />
       </div>
     </div>

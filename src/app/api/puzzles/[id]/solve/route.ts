@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
+
 import { prisma } from '@/lib/db'
 import { UpdateSolveStateSchema } from '@/lib/validation'
 import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
@@ -128,36 +130,81 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Find existing solve state or create new one
-    const existingSolve = await prisma.solve.findFirst({
+    const now = new Date()
+    const existingSolve = await prisma.solve.findUnique({
       where: {
-        puzzleId: id,
-        userId: session.user.id,
+        puzzleId_userId: {
+          puzzleId: id,
+          userId: session.user.id,
+        },
+      },
+      select: {
+        id: true,
+        completedAt: true,
       },
     })
 
-    const now = new Date()
-    const completedAt = validated.completed ? (existingSolve?.completedAt ?? now) : null
+    const completedAt = validated.completed ? existingSolve?.completedAt ?? now : null
 
     let solve
+
     if (existingSolve) {
-      solve = await prisma.solve.update({
-        where: { id: existingSolve.id },
-        data: {
-          state: validated.state,
-          completedAt,
-          userId: session.user.id,
-        },
-      })
+      try {
+        solve = await prisma.solve.update({
+          where: {
+            puzzleId_userId: {
+              puzzleId: id,
+              userId: session.user.id,
+            },
+          },
+          data: {
+            state: validated.state,
+            completedAt,
+          },
+        })
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+          // The record was deleted between the read and update; fall back to create.
+          solve = await prisma.solve.create({
+            data: {
+              puzzleId: id,
+              userId: session.user.id,
+              state: validated.state,
+              completedAt,
+            },
+          })
+        } else {
+          throw error
+        }
+      }
     } else {
-      solve = await prisma.solve.create({
-        data: {
-          puzzleId: id,
-          userId: session.user.id,
-          state: validated.state,
-          completedAt,
-        },
-      })
+      try {
+        solve = await prisma.solve.create({
+          data: {
+            puzzleId: id,
+            userId: session.user.id,
+            state: validated.state,
+            completedAt,
+          },
+        })
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          solve = await prisma.solve.update({
+            where: {
+              puzzleId_userId: {
+                puzzleId: id,
+                userId: session.user.id,
+              },
+            },
+            data: {
+              state: validated.state,
+              completedAt,
+            },
+          })
+        } else {
+          throw error
+        }
+      }
     }
 
     return NextResponse.json({

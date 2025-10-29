@@ -1,0 +1,18 @@
+- [ ] A list of previously generated games for a Topic should appear on that topics page
+  - [ ] The user should be able to click on the game to bring up that game in it's current prgress for that user.
+  - [ ] If the game has been completed by that user, a checkmark should appear.
+  - [ ] The list of generated games should be listed in order of creation and titled in a sequence (e.g. Game 1, Game 2, etc.)
+- [ ] In the game itself
+  - [ ] Add an option to reset or replay the game for that user that removes all the words and resests the progress.
+  - [ ] Add some space between the top of the puzzle and the top border
+  - [ ] When clicking TAB to move to the next clue, the cursor should be placed in the first letter in that word
+  - [ ] Change the Export button to export a blank version of the puzzle. Use crossword-example.jpeg as a layout example.
+  - [ ] Only show clues in the clues section, don't show the word.
+  - [ ] Add space between the puzzle title and the buttons
+  - [ ] Change the buttons to emojis or icons with hover text
+- [ ] On the Topics page
+  - [ ] Add ability to delete a Topic and everything related to that topic with user confirmation.
+
+- [ ] On individual Topic page
+  - [ ] Add ability to delete import lists and everything associate with that list with user confirmation
+  - [ ] Add ability to delete individual games with user confirmation
