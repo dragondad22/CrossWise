@@ -247,7 +247,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
 
     return cn(
       'relative flex items-center justify-center font-semibold uppercase tracking-wide border border-border/60 bg-card text-card-foreground transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-      isHighlighted && 'bg-primary/10',
+      isHighlighted && 'bg-yellow-100',
       isSelected && 'ring-2 ring-primary',
       checkState === true && 'bg-emerald-100 text-emerald-700',
       checkState === false && 'bg-rose-100 text-rose-600',
