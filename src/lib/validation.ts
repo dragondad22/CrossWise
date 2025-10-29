@@ -157,9 +157,10 @@ export function validateListJSON(data: unknown) {
     return { success: true, data: result }
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const issues = error.issues ?? (error as unknown as { errors?: typeof error.issues }).errors ?? []
       return {
         success: false,
-        errors: error.errors.map((err) => ({
+        errors: issues.map((err) => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code,
