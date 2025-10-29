@@ -12,10 +12,22 @@ import { buttonClasses } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { SolveState } from '@/types/crossword'
 
-const normalizeSolveState = (raw: any): SolveState => ({
-  ...raw,
+type RemoteSolveState = Partial<
+  Omit<SolveState, 'startTime' | 'endTime' | 'filledCells'>
+> & {
+  filledCells?: Record<string, string>
+  startTime?: string | Date
+  endTime?: string | Date
+}
+
+const normalizeSolveState = (raw: RemoteSolveState | null | undefined): SolveState => ({
+  filledCells: raw?.filledCells ?? {},
+  selectedCell: raw?.selectedCell,
+  selectedClue: raw?.selectedClue,
   startTime: raw?.startTime ? new Date(raw.startTime) : new Date(),
   endTime: raw?.endTime ? new Date(raw.endTime) : undefined,
+  checkResults: raw?.checkResults,
+  lastSaved: raw?.lastSaved,
 })
 
 export default function SolvePage() {
@@ -48,6 +60,67 @@ export default function SolvePage() {
     }
   }, [])
 
+  const loadPuzzle = useCallback(
+    async (id: string) => {
+      setLoading(true)
+      setError(null)
+      setWon(false) // Reset win state when loading new puzzle
+
+      try {
+        // First, try to load from localStorage
+        const savedState = autosaveManager.loadSolveState(id)
+
+        // Fetch puzzle data from API
+        const response = await fetch(`/api/puzzles/${id}/solve`)
+
+        if (response.status === 401) {
+          router.replace(`/login?next=${encodeURIComponent(`/solve/${id}`)}`)
+          return
+        }
+
+        if (response.ok) {
+          const result = await response.json()
+
+          if (result.success) {
+            const puzzleData = result.data.puzzle
+
+            setPuzzle({
+              id: puzzleData.id,
+              grid: puzzleData.grid,
+              numbering: puzzleData.numbering,
+              seed: puzzleData.seed,
+              listId: puzzleData.list.id,
+            })
+
+            // Use saved state if available, otherwise use API state, otherwise create new
+            if (savedState) {
+              setSolveState(savedState)
+            } else if (result.data.state) {
+              // Use solve state from API
+              const hydratedState = normalizeSolveState(result.data.state as RemoteSolveState)
+              setSolveState(hydratedState)
+              autosaveManager.saveToBrowser(id, hydratedState)
+            } else {
+              // Create new solve state
+              loadSolveState(id)
+            }
+          } else {
+            setError(result.error?.message || 'Failed to load puzzle')
+          }
+        } else {
+          // Puzzle doesn't exist in database, this shouldn't happen
+          setError('Puzzle not found')
+        }
+      } catch (error) {
+        setError('Network error')
+        console.error('Failed to load puzzle:', error)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [loadSolveState, router, setError, setLoading, setPuzzle, setSolveState, setWon],
+  )
+
   useEffect(() => {
     if (!puzzleId || !sessionHydrated) return
 
@@ -68,65 +141,7 @@ export default function SolvePage() {
         lastLoadedPuzzleRef.current = null
       }
     }
-  }, [puzzleId, sessionHydrated, user, router])
-
-  const loadPuzzle = async (id: string) => {
-    setLoading(true)
-    setError(null)
-    setWon(false) // Reset win state when loading new puzzle
-
-    try {
-      // First, try to load from localStorage
-      const savedState = autosaveManager.loadSolveState(id)
-
-      // Fetch puzzle data from API
-      const response = await fetch(`/api/puzzles/${id}/solve`)
-
-      if (response.status === 401) {
-        router.replace(`/login?next=${encodeURIComponent(`/solve/${id}`)}`)
-        return
-      }
-
-      if (response.ok) {
-        const result = await response.json()
-
-        if (result.success) {
-          const puzzleData = result.data.puzzle
-
-          setPuzzle({
-            id: puzzleData.id,
-            grid: puzzleData.grid,
-            numbering: puzzleData.numbering,
-            seed: puzzleData.seed,
-            listId: puzzleData.list.id,
-          })
-
-          // Use saved state if available, otherwise use API state, otherwise create new
-          if (savedState) {
-            setSolveState(savedState)
-          } else if (result.data.state) {
-            // Use solve state from API
-            const hydratedState = normalizeSolveState(result.data.state)
-            setSolveState(hydratedState)
-            autosaveManager.saveToBrowser(id, hydratedState)
-          } else {
-            // Create new solve state
-            loadSolveState(id)
-          }
-        } else {
-          setError(result.error?.message || 'Failed to load puzzle')
-        }
-      } else {
-        // Puzzle doesn't exist in database, this shouldn't happen
-        setError('Puzzle not found')
-      }
-    } catch (error) {
-      setError('Network error')
-      console.error('Failed to load puzzle:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [puzzleId, sessionHydrated, user, router, loadPuzzle])
 
   const handleNewPuzzle = async () => {
     if (!currentPuzzle) return

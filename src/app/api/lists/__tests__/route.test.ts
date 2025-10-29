@@ -130,26 +130,43 @@ describe('/api/lists route handlers', () => {
     topicFindUnique.mockResolvedValueOnce({ id: topicId, name: 'Animals' })
 
     const createdList = { id: 'clist1234567890123456789', topicId, name: 'Wildlife', source: 'UPLOAD' }
-    const createdItems: any[] = []
 
-    prismaTransaction.mockImplementationOnce(async (callback) => {
-      const tx = {
-        list: {
-          create: vi.fn().mockResolvedValue(createdList),
-        },
-        listItem: {
-          create: vi
-            .fn()
-            .mockImplementation(async ({ data }) => {
-              const created = { id: `item-${createdItems.length + 1}`, ...data }
-              createdItems.push(created)
-              return created
-            }),
-        },
-      }
-      const result = await callback(tx as any)
-      return result
-    })
+    type MockListItemData = {
+      listId: string
+      answer: string
+      clue: string
+      note?: string | null
+      difficulty?: string
+    }
+
+    type MockListItemRecord = MockListItemData & { id: string }
+
+    const createdItems: MockListItemRecord[] = []
+
+    const listCreateMock = vi.fn(async () => createdList)
+
+    const listItemCreateMock = vi.fn(
+      async ({ data }: { data: MockListItemData }) => {
+        const created: MockListItemRecord = { id: `item-${createdItems.length + 1}`, ...data }
+        createdItems.push(created)
+        return created
+      },
+    )
+
+    type MockTransactionClient = {
+      list: { create: typeof listCreateMock }
+      listItem: { create: typeof listItemCreateMock }
+    }
+
+    prismaTransaction.mockImplementationOnce(
+      async (callback: (client: MockTransactionClient) => Promise<{ list: typeof createdList; items: MockListItemRecord[] }>) => {
+        const tx: MockTransactionClient = {
+          list: { create: listCreateMock },
+          listItem: { create: listItemCreateMock },
+        }
+        return callback(tx)
+      },
+    )
 
     listFindUnique.mockResolvedValueOnce({
       ...createdList,

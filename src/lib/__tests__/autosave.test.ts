@@ -10,6 +10,8 @@ const createSolveState = (): SolveState => ({
   checkResults: {},
 })
 
+type OnSaveCallback = NonNullable<Parameters<AutosaveManager['startAutosave']>[2]>['onSave']
+
 describe('AutosaveManager', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -92,18 +94,31 @@ describe('AutosaveManager', () => {
   })
 
   it('handles server sync failures without leaving the saving flag stuck', async () => {
+    vi.useFakeTimers()
     const manager = new AutosaveManager()
-    const failingSave = vi.fn().mockRejectedValue(new Error('network down'))
+    const state = createSolveState()
+    let attempt = 0
+    const failingSaveImpl: NonNullable<OnSaveCallback> = async () => {
+      attempt += 1
+      if (attempt === 1) {
+        throw new Error('network down')
+      }
+    }
+    const failingSave = vi.fn(failingSaveImpl)
 
-    ;(manager as any).onServerSave = failingSave
-    await (manager as any).saveToServerIfNeeded(createSolveState())
+    manager.startAutosave('puzzle-sync', () => state, { onSave: failingSave })
 
-    expect(failingSave).toHaveBeenCalled()
-    expect((manager as any).isServerSaving).toBe(false)
+    await Promise.resolve()
+    expect(failingSave).toHaveBeenCalledTimes(1)
     expect(console.error).toHaveBeenCalledWith(
       'Failed to sync solve state to server:',
       expect.any(Error),
     )
+
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(failingSave).toHaveBeenCalledTimes(2)
+
+    manager.stopAutosave()
   })
 
   it('omits corrupted entries when listing saved puzzles', () => {

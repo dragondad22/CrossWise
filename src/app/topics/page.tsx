@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
 import { Topic } from '@/types/database'
@@ -14,11 +14,7 @@ export default function TopicsPage() {
   const { topics, setTopics, selectTopic, setLoading, setError, isLoading } = useAppStore()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  useEffect(() => {
-    fetchTopics()
-  }, [])
-
-  const fetchTopics = async () => {
+  const fetchTopics = useCallback(async () => {
     setLoading(true)
     setError(null)
 
@@ -51,7 +47,11 @@ export default function TopicsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [setError, setLoading, setTopics])
+
+  useEffect(() => {
+    void fetchTopics()
+  }, [fetchTopics])
 
   const handleCreateTopic = async (data: {
     name: string

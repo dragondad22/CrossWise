@@ -171,7 +171,8 @@ export const useAppStore = create<AppState>()(
         if (!state.solveState || !state.currentPuzzle) return
 
         const cellKey = `${row},${col}`
-        const { [cellKey]: removed, ...remainingCells } = state.solveState.filledCells
+        const remainingCells = { ...state.solveState.filledCells }
+        delete remainingCells[cellKey]
 
         const updatedState = {
           ...state.solveState,

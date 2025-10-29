@@ -147,7 +147,7 @@ export function validateListJSON(data: unknown) {
     }
 
     const commonLetters = Array.from(letterCounts.entries()).filter(
-      ([_, count]) => count >= 2,
+      ([, count]) => count >= 2,
     ).length
 
     if (commonLetters < 3) {

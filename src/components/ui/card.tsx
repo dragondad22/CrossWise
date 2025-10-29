@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 const baseCard = 'rounded-2xl bg-card text-card-foreground shadow-card border border-border'
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {}
+export type CardProps = React.HTMLAttributes<HTMLDivElement>
 
 export function Card({ className, ...props }: CardProps) {
   return <div className={cn(baseCard, className)} {...props} />

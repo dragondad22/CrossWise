@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
-import bcrypt from 'bcryptjs'
 
 import {
   sanitizeUser,

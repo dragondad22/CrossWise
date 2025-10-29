@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
 import { ListWithItemsAndTopic } from '@/types/database'
 import ListCard from '@/components/ListCard'
-import ImportListModal from '@/components/ImportListModal'
+import ImportListModal, { ImportListSubmission } from '@/components/ImportListModal'
 import EditListModal from '@/components/EditListModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
@@ -33,11 +33,44 @@ export default function ListsPage() {
   const [editingList, setEditingList] = useState<ListWithItemsAndTopic | null>(null)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
 
+  const fetchTopicAndLists = useCallback(
+    async (id: string) => {
+      setLoading(true)
+      setError(null)
+
+      try {
+        // Fetch topic details
+        const topicResponse = await fetch(`/api/topics/${id}`)
+        const topicResult = await topicResponse.json()
+
+        if (topicResult.success) {
+          selectTopic(topicResult.data)
+        }
+
+        // Fetch lists for this topic
+        const listsResponse = await fetch(`/api/lists?topicId=${id}`)
+        const listsResult = await listsResponse.json()
+
+        if (listsResult.success) {
+          setLists(listsResult.data)
+        } else {
+          setError(listsResult.error?.message || 'Failed to fetch lists')
+        }
+      } catch (error) {
+        setError('Network error')
+        console.error('Failed to fetch data:', error)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [selectTopic, setError, setLists, setLoading],
+  )
+
   useEffect(() => {
     if (topicId) {
-      fetchTopicAndLists(topicId)
+      void fetchTopicAndLists(topicId)
     }
-  }, [topicId])
+  }, [fetchTopicAndLists, topicId])
 
   useEffect(() => {
     // Filter lists for current topic
@@ -45,37 +78,7 @@ export default function ListsPage() {
     setFilteredLists(currentTopicLists)
   }, [lists, topicId])
 
-  const fetchTopicAndLists = async (id: string) => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      // Fetch topic details
-      const topicResponse = await fetch(`/api/topics/${id}`)
-      const topicResult = await topicResponse.json()
-
-      if (topicResult.success) {
-        selectTopic(topicResult.data)
-      }
-
-      // Fetch lists for this topic
-      const listsResponse = await fetch(`/api/lists?topicId=${id}`)
-      const listsResult = await listsResponse.json()
-
-      if (listsResult.success) {
-        setLists(listsResult.data)
-      } else {
-        setError(listsResult.error?.message || 'Failed to fetch lists')
-      }
-    } catch (error) {
-      setError('Network error')
-      console.error('Failed to fetch data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleImportList = async (data: { topicId: string; name: string; items: any[] }) => {
+  const handleImportList = async (data: ImportListSubmission) => {
     setLoading(true)
 
     try {

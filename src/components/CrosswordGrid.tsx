@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
-import { CrosswordGrid, CrosswordNumbering, SolveState } from '@/types/crossword'
+import type { CrosswordGrid as CrosswordGridType, CrosswordNumbering, SolveState } from '@/types/crossword'
 
 interface CrosswordGridProps {
-  grid: CrosswordGrid
+  grid: CrosswordGridType
   numbering: CrosswordNumbering
   solveState?: SolveState
   onCellClick?: (row: number, col: number) => void

@@ -1,13 +1,13 @@
 import { Prisma } from '@prisma/client'
 
 // Database types from Prisma
-export type Topic = Prisma.TopicGetPayload<{}>
-export type List = Prisma.ListGetPayload<{}>
-export type ListItem = Prisma.ListItemGetPayload<{}>
-export type Puzzle = Prisma.PuzzleGetPayload<{}>
-export type Solve = Prisma.SolveGetPayload<{}>
-export type User = Prisma.UserGetPayload<{}>
-export type Session = Prisma.SessionGetPayload<{}>
+export type Topic = Prisma.TopicGetPayload<Prisma.TopicDefaultArgs>
+export type List = Prisma.ListGetPayload<Prisma.ListDefaultArgs>
+export type ListItem = Prisma.ListItemGetPayload<Prisma.ListItemDefaultArgs>
+export type Puzzle = Prisma.PuzzleGetPayload<Prisma.PuzzleDefaultArgs>
+export type Solve = Prisma.SolveGetPayload<Prisma.SolveDefaultArgs>
+export type User = Prisma.UserGetPayload<Prisma.UserDefaultArgs>
+export type Session = Prisma.SessionGetPayload<Prisma.SessionDefaultArgs>
 
 // Extended types with relations
 export type TopicWithLists = Prisma.TopicGetPayload<{

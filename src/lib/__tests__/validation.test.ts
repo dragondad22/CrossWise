@@ -83,6 +83,9 @@ describe('validation helpers', () => {
     })
 
     expect(parsed.success).toBe(true)
+    if (!parsed.success) {
+      throw new Error('ImportListSchema parsing unexpectedly failed')
+    }
     expect(parsed.data.version).toBe(2)
   })
 

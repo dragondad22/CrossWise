@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
 
       // Create items with normalized answers
       const items = await Promise.all(
-        validated.items.map((item, index) =>
+        validated.items.map((item) =>
           tx.listItem.create({
             data: {
               listId: list.id,

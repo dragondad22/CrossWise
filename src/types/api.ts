@@ -1,3 +1,5 @@
+import type { CrosswordGrid, CrosswordNumbering, PuzzleSettings } from '@/types/crossword'
+
 // API request/response types
 export interface CreateTopicRequest {
   name: string
@@ -27,9 +29,9 @@ export interface GeneratePuzzleRequest {
 
 export interface GeneratePuzzleResponse {
   puzzleId: string
-  grid: any // Serialized grid data
-  numbering: any // Serialized numbering data
-  settings: any // Serialized settings
+  grid: CrosswordGrid
+  numbering: CrosswordNumbering
+  settings: PuzzleSettings
 }
 
 export interface ImportListRequest {
@@ -58,7 +60,7 @@ export interface ExportListResponse {
 
 export interface UpdateSolveStateRequest {
   puzzleId: string
-  state: any // Serialized solve state
+  state: string // JSON stringified solve state
   completed?: boolean
 }
 
@@ -66,10 +68,10 @@ export interface UpdateSolveStateRequest {
 export interface ApiError {
   message: string
   code?: string
-  details?: any
+  details?: unknown
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   error?: ApiError

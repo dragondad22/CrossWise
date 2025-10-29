@@ -399,7 +399,6 @@ export class CrosswordGenerator {
   }
 
   private generateNumbering(placements: WordPlacement[]): CrosswordNumbering {
-    const numbered = new Set<string>()
     const across: ClueEntry[] = []
     const down: ClueEntry[] = []
     let currentNumber = 1

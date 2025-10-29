@@ -158,7 +158,7 @@ export class AutosaveManager {
           if (lastSaved < cutoffTime) {
             toDelete.push(key)
           }
-        } catch (error) {
+        } catch {
           // Remove corrupted entries
           toDelete.push(key)
         }

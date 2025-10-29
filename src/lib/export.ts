@@ -1,6 +1,13 @@
 import { ListWithItemsAndTopic } from '@/types/database'
 import { CrosswordGrid, CrosswordNumbering, SolveState } from '@/types/crossword'
 
+type RawImportItem = {
+  answer?: unknown
+  clue?: unknown
+  note?: unknown
+  difficulty?: unknown
+}
+
 export interface ExportFormat {
   json: 'json'
   csv: 'csv'
@@ -160,7 +167,7 @@ function parseJSONImport(content: string) {
         topic: String(data.topic),
         name: String(data.name),
         version: Number(data.version) || 1,
-        items: data.items.map((item: any) => ({
+        items: data.items.map((item: RawImportItem) => ({
           answer: String(item.answer)
             .toUpperCase()
             .replace(/[^A-Z]/g, ''),
@@ -194,7 +201,12 @@ function parseCSVImport(content: string) {
       throw new Error('CSV must contain "answer" and "clue" columns')
     }
 
-    const items = []
+    const items: Array<{
+      answer: string
+      clue: string
+      note?: string
+      difficulty?: number
+    }> = []
 
     for (let i = 1; i < lines.length; i++) {
       const values = parseCSVLine(lines[i])

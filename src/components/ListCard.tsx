@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { format, formatDistanceToNow } from 'date-fns'
 
@@ -36,7 +36,7 @@ export default function ListCard({
   onRefresh,
 }: ListCardProps) {
   const itemCount = list.items.length
-  const userSolves = list.userSolves ?? []
+  const userSolves = useMemo(() => list.userSolves ?? [], [list.userSolves])
   const [selectedSolveIds, setSelectedSolveIds] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const setError = useAppStore((state) => state.setError)

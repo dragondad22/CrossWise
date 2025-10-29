@@ -1,14 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { validateListJSON } from '@/lib/validation'
+import type { z } from 'zod'
+
+import { validateListJSON, ListItemSchema } from '@/lib/validation'
 import { Topic } from '@/types/database'
 
 interface ImportListModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { topicId: string; name: string; items: any[] }) => void
+  onSubmit: (data: ImportListSubmission) => void
   topics: Topic[]
+}
+
+type ValidatedListItem = z.infer<typeof ListItemSchema>
+
+export interface ImportListSubmission {
+  topicId: string
+  name: string
+  items: ValidatedListItem[]
 }
 
 export default function ImportListModal({
@@ -56,7 +66,7 @@ export default function ImportListModal({
       setSelectedTopicId('')
       setErrors([])
       onClose()
-    } catch (error) {
+    } catch {
       setErrors(['Invalid JSON format'])
     }
 
