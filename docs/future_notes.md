@@ -18,7 +18,7 @@
 - **Keyboard shortcuts blocked in grid:** `CrosswordGrid.handleKeyPress` calls `preventDefault` for every key press (`src/components/CrosswordGrid.tsx:75`), so standard shortcuts (copy/paste, refresh, assistive tech commands) stop working whenever a cell is focused. Only suppress keystrokes that the grid handles and let modifiers bubble.
 
 ## Infrastructure & Tooling
-- **Testing:** Vitest already covers generators, auth helpers, and the store, but there is zero UI/integration coverage. Add component tests for `CrosswordGrid`/controls, API route contract tests, and e2e smoke checks to guard the solve workflow.
+- [x] **Testing:** Added Vitest coverage for `CrosswordGrid` interactions, contract tests for `/api/v1/solves/bulk`, and a store-driven solve-flow smoke test so UI and API regressions are caught alongside the existing unit suite.
 - **Observability:** Introduce logging standards (structured logs) and analytics hooks to meet PRP telemetry goals.
 - **Deployment readiness:** Document production migration strategy (`prisma migrate` vs `db push`), add health checks, and clarify backup/restore procedures for puzzle data.
 
