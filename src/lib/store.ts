@@ -79,7 +79,15 @@ export const useAppStore = create<AppState>()(
       selectTopic: (topic) => set({ selectedTopic: topic }),
       selectList: (list) => set({ selectedList: list }),
       setPuzzle: (puzzle) => set({ currentPuzzle: puzzle }),
-      setSolveState: (state) => set({ solveState: state }),
+      setSolveState: (state) =>
+        set({
+          solveState: state
+            ? {
+                ...state,
+                lockedCells: state.lockedCells ?? {},
+              }
+            : state,
+        }),
       setLoading: (loading) => set({ isLoading: loading }),
       setError: (error) => set({ error }),
       setWon: (won) => set({ isWon: won }),
@@ -116,15 +124,149 @@ export const useAppStore = create<AppState>()(
       // Solve actions
       updateCell: (row, col, letter) => {
         const state = get()
-        if (!state.solveState || !state.currentPuzzle) return
+        const currentPuzzle = state.currentPuzzle
+        const solveState = state.solveState
+        if (!solveState || !currentPuzzle) return
 
         const cellKey = `${row},${col}`
+        const existingLocked = solveState.lockedCells ?? {}
+        if (existingLocked[cellKey]) return
+
+        const filledCells = {
+          ...solveState.filledCells,
+          [cellKey]: letter.toUpperCase(),
+        }
+
+        const lockedCells = { ...existingLocked }
+        const checkResults = { ...(solveState.checkResults ?? {}) }
+        let selectedClue = solveState.selectedClue
+        let selectedCell = solveState.selectedCell
+        let completedClueForAdvance: { direction: 'across' | 'down'; number: number } | null = null
+
+        delete checkResults[cellKey]
+
+        const evaluateClue = (clue: { row: number; col: number; length: number; direction: 'across' | 'down' }) => {
+          if (!clue) return
+
+          const positions: Array<{
+            row: number
+            col: number
+            key: string
+            correctLetter: string | undefined
+          }> = []
+
+          for (let i = 0; i < clue.length; i++) {
+            const clueRow = clue.direction === 'down' ? clue.row + i : clue.row
+            const clueCol = clue.direction === 'across' ? clue.col + i : clue.col
+            const key = `${clueRow},${clueCol}`
+            const correctLetter = currentPuzzle.grid.cells[clueRow][clueCol].letter
+            positions.push({ row: clueRow, col: clueCol, key, correctLetter })
+
+            if (!lockedCells[key] && key !== cellKey && checkResults[key] !== undefined) {
+              delete checkResults[key]
+            }
+          }
+
+          const isComplete = positions.every(({ key }) => Boolean(filledCells[key]))
+          if (!isComplete) {
+            return
+          }
+
+          const isCorrect = positions.every(
+            ({ key, correctLetter }) => correctLetter && filledCells[key] === correctLetter,
+          )
+
+          if (isCorrect) {
+            for (const { key } of positions) {
+              lockedCells[key] = true
+              checkResults[key] = true
+            }
+
+            if (
+              solveState.selectedClue?.direction === clue.direction &&
+              solveState.selectedClue.number === clue.number
+            ) {
+              completedClueForAdvance = { direction: clue.direction, number: clue.number }
+            }
+          } else {
+            for (const { key } of positions) {
+              if (!lockedCells[key]) {
+                delete checkResults[key]
+              }
+            }
+          }
+        }
+
+        const acrossClue = currentPuzzle.numbering.across.find(
+          (clue) => clue.row === row && col >= clue.col && col < clue.col + clue.length,
+        )
+        const downClue = currentPuzzle.numbering.down.find(
+          (clue) => clue.col === col && row >= clue.row && row < clue.row + clue.length,
+        )
+
+        if (acrossClue) {
+          evaluateClue(acrossClue)
+        }
+        if (downClue) {
+          evaluateClue(downClue)
+        }
+
+        const findNextClueSelection = (
+          direction: 'across' | 'down',
+          currentNumber: number,
+        ): { clueNumber: number; row: number; col: number } | null => {
+          const clues = currentPuzzle.numbering[direction]
+          const currentIndex = clues.findIndex((clue) => clue.number === currentNumber)
+          if (currentIndex === -1) return null
+
+          for (let i = currentIndex + 1; i < clues.length; i++) {
+            const candidate = clues[i]
+            let fallback: { row: number; col: number } | null = null
+
+            for (let j = 0; j < candidate.length; j++) {
+              const candidateRow = direction === 'down' ? candidate.row + j : candidate.row
+              const candidateCol = direction === 'across' ? candidate.col + j : candidate.col
+              const candidateKey = `${candidateRow},${candidateCol}`
+
+              if (lockedCells[candidateKey]) {
+                continue
+              }
+
+              if (!filledCells[candidateKey]) {
+                return { clueNumber: candidate.number, row: candidateRow, col: candidateCol }
+              }
+
+              if (!fallback) {
+                fallback = { row: candidateRow, col: candidateCol }
+              }
+            }
+
+            if (fallback) {
+              return { clueNumber: candidate.number, row: fallback.row, col: fallback.col }
+            }
+          }
+
+          return null
+        }
+
+        if (completedClueForAdvance) {
+          const selection = findNextClueSelection(
+            completedClueForAdvance.direction,
+            completedClueForAdvance.number,
+          )
+          if (selection) {
+            selectedClue = { direction: completedClueForAdvance.direction, number: selection.clueNumber }
+            selectedCell = { row: selection.row, col: selection.col }
+          }
+        }
+
         const updatedState = {
-          ...state.solveState,
-          filledCells: {
-            ...state.solveState.filledCells,
-            [cellKey]: letter.toUpperCase(),
-          },
+          ...solveState,
+          filledCells,
+          lockedCells,
+          checkResults,
+          selectedClue,
+          selectedCell,
         }
 
         set({ solveState: updatedState })
@@ -137,7 +279,7 @@ export const useAppStore = create<AppState>()(
 
         // Auto-save to localStorage
         if (typeof window !== 'undefined') {
-          const key = `crosswise_solve_${state.currentPuzzle.id}`
+          const key = `crosswise_solve_${currentPuzzle.id}`
           localStorage.setItem(key, JSON.stringify(updatedState))
         }
       },
@@ -171,12 +313,20 @@ export const useAppStore = create<AppState>()(
         if (!state.solveState || !state.currentPuzzle) return
 
         const cellKey = `${row},${col}`
+        if (state.solveState.lockedCells?.[cellKey]) return
+
         const remainingCells = { ...state.solveState.filledCells }
         delete remainingCells[cellKey]
+
+        const checkResults = { ...(state.solveState.checkResults ?? {}) }
+        if (checkResults[cellKey] !== undefined) {
+          delete checkResults[cellKey]
+        }
 
         const updatedState = {
           ...state.solveState,
           filledCells: remainingCells,
+          checkResults,
         }
 
         set({ solveState: updatedState })
@@ -196,17 +346,23 @@ export const useAppStore = create<AppState>()(
         if (!clue) return
 
         const updatedCells = { ...state.solveState.filledCells }
+        const checkResults = { ...(state.solveState.checkResults ?? {}) }
 
         for (let i = 0; i < clue.length; i++) {
           const row = direction === 'down' ? clue.row + i : clue.row
           const col = direction === 'across' ? clue.col + i : clue.col
           const cellKey = `${row},${col}`
+          if (state.solveState.lockedCells?.[cellKey]) continue
           delete updatedCells[cellKey]
+          if (checkResults[cellKey] !== undefined) {
+            delete checkResults[cellKey]
+          }
         }
 
         const updatedState = {
           ...state.solveState,
           filledCells: updatedCells,
+          checkResults,
         }
 
         set({ solveState: updatedState })
@@ -216,7 +372,9 @@ export const useAppStore = create<AppState>()(
         const state = get()
         if (!state.solveState || !state.currentPuzzle) return
 
-        const checkResults: Record<string, boolean> = {}
+        const checkResults: Record<string, boolean> = {
+          ...(state.solveState.checkResults ?? {}),
+        }
 
         if (mode === 'letter' && state.solveState.selectedCell) {
           const { row, col } = state.solveState.selectedCell
@@ -226,6 +384,8 @@ export const useAppStore = create<AppState>()(
 
           if (filledLetter && correctLetter) {
             checkResults[cellKey] = filledLetter === correctLetter
+          } else {
+            delete checkResults[cellKey]
           }
         } else if (mode === 'word' && state.solveState.selectedClue) {
           const { direction, number } = state.solveState.selectedClue
@@ -241,6 +401,8 @@ export const useAppStore = create<AppState>()(
 
               if (filledLetter && correctLetter) {
                 checkResults[cellKey] = filledLetter === correctLetter
+              } else {
+                delete checkResults[cellKey]
               }
             }
           }
@@ -254,6 +416,8 @@ export const useAppStore = create<AppState>()(
 
             if (correctLetter) {
               checkResults[cellKey] = filledLetter === correctLetter
+            } else {
+              delete checkResults[cellKey]
             }
           })
         }
@@ -309,8 +473,13 @@ export const useAppStore = create<AppState>()(
 
         if (saved) {
           try {
-            const solveState = JSON.parse(saved)
-            set({ solveState })
+            const parsed = JSON.parse(saved)
+            set({
+              solveState: {
+                ...parsed,
+                lockedCells: parsed.lockedCells ?? {},
+              },
+            })
           } catch (error) {
             console.error('Failed to load solve state:', error)
           }
@@ -321,6 +490,7 @@ export const useAppStore = create<AppState>()(
               filledCells: {},
               startTime: new Date(),
               checkResults: {},
+              lockedCells: {},
             },
           })
         }

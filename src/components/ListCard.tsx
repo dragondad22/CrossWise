@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { format, formatDistanceToNow } from 'date-fns'
 
 import { useAppStore } from '@/lib/store'
+import { useAutosave } from '@/lib/autosave'
 import { cn } from '@/lib/utils'
 import {
   Card,
@@ -41,6 +42,7 @@ export default function ListCard({
   const [isProcessing, setIsProcessing] = useState(false)
   const setError = useAppStore((state) => state.setError)
   const setLoading = useAppStore((state) => state.setLoading)
+  const { clearSolveState } = useAutosave()
 
   const sortedHistory = [...userSolves].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -71,6 +73,10 @@ export default function ListCard({
       return
     }
 
+    const puzzlesToClear = userSolves
+      .filter((solve) => selectedSolveIds.includes(solve.id))
+      .map((solve) => solve.puzzleId)
+
     try {
       setIsProcessing(true)
       setLoading(true)
@@ -100,6 +106,10 @@ export default function ListCard({
           `Failed to ${action} selected puzzles`
         setError(message)
         return
+      }
+
+      if (action === 'reset' || action === 'delete') {
+        puzzlesToClear.forEach((puzzleId) => clearSolveState(puzzleId))
       }
 
       if (onRefresh) {

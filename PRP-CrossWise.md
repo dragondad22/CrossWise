@@ -117,10 +117,15 @@
 ## 7) Architecture & Stack
 
 **Front‑end:** Next.js (App Router), TypeScript, Tailwind, Zustand (or Redux) for state, shadcn/ui. Optional: Framer Motion.
+
 **Back‑end:** Next.js API routes (or FastAPI if preferred) for persistence/generation; Node for generator for shared types.
+
 **DB:** SQLite (local dev) → Postgres (prod). Prisma ORM.
+
 **Storage:** Object storage (e.g., S3 compatible) for exports (stretch).
+
 **Auth:** Email‑magic link (Clerk/Supabase Auth) (stretch) — v1 can be local/offline for single user.
+
 **Deployment:** Vercel (FE+API) or Fly.io; Postgres via Supabase/Neon.
 
 **Services:**

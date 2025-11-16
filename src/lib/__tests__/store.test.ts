@@ -61,6 +61,7 @@ const primeStoreForPuzzle = () => {
     filledCells: {},
     checkResults: {},
     startTime: new Date(),
+    lockedCells: {},
   })
   return useAppStore.getState()
 }
@@ -112,8 +113,104 @@ describe('useAppStore crossword interactions', () => {
     expect(updatedState.solveState?.filledCells['0,0']).toBe('C')
     expect(updatedState.solveState?.filledCells['0,1']).toBe('A')
     expect(updatedState.solveState?.filledCells['1,0']).toBe('R')
+    expect(updatedState.solveState?.lockedCells?.['0,0']).toBe(true)
+    expect(updatedState.solveState?.lockedCells?.['0,1']).toBe(true)
+    expect(updatedState.solveState?.lockedCells?.['1,0']).toBe(true)
+    expect(updatedState.solveState?.checkResults?.['0,0']).toBe(true)
+    expect(updatedState.solveState?.checkResults?.['0,1']).toBe(true)
+    expect(updatedState.solveState?.checkResults?.['1,0']).toBe(true)
     expect(setItemSpy).toHaveBeenCalled()
     expect(updatedState.isWon).toBe(true)
+  })
+
+  it('locks completed words and prevents edits or clears', () => {
+    const store = primeStoreForPuzzle()
+    store.selectClue('across', 1)
+
+    store.updateCell(0, 0, 'c')
+    store.updateCell(0, 1, 'a')
+
+    let current = useAppStore.getState()
+    expect(current.solveState?.lockedCells?.['0,0']).toBe(true)
+    expect(current.solveState?.lockedCells?.['0,1']).toBe(true)
+
+    store.updateCell(0, 0, 'x')
+    store.clearCell(0, 0)
+    store.clearWord('across', 1)
+
+    current = useAppStore.getState()
+    expect(current.solveState?.filledCells['0,0']).toBe('C')
+    expect(current.solveState?.filledCells['0,1']).toBe('A')
+    expect(current.solveState?.checkResults?.['0,0']).toBe(true)
+    expect(current.solveState?.checkResults?.['0,1']).toBe(true)
+  })
+
+  it('auto advances to the next clue after completing a word', () => {
+    const store = useAppStore.getState()
+
+    const grid: CrosswordGrid = {
+      size: { rows: 1, cols: 4 },
+      cells: [
+        [
+          { row: 0, col: 0, type: 'cell', letter: 'C', number: 1 },
+          { row: 0, col: 1, type: 'cell', letter: 'A', number: undefined },
+          { row: 0, col: 2, type: 'cell', letter: 'T', number: undefined },
+          { row: 0, col: 3, type: 'cell', letter: 'S', number: 2 },
+        ],
+      ],
+    }
+
+    const numbering: CrosswordNumbering = {
+      across: [
+        {
+          number: 1,
+          answer: 'CAT',
+          clue: 'Common pet',
+          length: 3,
+          row: 0,
+          col: 0,
+          direction: 'across',
+        },
+        {
+          number: 2,
+          answer: 'S',
+          clue: 'Plural letter',
+          length: 1,
+          row: 0,
+          col: 3,
+          direction: 'across',
+        },
+      ],
+      down: [],
+    }
+
+    store.setPuzzle({
+      id: 'puzzle-advance',
+      listId: 'list-advance',
+      seed: 'seed-advance',
+      grid,
+      numbering,
+    })
+    store.setSolveState({
+      filledCells: {},
+      checkResults: {},
+      lockedCells: {},
+      startTime: new Date(),
+    })
+
+    store.selectClue('across', 1)
+    store.selectCell(0, 0)
+
+    store.updateCell(0, 0, 'c')
+    store.updateCell(0, 1, 'a')
+    store.updateCell(0, 2, 't')
+
+    const updated = useAppStore.getState().solveState
+    expect(updated?.lockedCells?.['0,0']).toBe(true)
+    expect(updated?.lockedCells?.['0,1']).toBe(true)
+    expect(updated?.lockedCells?.['0,2']).toBe(true)
+    expect(updated?.selectedClue).toEqual({ direction: 'across', number: 2 })
+    expect(updated?.selectedCell).toEqual({ row: 0, col: 3 })
   })
 
   it('clears individual cells and entire words correctly', () => {
@@ -122,6 +219,7 @@ describe('useAppStore crossword interactions', () => {
       filledCells: { '0,0': 'C', '0,1': 'A', '1,0': 'R' },
       checkResults: {},
       startTime: new Date(),
+      lockedCells: {},
     })
 
     store.clearCell(0, 1)
@@ -141,6 +239,7 @@ describe('useAppStore crossword interactions', () => {
       selectedCell: { row: 0, col: 0 },
       selectedClue: { direction: 'across', number: 1 },
       startTime: new Date(),
+      lockedCells: {},
     })
 
     store.checkSolution('letter')
@@ -162,6 +261,7 @@ describe('useAppStore crossword interactions', () => {
       filledCells: { '0,0': 'C' },
       checkResults: {},
       startTime: new Date('2024-01-01T00:00:00Z'),
+      lockedCells: {},
     })
 
     store.saveSolveState()

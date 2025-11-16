@@ -81,6 +81,7 @@ export interface SolveState {
   endTime?: Date
   checkResults?: Record<string, boolean> // "row,col" -> isCorrect
   lastSaved?: string
+  lockedCells?: Record<string, boolean> // "row,col" -> isLocked
 }
 
 // UI types

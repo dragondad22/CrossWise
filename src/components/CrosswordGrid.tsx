@@ -75,13 +75,19 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
   const handleKeyPress = (e: React.KeyboardEvent, row: number, col: number) => {
     e.preventDefault()
 
+    const cellKey = `${row},${col}`
+    const isLocked = Boolean(solveState?.lockedCells?.[cellKey])
+
+    if (isLocked && (isValidLetter(e.key) || e.key === 'Backspace' || e.key === 'Delete')) {
+      return
+    }
+
     // Only allow single letters A-Z (case insensitive)
     if (isValidLetter(e.key)) {
       updateCell(row, col, e.key.toUpperCase())
       // Move to next cell in selected direction
       moveToNextCell(row, col)
     } else if (e.key === 'Backspace') {
-      const cellKey = `${row},${col}`
       const currentLetter = solveState?.filledCells[cellKey]
 
       if (currentLetter) {
@@ -169,6 +175,12 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     }
   }
 
+  useEffect(() => {
+    if (!solveState?.selectedCell) return
+    const { row, col } = solveState.selectedCell
+    setTimeout(() => focusCell(row, col), 0)
+  }, [solveState?.selectedCell?.row, solveState?.selectedCell?.col])
+
   const moveToNextClue = (backward: boolean = false) => {
     if (!solveState?.selectedClue) return
 
@@ -180,11 +192,29 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
 
     const nextIndex = backward ? currentIndex - 1 : currentIndex + 1
 
-    if (nextIndex >= 0 && nextIndex < clues.length) {
-      const nextClue = clues[nextIndex]
-      selectClue(direction, nextClue.number)
-      selectCell(nextClue.row, nextClue.col)
+    if (nextIndex < 0 || nextIndex >= clues.length) return
+
+    const nextClue = clues[nextIndex]
+    selectClue(direction, nextClue.number)
+
+    // Find the first empty cell in the next clue; fall back to the starting cell.
+    let targetRow = nextClue.row
+    let targetCol = nextClue.col
+
+    for (let i = 0; i < nextClue.length; i++) {
+      const candidateRow = direction === 'down' ? nextClue.row + i : nextClue.row
+      const candidateCol = direction === 'across' ? nextClue.col + i : nextClue.col
+      const cellKey = `${candidateRow},${candidateCol}`
+
+      if (!solveState.filledCells[cellKey]) {
+        targetRow = candidateRow
+        targetCol = candidateCol
+        break
+      }
     }
+
+    selectCell(targetRow, targetCol)
+    setTimeout(() => focusCell(targetRow, targetCol), 0)
   }
 
   const handleArrowKey = (key: string, row: number, col: number) => {

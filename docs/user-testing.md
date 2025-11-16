@@ -55,8 +55,9 @@ Work through the tasks in order. Capture notes or screenshots whenever something
 1. Click a cell and type letter answers.  
 2. Use arrow keys and Tab to move around.  
 3. Try the “Check letter/word” buttons.  
-4. Close the page or refresh—autosave should restore progress.  
-5. Solve the whole puzzle and confirm you see a win state.
+4. Fill in a full word and confirm it highlights in green, locks to prevent accidental edits, and focus jumps to the next clue automatically.  
+5. Close the page or refresh—autosave should restore progress.  
+6. Solve the whole puzzle and confirm you see a win state.
 
 ### E. Export & Logout
 1. Export puzzle state or list as JSON/CSV.  
