@@ -54,6 +54,12 @@ export default function SolvePage() {
   const serverSyncWarningRef = useRef(false)
 
   useEffect(() => {
+    const nextDirection = solveState?.selectedClue?.direction
+    if (!nextDirection) return
+    setSelectedTab((prev) => (prev === nextDirection ? prev : nextDirection))
+  }, [solveState?.selectedClue?.direction])
+
+  useEffect(() => {
     return () => {
       autosaveManager.stopAutosave()
       lastLoadedPuzzleRef.current = null

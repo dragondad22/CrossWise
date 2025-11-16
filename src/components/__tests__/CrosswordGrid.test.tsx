@@ -68,18 +68,37 @@ const numbering: CrosswordNumbering = {
   ],
 }
 
-const downOnlyNumbering: CrosswordNumbering = {
-  across: [],
+const sequentialGrid: CrosswordGridType = {
+  size: { rows: 2, cols: 6 },
+  cells: [
+    [
+      { row: 0, col: 0, type: 'cell', letter: 'A', number: 3 },
+      { row: 0, col: 1, type: 'cell', letter: 'B' },
+      { row: 0, col: 2, type: 'block' },
+      { row: 0, col: 3, type: 'cell', letter: 'C', number: 5 },
+      { row: 0, col: 4, type: 'cell', letter: 'D' },
+      { row: 0, col: 5, type: 'block' },
+    ],
+    [
+      { row: 1, col: 0, type: 'cell', letter: 'E', number: 9 },
+      { row: 1, col: 1, type: 'cell', letter: 'F' },
+      { row: 1, col: 2, type: 'cell', letter: 'G' },
+      { row: 1, col: 3, type: 'cell', letter: 'H' },
+      { row: 1, col: 4, type: 'block' },
+      { row: 1, col: 5, type: 'cell', letter: 'I' },
+    ],
+  ],
+}
+
+const sequentialNumbering: CrosswordNumbering = {
+  across: [
+    { number: 3, answer: 'AB', clue: 'First pair', length: 2, row: 0, col: 0, direction: 'across' },
+    { number: 5, answer: 'CD', clue: 'Second pair', length: 2, row: 0, col: 3, direction: 'across' },
+    { number: 9, answer: 'EFG', clue: 'Third trio', length: 3, row: 1, col: 0, direction: 'across' },
+  ],
   down: [
-    {
-      number: 5,
-      clue: 'Vertical pronoun',
-      answer: 'IT',
-      length: 2,
-      direction: 'down',
-      row: 0,
-      col: 1,
-    },
+    { number: 1, answer: 'AE', clue: 'Down one', length: 2, row: 0, col: 0, direction: 'down' },
+    { number: 2, answer: 'CH', clue: 'Down two', length: 2, row: 0, col: 3, direction: 'down' },
   ],
 }
 
@@ -109,13 +128,15 @@ describe('CrosswordGrid', () => {
   })
 
   it('falls back to selecting the down clue when no across clue matches', async () => {
-    render(<CrosswordGrid grid={baseGrid} numbering={downOnlyNumbering} solveState={createSolveState()} />)
+    render(
+      <CrosswordGrid grid={sequentialGrid} numbering={sequentialNumbering} solveState={createSolveState()} />,
+    )
 
-    const downCell = document.querySelector('[data-cell="0-1"]') as HTMLElement
+    const downCell = document.querySelector('[data-cell="1-3"]') as HTMLElement
     await userEvent.click(downCell)
 
-    expect(selectCellMock).toHaveBeenCalledWith(0, 1)
-    expect(selectClueMock).toHaveBeenLastCalledWith('down', 5)
+    expect(selectCellMock).toHaveBeenCalledWith(1, 3)
+    expect(selectClueMock).toHaveBeenLastCalledWith('down', 2)
   })
 
   it('updates letters and advances focus when typing', async () => {
@@ -145,5 +166,70 @@ describe('CrosswordGrid', () => {
 
     expect(updateCellMock).not.toHaveBeenCalled()
     expect(clearCellMock).not.toHaveBeenCalled()
+  })
+
+  it('cycles through clues sequentially with tabbing and wraps after the final entry', async () => {
+    const solveState = createSolveState({
+      selectedCell: { row: 0, col: 0 },
+      selectedClue: { direction: 'across', number: 3 },
+    })
+    selectClueMock.mockImplementation((direction: 'across' | 'down', number: number) => {
+      solveState.selectedClue = { direction, number }
+    })
+
+    render(
+      <CrosswordGrid
+        grid={sequentialGrid}
+        numbering={sequentialNumbering}
+        solveState={solveState}
+      />,
+    )
+
+    const firstAcrossCell = document.querySelector('[data-cell="0-0"]') as HTMLElement
+    await userEvent.click(firstAcrossCell)
+    vi.clearAllMocks()
+
+    await userEvent.keyboard('{Tab}')
+    expect(selectClueMock).toHaveBeenCalledWith('across', 5)
+
+    await userEvent.keyboard('{Tab}')
+    expect(selectClueMock).toHaveBeenCalledWith('across', 9)
+
+    await userEvent.keyboard('{Tab}')
+    expect(selectClueMock).toHaveBeenCalledWith('down', 1)
+
+    await userEvent.keyboard('{Tab}')
+    expect(selectClueMock).toHaveBeenCalledWith('down', 2)
+  })
+
+  it('cycles backwards in reverse order when using shift+tab', async () => {
+    const solveState = createSolveState({
+      selectedCell: { row: 0, col: 0 },
+      selectedClue: { direction: 'across', number: 3 },
+    })
+    selectClueMock.mockImplementation((direction: 'across' | 'down', number: number) => {
+      solveState.selectedClue = { direction, number }
+    })
+
+    render(
+      <CrosswordGrid
+        grid={sequentialGrid}
+        numbering={sequentialNumbering}
+        solveState={solveState}
+      />,
+    )
+
+    const firstAcrossCell = document.querySelector('[data-cell="0-0"]') as HTMLElement
+    await userEvent.click(firstAcrossCell)
+    vi.clearAllMocks()
+
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+    expect(selectClueMock).toHaveBeenCalledWith('down', 2)
+
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+    expect(selectClueMock).toHaveBeenCalledWith('down', 1)
+
+    await userEvent.keyboard('{Shift>}{Tab}{/Shift}')
+    expect(selectClueMock).toHaveBeenCalledWith('across', 9)
   })
 })

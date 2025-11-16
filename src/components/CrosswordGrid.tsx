@@ -181,36 +181,54 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     setTimeout(() => focusCell(row, col), 0)
   }, [solveState?.selectedCell?.row, solveState?.selectedCell?.col])
 
+  const getClueCells = (clue: { row: number; col: number; length: number; direction: 'across' | 'down' }) => {
+    const cells: Array<{ row: number; col: number }> = []
+    for (let i = 0; i < clue.length; i++) {
+      const row = clue.direction === 'down' ? clue.row + i : clue.row
+      const col = clue.direction === 'across' ? clue.col + i : clue.col
+      cells.push({ row, col })
+    }
+    return cells
+  }
+
   const moveToNextClue = (backward: boolean = false) => {
     if (!solveState?.selectedClue) return
 
-    const { direction, number } = solveState.selectedClue
-    const clues = numbering[direction]
-    const currentIndex = clues.findIndex((c) => c.number === number)
+    const combinedClues = [
+      ...numbering.across.map((clue) => ({ direction: 'across' as const, clue })),
+      ...numbering.down.map((clue) => ({ direction: 'down' as const, clue })),
+    ]
+
+    if (combinedClues.length === 0) return
+
+    const currentIndex = combinedClues.findIndex(
+      (entry) =>
+        entry.direction === solveState.selectedClue?.direction &&
+        entry.clue.number === solveState.selectedClue?.number,
+    )
 
     if (currentIndex === -1) return
 
-    const nextIndex = backward ? currentIndex - 1 : currentIndex + 1
+    const step = backward ? -1 : 1
+    const nextIndex = (currentIndex + step + combinedClues.length) % combinedClues.length
+    const targetEntry = combinedClues[nextIndex]
 
-    if (nextIndex < 0 || nextIndex >= clues.length) return
-
-    const nextClue = clues[nextIndex]
-    selectClue(direction, nextClue.number)
+    const nextDirection = targetEntry.direction
+    const nextClue = targetEntry.clue
+    selectClue(nextDirection, nextClue.number)
 
     // Find the first empty cell in the next clue; fall back to the starting cell.
     let targetRow = nextClue.row
     let targetCol = nextClue.col
 
-    for (let i = 0; i < nextClue.length; i++) {
-      const candidateRow = direction === 'down' ? nextClue.row + i : nextClue.row
-      const candidateCol = direction === 'across' ? nextClue.col + i : nextClue.col
-      const cellKey = `${candidateRow},${candidateCol}`
+    const targetCell = getClueCells(nextClue).find((cell) => {
+      const cellKey = `${cell.row},${cell.col}`
+      return !solveState.filledCells[cellKey]
+    })
 
-      if (!solveState.filledCells[cellKey]) {
-        targetRow = candidateRow
-        targetCol = candidateCol
-        break
-      }
+    if (targetCell) {
+      targetRow = targetCell.row
+      targetCol = targetCell.col
     }
 
     selectCell(targetRow, targetCol)

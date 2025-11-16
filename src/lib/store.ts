@@ -214,18 +214,29 @@ export const useAppStore = create<AppState>()(
         const findNextClueSelection = (
           direction: 'across' | 'down',
           currentNumber: number,
-        ): { clueNumber: number; row: number; col: number } | null => {
-          const clues = currentPuzzle.numbering[direction]
-          const currentIndex = clues.findIndex((clue) => clue.number === currentNumber)
+        ): { clueNumber: number; direction: 'across' | 'down'; row: number; col: number } | null => {
+          const combinedClues = [
+            ...currentPuzzle.numbering.across.map((clue) => ({ direction: 'across' as const, clue })),
+            ...currentPuzzle.numbering.down.map((clue) => ({ direction: 'down' as const, clue })),
+          ]
+
+          if (!combinedClues.length) return null
+
+          const currentIndex = combinedClues.findIndex(
+            (entry) => entry.direction === direction && entry.clue.number === currentNumber,
+          )
           if (currentIndex === -1) return null
 
-          for (let i = currentIndex + 1; i < clues.length; i++) {
-            const candidate = clues[i]
+          for (let offset = 1; offset <= combinedClues.length; offset++) {
+            const candidateIndex = (currentIndex + offset) % combinedClues.length
+            if (candidateIndex === currentIndex) continue
+
+            const entry = combinedClues[candidateIndex]
             let fallback: { row: number; col: number } | null = null
 
-            for (let j = 0; j < candidate.length; j++) {
-              const candidateRow = direction === 'down' ? candidate.row + j : candidate.row
-              const candidateCol = direction === 'across' ? candidate.col + j : candidate.col
+            for (let j = 0; j < entry.clue.length; j++) {
+              const candidateRow = entry.clue.direction === 'down' ? entry.clue.row + j : entry.clue.row
+              const candidateCol = entry.clue.direction === 'across' ? entry.clue.col + j : entry.clue.col
               const candidateKey = `${candidateRow},${candidateCol}`
 
               if (lockedCells[candidateKey]) {
@@ -233,7 +244,12 @@ export const useAppStore = create<AppState>()(
               }
 
               if (!filledCells[candidateKey]) {
-                return { clueNumber: candidate.number, row: candidateRow, col: candidateCol }
+                return {
+                  direction: entry.direction,
+                  clueNumber: entry.clue.number,
+                  row: candidateRow,
+                  col: candidateCol,
+                }
               }
 
               if (!fallback) {
@@ -242,7 +258,12 @@ export const useAppStore = create<AppState>()(
             }
 
             if (fallback) {
-              return { clueNumber: candidate.number, row: fallback.row, col: fallback.col }
+              return {
+                direction: entry.direction,
+                clueNumber: entry.clue.number,
+                row: fallback.row,
+                col: fallback.col,
+              }
             }
           }
 
@@ -255,7 +276,7 @@ export const useAppStore = create<AppState>()(
             completedClueForAdvance.number,
           )
           if (selection) {
-            selectedClue = { direction: completedClueForAdvance.direction, number: selection.clueNumber }
+            selectedClue = { direction: selection.direction, number: selection.clueNumber }
             selectedCell = { row: selection.row, col: selection.col }
           }
         }

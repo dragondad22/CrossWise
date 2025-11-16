@@ -213,6 +213,50 @@ describe('useAppStore crossword interactions', () => {
     expect(updated?.selectedCell).toEqual({ row: 0, col: 3 })
   })
 
+  it('cycles auto-advance into the next direction when across clues finish', () => {
+    const store = useAppStore.getState()
+
+    const grid: CrosswordGrid = {
+      size: { rows: 2, cols: 2 },
+      cells: [
+        [
+          { row: 0, col: 0, type: 'cell', letter: 'A', number: 1 },
+          { row: 0, col: 1, type: 'cell', letter: 'B', number: undefined },
+        ],
+        [
+          { row: 1, col: 0, type: 'cell', letter: 'C', number: undefined },
+          { row: 1, col: 1, type: 'block' },
+        ],
+      ],
+    }
+
+    const numbering: CrosswordNumbering = {
+      across: [
+        { number: 1, answer: 'AB', clue: 'Letters A & B', length: 2, row: 0, col: 0, direction: 'across' },
+      ],
+      down: [
+        { number: 1, answer: 'AC', clue: 'A plus another letter', length: 2, row: 0, col: 0, direction: 'down' },
+      ],
+    }
+
+    store.setPuzzle({ id: 'wrap-puzzle', listId: 'wrap', seed: 'wrap', grid, numbering })
+    store.setSolveState({
+      filledCells: {},
+      checkResults: {},
+      lockedCells: {},
+      startTime: new Date(),
+    })
+
+    store.selectClue('across', 1)
+    store.selectCell(0, 0)
+    store.updateCell(0, 0, 'a')
+    store.updateCell(0, 1, 'b')
+
+    const state = useAppStore.getState().solveState
+    expect(state?.selectedClue).toEqual({ direction: 'down', number: 1 })
+    expect(state?.selectedCell).toEqual({ row: 1, col: 0 })
+  })
+
   it('clears individual cells and entire words correctly', () => {
     const store = primeStoreForPuzzle()
     store.setSolveState({
