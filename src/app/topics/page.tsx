@@ -19,7 +19,7 @@ export default function TopicsPage() {
     setError(null)
 
     try {
-      const response = await fetch('/api/topics')
+      const response = await fetch('/api/v1/topics')
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -62,7 +62,7 @@ export default function TopicsPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/topics', {
+      const response = await fetch('/api/v1/topics', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

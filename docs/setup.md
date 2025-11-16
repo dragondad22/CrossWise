@@ -70,7 +70,15 @@ Formatting uses Prettier 3 with the Tailwind plugin.
 
 ## Authentication Defaults
 - Demo account (created by seeding): `demo@crosswise.dev` / `password123`
-- Sessions last 7 days (`SESSION_DURATION_MS` in `src/lib/auth.ts`). Revoke by hitting `/api/auth/logout` or clearing the `crosswise_session` cookie.
+- Sessions last 7 days (`SESSION_DURATION_MS` in `src/lib/auth.ts`). Revoke by hitting `/api/v1/auth/logout` or clearing the `crosswise_session` cookie.
+
+## API Surface
+- All HTTP endpoints live under the `/api/v1` prefix and follow RESTful resource conventions (`topics`, `lists`, `puzzles`, `solves`, `auth`).
+- Example calls:
+  - `GET /api/v1/topics` – list topics.
+  - `POST /api/v1/lists` – import a new list.
+  - `POST /api/v1/puzzles/generate` – spin up a crossword for a list.
+- Versioning via the `v1` segment lets you evolve future APIs without breaking existing clients.
 
 ## Deployment Notes
 - Vercel-friendly; ensure `DATABASE_URL` is configured for the target environment (PostgreSQL recommended).

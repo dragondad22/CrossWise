@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: { user: null } })
   }
 
-  const sessionContext = await getSessionForToken(token)
+  const sessionContext = await getSessionForToken(token, { refresh: true })
 
   if (!sessionContext) {
     return NextResponse.json({ success: true, data: { user: null } })

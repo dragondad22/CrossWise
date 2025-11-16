@@ -5,6 +5,15 @@ import { prisma } from '@/lib/db'
 import { UpdateListSchema, normalizeAnswer } from '@/lib/validation'
 import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
 
+const unauthorizedResponse = () =>
+  NextResponse.json({ success: false, error: { message: 'Authentication required' } }, { status: 401 })
+
+async function requireSession(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
+  if (!token) return null
+  return getSessionForToken(token, { refresh: true })
+}
+
 function mapDifficulty(
   difficulty: number | 'EASY' | 'MEDIUM' | 'HARD' | undefined,
 ): 'EASY' | 'MEDIUM' | 'HARD' {
@@ -25,19 +34,15 @@ function mapDifficulty(
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const session = await requireSession(request)
+    if (!session?.user) {
+      return unauthorizedResponse()
+    }
+    const userId = session.user.id
+
     const { id } = await params
     const body = await request.json()
     const validated = UpdateListSchema.parse(body)
-
-    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-    let userId: string | null = null
-
-    if (token) {
-      const session = await getSessionForToken(token)
-      if (session?.user) {
-        userId = session.user.id
-      }
-    }
 
     const existingList = await prisma.list.findUnique({
       where: { id },
@@ -151,30 +156,28 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       puzzle: { id: string; listId: string; createdAt: Date; seed: string | null }
     }[] = []
 
-    if (userId) {
-      userSolves = await prisma.solve.findMany({
-        where: {
-          userId,
-          puzzle: { listId: id },
-        },
-        select: {
-          id: true,
-          puzzleId: true,
-          createdAt: true,
-          updatedAt: true,
-          completedAt: true,
-          puzzle: {
-            select: {
-              id: true,
-              listId: true,
-              createdAt: true,
-              seed: true,
-            },
+    userSolves = await prisma.solve.findMany({
+      where: {
+        userId,
+        puzzle: { listId: id },
+      },
+      select: {
+        id: true,
+        puzzleId: true,
+        createdAt: true,
+        updatedAt: true,
+        completedAt: true,
+        puzzle: {
+          select: {
+            id: true,
+            listId: true,
+            createdAt: true,
+            seed: true,
           },
         },
-        orderBy: { updatedAt: 'desc' },
-      })
-    }
+      },
+      orderBy: { updatedAt: 'desc' },
+    })
 
     return NextResponse.json({
       success: true,

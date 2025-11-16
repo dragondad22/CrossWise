@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/db'
+import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
+
+const unauthorizedResponse = () =>
+  NextResponse.json({ success: false, error: { message: 'Authentication required' } }, { status: 401 })
+
+async function requireSession(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
+  if (!token) return null
+  return getSessionForToken(token, { refresh: true })
+}
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const session = await requireSession(request)
+    if (!session?.user) {
+      return unauthorizedResponse()
+    }
+
     const listId = params.id
 
     const puzzles = await prisma.puzzle.findMany({
       where: {
-        listId: listId,
+        listId,
       },
       orderBy: {
         createdAt: 'desc',

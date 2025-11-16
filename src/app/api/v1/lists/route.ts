@@ -4,20 +4,25 @@ import { CreateListSchema } from '@/lib/validation'
 import { normalizeAnswer } from '@/lib/validation'
 import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
 
+const unauthorizedResponse = () =>
+  NextResponse.json({ success: false, error: { message: 'Authentication required' } }, { status: 401 })
+
+async function requireSession(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
+  if (!token) return null
+  return getSessionForToken(token, { refresh: true })
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const topicId = searchParams.get('topicId')
 
   try {
-    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-    let userId: string | null = null
-
-    if (token) {
-      const session = await getSessionForToken(token)
-      if (session?.user) {
-        userId = session.user.id
-      }
+    const session = await requireSession(request)
+    if (!session?.user) {
+      return unauthorizedResponse()
     }
+    const userId = session.user.id
 
     const where = topicId ? { topicId } : {}
 
@@ -36,10 +41,6 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { updatedAt: 'desc' },
     })
-
-    if (!userId) {
-      return NextResponse.json({ success: true, data: lists })
-    }
 
     const listIds = lists.map((list) => list.id)
 
@@ -102,6 +103,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await requireSession(request)
+    if (!session?.user) {
+      return unauthorizedResponse()
+    }
+
     const body = await request.json()
     const validated = CreateListSchema.parse(body)
 

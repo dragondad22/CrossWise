@@ -16,7 +16,7 @@ export default function AppHeader() {
   const handleLogout = async () => {
     setIsLoggingOut(true)
     try {
-      const response = await fetch('/api/auth/logout', { method: 'POST' })
+      const response = await fetch('/api/v1/auth/logout', { method: 'POST' })
       if (!response.ok) {
         console.error('Failed to log out', await response.text())
       }

@@ -5,18 +5,18 @@
 | --- | --- | --- | --- |
 | `RootLayout` | `src/app/layout.tsx` | Server component that resolves the session cookie, hydrates initial auth state, and renders the global header plus page content. | `@/lib/auth`, `next/headers`, `AuthProvider`, `AppHeader` |
 | `Home` | `src/app/page.tsx` | Marketing-style landing page linking into topics and registration. | UI primitives |
-| `LoginPage` / `RegisterPage` | `src/app/login/page.tsx`, `src/app/register/page.tsx` | Client-side forms that post to auth APIs and hydrate the Zustand store. | `useAppStore`, `/api/auth/*` |
-| `TopicsPage` | `src/app/topics/page.tsx` | Fetches topics, drives topic creation modal, and sets global selection. | `useAppStore`, `/api/topics`, `CreateTopicModal`, `TopicCard` |
-| `ListsPage` | `src/app/topics/[id]/lists/page.tsx` | Manages list fetching, import/edit modals, puzzle generation/export triggers. | `useAppStore`, `/api/topics/:id`, `/api/lists`, `/api/puzzles/generate`, multiple modals |
-| `SolvePage` | `src/app/solve/[id]/page.tsx` | Loads puzzle & solve state, orchestrates autosave, and renders solving UI. | `useAppStore`, `autosaveManager`, `/api/puzzles/:id/solve`, presentation components |
+| `LoginPage` / `RegisterPage` | `src/app/login/page.tsx`, `src/app/register/page.tsx` | Client-side forms that post to auth APIs and hydrate the Zustand store. | `useAppStore`, `/api/v1/auth/*` |
+| `TopicsPage` | `src/app/topics/page.tsx` | Fetches topics, drives topic creation modal, and sets global selection. | `useAppStore`, `/api/v1/topics`, `CreateTopicModal`, `TopicCard` |
+| `ListsPage` | `src/app/topics/[id]/lists/page.tsx` | Manages list fetching, import/edit modals, puzzle generation/export triggers. | `useAppStore`, `/api/v1/topics/:id`, `/api/v1/lists`, `/api/v1/puzzles/generate`, multiple modals |
+| `SolvePage` | `src/app/solve/[id]/page.tsx` | Loads puzzle & solve state, orchestrates autosave, and renders solving UI. | `useAppStore`, `autosaveManager`, `/api/v1/puzzles/:id/solve`, presentation components |
 
 ## API Route Handlers
 | Namespace | Location | Responsibilities | Depends On |
 | --- | --- | --- | --- |
-| Auth | `src/app/api/auth/*/route.ts` | Login, register, logout, and session probing. | `@/lib/auth`, `@/lib/validation`, `prisma`, cookies |
-| Topics | `src/app/api/topics/**/*.ts` | CRUD topics plus detail fetch with list counts. | `prisma`, `CreateTopicSchema` |
-| Lists | `src/app/api/lists/**/*.ts` | Fetch lists with optional user solve metadata, create/import/update lists, export lists, list recent puzzles. | `prisma`, `CreateListSchema`, `UpdateListSchema`, `validateListJSON`, `normalizeAnswer`, auth helper |
-| Puzzles | `src/app/api/puzzles/**/*.ts` | Generate new puzzles and load/save solve state (auth-only). | `CrosswordGenerator`, `GeneratePuzzleSchema`, `UpdateSolveStateSchema`, session helpers |
+| Auth | `src/app/api/v1/auth/*/route.ts` | Login, register, logout, and session probing. | `@/lib/auth`, `@/lib/validation`, `prisma`, cookies |
+| Topics | `src/app/api/v1/topics/**/*.ts` | CRUD topics plus detail fetch with list counts. | `prisma`, `CreateTopicSchema` |
+| Lists | `src/app/api/v1/lists/**/*.ts` | Fetch lists with optional user solve metadata, create/import/update lists, export lists, list recent puzzles. | `prisma`, `CreateListSchema`, `UpdateListSchema`, `validateListJSON`, `normalizeAnswer`, auth helper |
+| Puzzles | `src/app/api/v1/puzzles/**/*.ts` | Generate new puzzles and load/save solve state (auth-only). | `CrosswordGenerator`, `GeneratePuzzleSchema`, `UpdateSolveStateSchema`, session helpers |
 
 ## Core Libraries
 | Module | Location | Summary | Key Collaborators |
@@ -34,7 +34,7 @@
 ## Components
 | Component | Location | Purpose | Notes |
 | --- | --- | --- | --- |
-| `AppHeader` | `src/components/AppHeader.tsx` | Sticky navigation bar with auth-aware actions. | Uses `/api/auth/logout` |
+| `AppHeader` | `src/components/AppHeader.tsx` | Sticky navigation bar with auth-aware actions. | Uses `/api/v1/auth/logout` |
 | `AuthProvider` | `src/components/AuthProvider.tsx` | Hydrates Zustand with server-provided user on mount. | Client-side wrapper |
 | `CrosswordGrid` | `src/components/CrosswordGrid.tsx` | Renders interactive grid, handles keyboard navigation, clue selection, and highlighting. | Talks to `useAppStore` |
 | `ClueList` | `src/components/ClueList.tsx` | Searchable clue list with status indicator per entry. | Depends on store selection & check results |

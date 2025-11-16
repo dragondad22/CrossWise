@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const session = await getSessionForToken(token)
+    const session = await getSessionForToken(token, { refresh: true })
 
     if (!session?.user) {
       return NextResponse.json(

@@ -40,7 +40,7 @@ export default function ListsPage() {
 
       try {
         // Fetch topic details
-        const topicResponse = await fetch(`/api/topics/${id}`)
+        const topicResponse = await fetch(`/api/v1/topics/${id}`)
         const topicResult = await topicResponse.json()
 
         if (topicResult.success) {
@@ -48,7 +48,7 @@ export default function ListsPage() {
         }
 
         // Fetch lists for this topic
-        const listsResponse = await fetch(`/api/lists?topicId=${id}`)
+        const listsResponse = await fetch(`/api/v1/lists?topicId=${id}`)
         const listsResult = await listsResponse.json()
 
         if (listsResult.success) {
@@ -82,7 +82,7 @@ export default function ListsPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/lists', {
+      const response = await fetch('/api/v1/lists', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export default function ListsPage() {
     setError(null)
 
     try {
-      const response = await fetch(`/api/lists/${editingList.id}`, {
+      const response = await fetch(`/api/v1/lists/${editingList.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ export default function ListsPage() {
     try {
       setLoading(true)
 
-      const response = await fetch('/api/puzzles/generate', {
+      const response = await fetch('/api/v1/puzzles/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +229,7 @@ export default function ListsPage() {
 
   const handleExportList = async (list: ListWithItemsAndTopic) => {
     try {
-      const response = await fetch(`/api/lists/${list.id}/export`)
+      const response = await fetch(`/api/v1/lists/${list.id}/export`)
 
       if (response.ok) {
         const blob = await response.blob()

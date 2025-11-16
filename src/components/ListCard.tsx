@@ -82,7 +82,7 @@ export default function ListCard({
       setLoading(true)
       setError(null)
 
-      const response = await fetch('/api/solves/bulk', {
+      const response = await fetch('/api/v1/solves/bulk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

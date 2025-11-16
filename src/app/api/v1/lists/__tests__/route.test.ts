@@ -44,32 +44,11 @@ vi.mock('@/lib/auth', async () => {
   }
 })
 
-describe('/api/lists route handlers', () => {
+describe('/api/v1/lists route handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('fetches lists without user solves when unauthenticated', async () => {
-    const lists = [
-      {
-        id: 'clist1234567890123456789',
-        name: 'Animals',
-        topicId: 'ctopic1234567890123456789',
-        items: [],
-        puzzles: [],
-        _count: { items: 0, puzzles: 0 },
-        topic: { id: 'ctopic1234567890123456789', name: 'Topics' },
-      },
-    ]
-    listFindMany.mockResolvedValueOnce(lists)
-
-    const request = new NextRequest('http://localhost/api/lists')
-    const response = await GET(request)
-    const payload = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(listFindMany).toHaveBeenCalled()
-    expect(payload.data).toEqual(lists)
+    mockSession.mockReset()
+    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
   })
 
   it('fetches lists and attaches user solves when a session exists', async () => {
@@ -85,7 +64,6 @@ describe('/api/lists route handlers', () => {
       },
     ]
     listFindMany.mockResolvedValueOnce(lists)
-    mockSession.mockResolvedValueOnce({ user: { id: 'user-1' } })
     solveFindMany.mockResolvedValueOnce([
       {
         id: 'solve-1',
@@ -102,14 +80,14 @@ describe('/api/lists route handlers', () => {
       },
     ])
 
-    const request = new NextRequest('http://localhost/api/lists', {
+    const request = new NextRequest('http://localhost/api/v1/lists', {
       headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
     })
     const response = await GET(request)
     const payload = await response.json()
 
     expect(response.status).toBe(200)
-    expect(mockSession).toHaveBeenCalledWith('token-123')
+    expect(mockSession).toHaveBeenCalledWith('token-123', { refresh: true })
     expect(solveFindMany).toHaveBeenCalled()
     expect(payload.data[0].userSolves).toHaveLength(1)
   })
@@ -117,12 +95,20 @@ describe('/api/lists route handlers', () => {
   it('propagates database errors on GET', async () => {
     listFindMany.mockRejectedValueOnce(new Error('db down'))
 
-    const request = new NextRequest('http://localhost/api/lists')
+    const request = new NextRequest('http://localhost/api/v1/lists', {
+      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+    })
     const response = await GET(request)
     const payload = await response.json()
 
     expect(response.status).toBe(500)
     expect(payload.error.message).toMatch(/Failed to fetch lists/)
+  })
+
+  it('rejects GET requests without authentication', async () => {
+    mockSession.mockResolvedValueOnce(null)
+    const response = await GET(new NextRequest('http://localhost/api/v1/lists'))
+    expect(response.status).toBe(401)
   })
 
   it('creates a list with normalized items on POST', async () => {
@@ -184,10 +170,10 @@ describe('/api/lists route handlers', () => {
       ],
     }
 
-    const request = new NextRequest('http://localhost/api/lists', {
+    const request = new NextRequest('http://localhost/api/v1/lists', {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
     })
 
     const response = await POST(request)
@@ -204,14 +190,14 @@ describe('/api/lists route handlers', () => {
   it('returns 404 when posting to a missing topic', async () => {
     topicFindUnique.mockResolvedValueOnce(null)
 
-    const request = new NextRequest('http://localhost/api/lists', {
+    const request = new NextRequest('http://localhost/api/v1/lists', {
       method: 'POST',
       body: JSON.stringify({
         topicId: 'ckmissingtopic1234567890123',
         name: 'Wildlife',
         items: [{ answer: 'cat', clue: 'Feline friend' }],
       }),
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
     })
 
     const response = await POST(request)
@@ -225,7 +211,26 @@ describe('/api/lists route handlers', () => {
     topicFindUnique.mockResolvedValueOnce({ id: 'ctopic1234567890123456789' })
     prismaTransaction.mockRejectedValueOnce(new Error('transaction failed'))
 
-    const request = new NextRequest('http://localhost/api/lists', {
+    const request = new NextRequest('http://localhost/api/v1/lists', {
+      method: 'POST',
+      body: JSON.stringify({
+        topicId: 'ctopic1234567890123456789',
+        name: 'Wildlife',
+        items: [{ answer: 'cat', clue: 'Feline friend' }],
+      }),
+      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+    })
+
+    const response = await POST(request)
+    const payload = await response.json()
+
+    expect(response.status).toBe(500)
+    expect(payload.error.message).toMatch(/Failed to create list/)
+  })
+
+  it('rejects POST requests without authentication', async () => {
+    mockSession.mockResolvedValueOnce(null)
+    const request = new NextRequest('http://localhost/api/v1/lists', {
       method: 'POST',
       body: JSON.stringify({
         topicId: 'ctopic1234567890123456789',
@@ -236,9 +241,6 @@ describe('/api/lists route handlers', () => {
     })
 
     const response = await POST(request)
-    const payload = await response.json()
-
-    expect(response.status).toBe(500)
-    expect(payload.error.message).toMatch(/Failed to create list/)
+    expect(response.status).toBe(401)
   })
 })

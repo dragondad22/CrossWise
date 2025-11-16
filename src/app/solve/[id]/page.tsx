@@ -71,7 +71,7 @@ export default function SolvePage() {
         const savedState = autosaveManager.loadSolveState(id)
 
         // Fetch puzzle data from API
-        const response = await fetch(`/api/puzzles/${id}/solve`)
+        const response = await fetch(`/api/v1/puzzles/${id}/solve`)
 
         if (response.status === 401) {
           router.replace(`/login?next=${encodeURIComponent(`/solve/${id}`)}`)
@@ -151,7 +151,7 @@ export default function SolvePage() {
 
       // Get the list ID from current puzzle (we'd need to fetch this from the API)
       // For now, we'll generate a new puzzle with the same list
-      const response = await fetch('/api/puzzles/generate', {
+      const response = await fetch('/api/v1/puzzles/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,7 +187,7 @@ export default function SolvePage() {
 
       try {
         const isCompleted = useAppStore.getState().checkWin()
-        const response = await fetch(`/api/puzzles/${puzzleId}/solve`, {
+        const response = await fetch(`/api/v1/puzzles/${puzzleId}/solve`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

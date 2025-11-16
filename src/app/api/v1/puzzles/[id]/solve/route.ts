@@ -17,7 +17,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       )
     }
 
-    const session = await getSessionForToken(token)
+    const session = await getSessionForToken(token, { refresh: true })
 
     if (!session) {
       return NextResponse.json(
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    const session = await getSessionForToken(token)
+    const session = await getSessionForToken(token, { refresh: true })
 
     if (!session) {
       return NextResponse.json(

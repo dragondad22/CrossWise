@@ -48,12 +48,12 @@ if (outcome.success) {
 ## API Handlers (selected)
 | Handler | File | Highlights |
 | --- | --- | --- |
-| Login & Register | `src/app/api/auth/login/route.ts`, `src/app/api/auth/register/route.ts` | Zod validation, bcrypt comparison, session cookie issuance. |
-| Session probe | `src/app/api/auth/session/route.ts` | Returns `{ user: null }` without error when unauthenticated for easier client hydration. |
-| Topics CRUD | `src/app/api/topics/[id]/route.ts` | Uses Prisma includes for nested list metadata; handles uniqueness and not-found cases. |
-| List fetch/update | `src/app/api/lists/route.ts`, `src/app/api/lists/[id]/route.ts` | Augments results with `userSolves` when a session exists, prevents duplicate answers post-normalisation, maps numeric difficulty to enum values. |
-| Generate puzzle | `src/app/api/puzzles/generate/route.ts` | Shuffles list items, limits to 25, stores generated grid/numbering/settings JSON strings. |
-| Solve state sync | `src/app/api/puzzles/[id]/solve/route.ts` | Enforces authentication, merges stored solve state, upserts completion status. |
+| Login & Register | `src/app/api/v1/auth/login/route.ts`, `src/app/api/v1/auth/register/route.ts` | Zod validation, bcrypt comparison, session cookie issuance. |
+| Session probe | `src/app/api/v1/auth/session/route.ts` | Returns `{ user: null }` without error when unauthenticated for easier client hydration. |
+| Topics CRUD | `src/app/api/v1/topics/[id]/route.ts` | Uses Prisma includes for nested list metadata; handles uniqueness and not-found cases. |
+| List fetch/update | `src/app/api/v1/lists/route.ts`, `src/app/api/v1/lists/[id]/route.ts` | Augments results with `userSolves` when a session exists, prevents duplicate answers post-normalisation, maps numeric difficulty to enum values. |
+| Generate puzzle | `src/app/api/v1/puzzles/generate/route.ts` | Shuffles list items, limits to 25, stores generated grid/numbering/settings JSON strings. |
+| Solve state sync | `src/app/api/v1/puzzles/[id]/solve/route.ts` | Enforces authentication, merges stored solve state, upserts completion status. |
 
 ## UI Components
 | Component | File | Notes |

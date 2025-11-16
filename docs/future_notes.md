@@ -1,9 +1,9 @@
 # Future Notes & Technical Debt
 
 ## Platform & Architecture
-- **Authentication scope:** APIs beyond `/api/puzzles/:id/solve` do not enforce auth; topic/list CRUD should require ownership/role checks. PRP envisions admin/user roles that are not yet implemented.
-- **Session lifetime management:** Session expiry is enforced server-side, but there is no refresh flow or background cleanup. Consider rotating tokens and pruning expired rows via cron/job.
-- **Prisma client usage:** `src/app/api/lists/[id]/puzzles/route.ts` instantiates a new `PrismaClient` rather than the shared singleton. Consolidate on `@/lib/db` to avoid connection churn in serverless environments.
+- [x] **Authentication scope:** Topic/list CRUD handlers now require a valid `crosswise_session` cookie and call `getSessionForToken(..., { refresh: true })` before touching Prisma (`src/app/api/v1/topics/*`, `src/app/api/v1/lists/*`). Unauthenticated requests receive a consistent 401 response.
+- [x] **Session lifetime management:** `src/lib/auth.ts` introduces sliding-session refreshes (extending expiry when a token is within 24h of expiring) plus an hourly `cleanupExpiredSessions` sweep, so stale rows are pruned automatically.
+- [x] **Prisma client usage:** `/api/v1/lists/[id]/puzzles` now imports the shared `prisma` singleton from `@/lib/db`, eliminating the ad-hoc `new PrismaClient()` and keeping connection usage consistent.
 
 ## Domain Features
 - **List versioning:** UI exposes a manual version input, yet edits do not auto-increment or track history. Add optimistic version bumping and audit trails.

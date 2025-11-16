@@ -7,6 +7,8 @@ import {
   createSession,
   getSessionForToken,
   deleteSessionByToken,
+  cleanupExpiredSessions,
+  __resetSessionCleanupState,
   SESSION_COOKIE_NAME,
 } from '../auth'
 
@@ -15,6 +17,8 @@ const prismaMocks = vi.hoisted(() => ({
     create: vi.fn(),
     findUnique: vi.fn(),
     delete: vi.fn(),
+    deleteMany: vi.fn(),
+    update: vi.fn(),
   },
 }))
 
@@ -49,6 +53,9 @@ describe('auth helpers', () => {
     vi.clearAllMocks()
     randomBytesMock.mockReset()
     randomBytesMock.mockImplementation(() => Buffer.from('default-token', 'utf-8'))
+    prismaMocks.session.deleteMany.mockResolvedValue({ count: 0 })
+    prismaMocks.session.update.mockResolvedValue(undefined)
+    __resetSessionCleanupState()
   })
 
   afterEach(() => {
@@ -90,6 +97,7 @@ describe('auth helpers', () => {
     const { token, expiresAt } = await createSession('user-1')
 
     expect(randomBytesMock).toHaveBeenCalledWith(32)
+    expect(prismaMocks.session.deleteMany).toHaveBeenCalled()
     expect(prismaMocks.session.create).toHaveBeenCalledWith({
       data: {
         userId: 'user-1',
@@ -148,6 +156,34 @@ describe('auth helpers', () => {
     expect(result).toBeNull()
   })
 
+  it('refreshes session expiry when within threshold and refresh requested', async () => {
+    const expiringSession = {
+      token: 'session-token',
+      expiresAt: new Date('2024-01-01T12:00:00Z'),
+      user: { id: 'user-1', email: 'test@example.com', name: 'Test User' },
+    }
+    prismaMocks.session.findUnique.mockResolvedValueOnce(expiringSession)
+
+    await getSessionForToken('session-token', { refresh: true })
+
+    expect(prismaMocks.session.update).toHaveBeenCalledWith({
+      where: { token: 'session-token' },
+      data: { expiresAt: new Date('2024-01-08T00:00:00.000Z') },
+    })
+  })
+
+  it('skips refreshing when not requested', async () => {
+    prismaMocks.session.findUnique.mockResolvedValueOnce({
+      token: 'session-token',
+      expiresAt: new Date('2024-01-01T12:00:00Z'),
+      user: { id: 'user-1', email: 'a@b.com', name: 'Test' },
+    })
+
+    await getSessionForToken('session-token')
+
+    expect(prismaMocks.session.update).not.toHaveBeenCalled()
+  })
+
   it('silently ignores delete failures', async () => {
     prismaMocks.session.delete.mockRejectedValueOnce(new Error('not found'))
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -164,5 +200,15 @@ describe('auth helpers', () => {
 
   it('exposes the session cookie constant for reuse', () => {
     expect(SESSION_COOKIE_NAME).toBe('crosswise_session')
+  })
+
+  it('exports a cleanup helper that deletes expired sessions', async () => {
+    prismaMocks.session.deleteMany.mockResolvedValueOnce({ count: 3 })
+
+    const result = await cleanupExpiredSessions()
+    expect(prismaMocks.session.deleteMany).toHaveBeenCalledWith({
+      where: { expiresAt: { lt: new Date('2024-01-01T00:00:00.000Z') } },
+    })
+    expect(result).toEqual({ count: 3 })
   })
 })
