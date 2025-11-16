@@ -168,6 +168,26 @@ describe('CrosswordGrid', () => {
     expect(clearCellMock).not.toHaveBeenCalled()
   })
 
+  it('moves to the previous cell when hitting backspace on a locked entry', async () => {
+    const solveState = createSolveState({
+      selectedCell: { row: 0, col: 1 },
+      selectedClue: { direction: 'across', number: 1 },
+      lockedCells: { '0,1': true },
+      filledCells: { '0,0': 'H', '0,1': 'I' },
+    })
+
+    render(<CrosswordGrid grid={baseGrid} numbering={numbering} solveState={solveState} />)
+
+    const lockedCell = document.querySelector('[data-cell="0-1"]') as HTMLElement
+    await userEvent.click(lockedCell)
+    vi.clearAllMocks()
+
+    await userEvent.keyboard('{Backspace}')
+
+    expect(clearCellMock).toHaveBeenCalledWith(0, 0)
+    expect(selectCellMock).toHaveBeenCalledWith(0, 0)
+  })
+
   it('cycles through clues sequentially with tabbing and wraps after the final entry', async () => {
     const solveState = createSolveState({
       selectedCell: { row: 0, col: 0 },

@@ -18,9 +18,10 @@ type RemoteSolveState = Partial<
   filledCells?: Record<string, string>
   startTime?: string | Date
   endTime?: string | Date
+  lockedCells?: Record<string, boolean>
 }
 
-const normalizeSolveState = (raw: RemoteSolveState | null | undefined): SolveState => ({
+export const normalizeSolveState = (raw: RemoteSolveState | null | undefined): SolveState => ({
   filledCells: raw?.filledCells ?? {},
   selectedCell: raw?.selectedCell,
   selectedClue: raw?.selectedClue,
@@ -28,7 +29,36 @@ const normalizeSolveState = (raw: RemoteSolveState | null | undefined): SolveSta
   endTime: raw?.endTime ? new Date(raw.endTime) : undefined,
   checkResults: raw?.checkResults,
   lastSaved: raw?.lastSaved,
+  lockedCells: raw?.lockedCells ?? {},
 })
+
+const getLastSavedTimestamp = (state: SolveState | null | undefined) => {
+  if (!state?.lastSaved) return 0
+  const value = new Date(state.lastSaved).getTime()
+  return Number.isFinite(value) ? value : 0
+}
+
+export const resolveSolveState = (
+  localState: SolveState | null,
+  remoteState: SolveState | null,
+): { state: SolveState; source: 'local' | 'remote' } | null => {
+  if (localState && remoteState) {
+    if (getLastSavedTimestamp(remoteState) > getLastSavedTimestamp(localState)) {
+      return { state: remoteState, source: 'remote' }
+    }
+    return { state: localState, source: 'local' }
+  }
+
+  if (localState) {
+    return { state: localState, source: 'local' }
+  }
+
+  if (remoteState) {
+    return { state: remoteState, source: 'remote' }
+  }
+
+  return null
+}
 
 export default function SolvePage() {
   const router = useRouter()
@@ -98,14 +128,18 @@ export default function SolvePage() {
               listId: puzzleData.list.id,
             })
 
-            // Use saved state if available, otherwise use API state, otherwise create new
-            if (savedState) {
-              setSolveState(savedState)
-            } else if (result.data.state) {
-              // Use solve state from API
-              const hydratedState = normalizeSolveState(result.data.state as RemoteSolveState)
-              setSolveState(hydratedState)
-              autosaveManager.saveToBrowser(id, hydratedState)
+            const remoteState = result.data.state
+              ? normalizeSolveState(result.data.state as RemoteSolveState)
+              : null
+
+            const resolvedState = resolveSolveState(savedState, remoteState)
+
+            if (resolvedState) {
+              setSolveState(resolvedState.state)
+
+              if (resolvedState.source === 'remote') {
+                autosaveManager.saveToBrowser(id, resolvedState.state)
+              }
             } else {
               // Create new solve state
               loadSolveState(id)
@@ -230,7 +264,12 @@ export default function SolvePage() {
           return
         }
 
-        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        if (
+          error instanceof TypeError &&
+          (error.message === 'Failed to fetch' ||
+            error.message === 'NetworkError when attempting to fetch resource.' ||
+            error.message === 'NetworkError when attempting to fetch resource')
+        ) {
           if (!serverSyncWarningRef.current) {
             console.warn(
               'Solve state sync skipped: offline or server unreachable. Progress will resync when the connection returns.',

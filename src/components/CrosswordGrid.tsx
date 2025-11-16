@@ -78,16 +78,19 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     const cellKey = `${row},${col}`
     const isLocked = Boolean(solveState?.lockedCells?.[cellKey])
 
-    if (isLocked && (isValidLetter(e.key) || e.key === 'Backspace' || e.key === 'Delete')) {
-      return
-    }
-
     // Only allow single letters A-Z (case insensitive)
     if (isValidLetter(e.key)) {
+      if (isLocked) return
+
       updateCell(row, col, e.key.toUpperCase())
       // Move to next cell in selected direction
       moveToNextCell(row, col)
     } else if (e.key === 'Backspace') {
+      if (isLocked) {
+        moveToPreviousCell(row, col)
+        return
+      }
+
       const currentLetter = solveState?.filledCells[cellKey]
 
       if (currentLetter) {
@@ -98,6 +101,8 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
         moveToPreviousCell(row, col)
       }
     } else if (e.key === 'Delete') {
+      if (isLocked) return
+
       clearCell(row, col)
     } else if (e.key === 'Tab') {
       e.preventDefault()
