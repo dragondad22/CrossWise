@@ -46,3 +46,6 @@ coverage/
 # Databases
 *.db
 .vercel
+
+# Non-public documents
+.np-docs/
