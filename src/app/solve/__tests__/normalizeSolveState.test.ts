@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { normalizeSolveState, resolveSolveState } from '../[id]/page'
+import { normalizeSolveState, resolveSolveState } from '../solveState'
 import type { SolveState } from '@/types/crossword'
 
 const createSolveState = (overrides: Partial<SolveState> = {}): SolveState => ({

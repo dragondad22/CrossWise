@@ -11,11 +11,12 @@ export class AutosaveManager {
   private getState: (() => SolveState | null) | null = null
   private onServerSave: ServerSaveCallback | null = null
   private isServerSaving = false
+  private handleBeforeUnload = () => this.forceSave()
 
   constructor() {
     // Auto-save on page unload
     if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', this.forceSave.bind(this))
+      window.addEventListener('beforeunload', this.handleBeforeUnload)
     }
   }
 

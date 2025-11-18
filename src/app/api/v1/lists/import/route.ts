@@ -24,13 +24,13 @@ export async function POST(request: NextRequest) {
     // Validate the import data
     const validation = validateListJSON(body)
 
-    if (!validation.success) {
+    if (!validation.success || !validation.data) {
       return NextResponse.json(
         {
           success: false,
           error: {
             message: 'Validation failed',
-            details: validation.errors,
+            details: validation.errors ?? [],
           },
         },
         { status: 400 },

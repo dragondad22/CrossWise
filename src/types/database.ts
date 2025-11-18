@@ -62,6 +62,6 @@ export type SolveWithPuzzle = Prisma.SolveGetPayload<{
   }
 }>
 
-// Enums
-export type ListSource = Prisma.ListSource
-export type Difficulty = Prisma.Difficulty
+// Enums (Prisma 5+ does not export enums on Prisma namespace)
+export type ListSource = 'UPLOAD' | 'PASTE' | 'API'
+export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD'

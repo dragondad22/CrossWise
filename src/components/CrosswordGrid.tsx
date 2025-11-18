@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
@@ -173,18 +173,20 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     }
   }
 
-  const focusCell = (row: number, col: number) => {
+  const focusCell = useCallback((row: number, col: number) => {
     const cellElement = document.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
     if (cellElement) {
       cellElement.focus()
     }
-  }
+  }, [])
+
+  const selectedCell = solveState?.selectedCell
 
   useEffect(() => {
-    if (!solveState?.selectedCell) return
-    const { row, col } = solveState.selectedCell
+    if (!selectedCell) return
+    const { row, col } = selectedCell
     setTimeout(() => focusCell(row, col), 0)
-  }, [solveState?.selectedCell?.row, solveState?.selectedCell?.col])
+  }, [focusCell, selectedCell])
 
   const getClueCells = (clue: { row: number; col: number; length: number; direction: 'across' | 'down' }) => {
     const cells: Array<{ row: number; col: number }> = []

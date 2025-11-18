@@ -12,14 +12,14 @@ async function requireSession(request: NextRequest) {
   return getSessionForToken(token, { refresh: true })
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireSession(request)
     if (!session?.user) {
       return unauthorizedResponse()
     }
 
-    const listId = params.id
+    const { id: listId } = await params
 
     const puzzles = await prisma.puzzle.findMany({
       where: {

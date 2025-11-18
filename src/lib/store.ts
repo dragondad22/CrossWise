@@ -145,7 +145,13 @@ export const useAppStore = create<AppState>()(
 
         delete checkResults[cellKey]
 
-        const evaluateClue = (clue: { row: number; col: number; length: number; direction: 'across' | 'down' }) => {
+        const evaluateClue = (clue: {
+          row: number
+          col: number
+          length: number
+          direction: 'across' | 'down'
+          number: number
+        }) => {
           if (!clue) return
 
           const positions: Array<{
@@ -271,10 +277,8 @@ export const useAppStore = create<AppState>()(
         }
 
         if (completedClueForAdvance) {
-          const selection = findNextClueSelection(
-            completedClueForAdvance.direction,
-            completedClueForAdvance.number,
-          )
+          const { direction, number } = completedClueForAdvance
+          const selection = findNextClueSelection(direction, number)
           if (selection) {
             selectedClue = { direction: selection.direction, number: selection.clueNumber }
             selectedCell = { row: selection.row, col: selection.col }

@@ -22,6 +22,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const validated = GeneratePuzzleSchema.parse(body)
+    const gridSize = validated.gridSize
+      ? { rows: validated.gridSize.rows ?? 15, cols: validated.gridSize.cols ?? 15 }
+      : { rows: 15, cols: 15 }
 
     // Fetch list with items
     const list = await prisma.list.findUnique({
@@ -57,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     // Generate puzzle
     const generator = new CrosswordGenerator({
-      gridSize: validated.gridSize,
+      gridSize,
       seed: validated.seed || `${Date.now()}_${list.id}`,
       maxAttempts: 300,
     })
@@ -89,7 +92,7 @@ export async function POST(request: NextRequest) {
         grid: JSON.stringify(result.grid),
         numbering: JSON.stringify(result.numbering),
         settings: JSON.stringify({
-          gridSize: validated.gridSize || { rows: 15, cols: 15 },
+          gridSize,
           checkMode: 'word',
           symmetry: false,
           allowHyphens: false,
