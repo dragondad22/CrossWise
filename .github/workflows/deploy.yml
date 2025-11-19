@@ -47,10 +47,17 @@ jobs:
 
       - name: Install deps
         run: npm ci
-        
+
       - name: Debug DATABASE_URL host
         run: |
           echo "${DATABASE_URL}" | sed 's#://.*@#://***@#'
+
+      - name: Test Supabase connectivity
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          PGPASSWORD=$(node -e "console.log(new URL(process.env.DATABASE_URL).password)") \
+          psql "$DATABASE_URL" -c 'select version();'
 
       - name: Apply Prisma migrations to Supabase
         run: npx prisma migrate deploy
