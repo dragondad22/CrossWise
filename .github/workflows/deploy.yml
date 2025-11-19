@@ -47,6 +47,10 @@ jobs:
 
       - name: Install deps
         run: npm ci
+        
+      - name: Debug DATABASE_URL host
+        run: |
+          echo "${DATABASE_URL}" | sed 's#://.*@#://***@#'
 
       - name: Apply Prisma migrations to Supabase
         run: npx prisma migrate deploy
