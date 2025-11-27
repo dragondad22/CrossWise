@@ -1,5 +1,6 @@
 'use client'
 
+import type React from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useAppStore } from '@/lib/store'
@@ -16,8 +17,43 @@ interface CrosswordGridProps {
 
 export default function CrosswordGrid({ grid, numbering, solveState }: CrosswordGridProps) {
   const gridRef = useRef<HTMLDivElement>(null)
+  const virtualKeyboardInputRef = useRef<HTMLInputElement>(null)
+  const selectedClueRef = useRef<SolveState['selectedClue'] | null>(solveState?.selectedClue ?? null)
+  const selectedCellRef = useRef<SolveState['selectedCell'] | null>(solveState?.selectedCell ?? null)
   const [cellSize, setCellSize] = useState(40)
+  const [shouldUseVirtualKeyboard, setShouldUseVirtualKeyboard] = useState(false)
   const { updateCell, selectCell, selectClue, clearCell } = useAppStore()
+
+  const focusVirtualInput = useCallback(() => {
+    const input = virtualKeyboardInputRef.current
+    if (!input) return
+
+    input.focus({ preventScroll: true })
+    input.setSelectionRange(0, 0)
+  }, [])
+
+  // Enable hidden input on touch devices so tapping cells opens the soft keyboard.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const hasCoarsePointer =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(pointer: coarse)').matches
+    const isTouchDevice = hasCoarsePointer || 'ontouchstart' in window
+
+    setShouldUseVirtualKeyboard(isTouchDevice)
+  }, [])
+
+  useEffect(() => {
+    focusVirtualInput()
+  }, [focusVirtualInput])
+
+  // Keep a local reference so keyboard navigation works even when the upstream store
+  // doesn't immediately re-render with a new selected clue (e.g., in tests with mocks).
+  useEffect(() => {
+    selectedClueRef.current = solveState?.selectedClue ?? null
+    selectedCellRef.current = solveState?.selectedCell ?? null
+  }, [solveState])
 
   // Calculate grid size and cell size based on container
   useEffect(() => {
@@ -47,6 +83,13 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     if (cell.type === 'block') return
 
     selectCell(row, col)
+    selectedCellRef.current = { row, col }
+
+    focusVirtualInput()
+
+    if (shouldUseVirtualKeyboard) {
+      setTimeout(() => virtualKeyboardInputRef.current?.focus({ preventScroll: true }), 0)
+    }
 
     // Find intersecting clues
     const acrossClue = numbering.across.find(
@@ -73,6 +116,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
   }
 
   const handleKeyPress = (e: React.KeyboardEvent, row: number, col: number) => {
+    // Debug: console.log('handleKeyPress', e.key, { row, col })
     e.preventDefault()
 
     const cellKey = `${row},${col}`
@@ -137,7 +181,11 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
       if (!hasLetter) {
         // Found empty cell, select it
         selectCell(nextRow, nextCol)
-        setTimeout(() => focusCell(nextRow, nextCol), 0)
+        selectedCellRef.current = { row: nextRow, col: nextCol }
+        setTimeout(() => {
+          focusCell(nextRow, nextCol)
+          focusVirtualInput()
+        }, 0)
         return
       }
 
@@ -168,25 +216,38 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     } else if (direction === 'down' && prevRow >= clue.row) {
       clearCell(prevRow, prevCol)
       selectCell(prevRow, prevCol)
+      selectedCellRef.current = { row: prevRow, col: prevCol }
       // Focus the previous cell element
-      setTimeout(() => focusCell(prevRow, prevCol), 0)
+      setTimeout(() => {
+        focusCell(prevRow, prevCol)
+        focusVirtualInput()
+      }, 0)
     }
   }
 
-  const focusCell = useCallback((row: number, col: number) => {
-    const cellElement = document.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
-    if (cellElement) {
-      cellElement.focus()
-    }
-  }, [])
+  const focusCell = useCallback(
+    (row: number, col: number) => {
+      if (shouldUseVirtualKeyboard) return
+
+      const cellElement = document.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
+      if (cellElement) {
+        cellElement.focus()
+      }
+    },
+    [shouldUseVirtualKeyboard],
+  )
 
   const selectedCell = solveState?.selectedCell
 
   useEffect(() => {
     if (!selectedCell) return
     const { row, col } = selectedCell
-    setTimeout(() => focusCell(row, col), 0)
-  }, [focusCell, selectedCell])
+
+    setTimeout(() => {
+      focusCell(row, col)
+      focusVirtualInput()
+    }, 0)
+  }, [focusCell, focusVirtualInput, selectedCell, shouldUseVirtualKeyboard])
 
   const getClueCells = (clue: { row: number; col: number; length: number; direction: 'across' | 'down' }) => {
     const cells: Array<{ row: number; col: number }> = []
@@ -199,7 +260,8 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
   }
 
   const moveToNextClue = (backward: boolean = false) => {
-    if (!solveState?.selectedClue) return
+    const currentSelectedClue = selectedClueRef.current
+    if (!currentSelectedClue) return
 
     const combinedClues = [
       ...numbering.across.map((clue) => ({ direction: 'across' as const, clue })),
@@ -210,8 +272,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
 
     const currentIndex = combinedClues.findIndex(
       (entry) =>
-        entry.direction === solveState.selectedClue?.direction &&
-        entry.clue.number === solveState.selectedClue?.number,
+        entry.direction === currentSelectedClue.direction && entry.clue.number === currentSelectedClue.number,
     )
 
     if (currentIndex === -1) return
@@ -228,9 +289,11 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     let targetRow = nextClue.row
     let targetCol = nextClue.col
 
+    const filledCells = solveState?.filledCells ?? {}
+
     const targetCell = getClueCells(nextClue).find((cell) => {
       const cellKey = `${cell.row},${cell.col}`
-      return !solveState.filledCells[cellKey]
+      return !filledCells[cellKey]
     })
 
     if (targetCell) {
@@ -239,7 +302,10 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     }
 
     selectCell(targetRow, targetCol)
-    setTimeout(() => focusCell(targetRow, targetCol), 0)
+    selectedCellRef.current = { row: targetRow, col: targetCol }
+    selectedClueRef.current = { direction: nextDirection, number: nextClue.number }
+    focusCell(targetRow, targetCol)
+    focusVirtualInput()
   }
 
   const handleArrowKey = (key: string, row: number, col: number) => {
@@ -321,8 +387,81 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     return solveState?.filledCells[cellKey] || ''
   }
 
+  const handleKey = useCallback(
+    (key: string, shiftKey: boolean, row: number, col: number) => {
+      const fakeEvent = {
+        key,
+        shiftKey,
+        preventDefault: () => {},
+      } as React.KeyboardEvent
+
+      handleKeyPress(fakeEvent, row, col)
+    },
+    [handleKeyPress],
+  )
+
+  useEffect(() => {
+    if (shouldUseVirtualKeyboard) return
+
+    const onWindowKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return
+      const selectedCell = selectedCellRef.current
+      if (!selectedCell) return
+
+      event.preventDefault()
+      const { row, col } = selectedCell
+      handleKey(event.key, event.shiftKey, row, col)
+    }
+
+    document.addEventListener('keydown', onWindowKeyDown, true)
+    return () => document.removeEventListener('keydown', onWindowKeyDown, true)
+  }, [handleKey, shouldUseVirtualKeyboard])
+
+  const handleVirtualKeyboardKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    focusVirtualInput()
+
+    const selectedCell = selectedCellRef.current
+    if (!selectedCell) return
+
+    if (isValidLetter(e.key)) {
+      handleKey(e.key, e.shiftKey, selectedCell.row, selectedCell.col)
+      return
+    }
+
+    const { row, col } = selectedCell
+    handleKey(e.key, e.shiftKey, row, col)
+    focusVirtualInput()
+  }
+
+  const handleVirtualKeyboardInput = (e: React.FormEvent<HTMLInputElement>) => {
+    const selectedCell = selectedCellRef.current
+    if (!selectedCell) return
+    const value = e.currentTarget.value
+    e.currentTarget.value = ''
+
+    const lastChar = value.slice(-1)
+    if (!lastChar) return
+
+    const { row, col } = selectedCell
+    handleKey(lastChar, false, row, col)
+  }
+
   return (
     <div className="flex justify-center p-4">
+      <input
+        ref={virtualKeyboardInputRef}
+        aria-hidden="true"
+        className="absolute h-px w-px opacity-0"
+        tabIndex={shouldUseVirtualKeyboard ? 0 : -1}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        inputMode="text"
+        defaultValue=""
+        onKeyDown={handleVirtualKeyboardKeyDown}
+        onInput={handleVirtualKeyboardInput}
+      />
       <div
         ref={gridRef}
         className="inline-grid select-none gap-px rounded-2xl border border-border bg-foreground/80 p-1 shadow-card"
