@@ -1,0 +1,32 @@
+{
+  "topic": "Test Topic",
+  "name": "Test Puzzle Self-Clued",
+  "version": 1,
+  "items": [
+    { "answer": "ALPHA", "clue": "ALPHA", "difficulty": 1 },
+    { "answer": "BRAVO", "clue": "BRAVO", "difficulty": 1 },
+    { "answer": "CHARLIE", "clue": "CHARLIE", "difficulty": 1 },
+    { "answer": "DELTA", "clue": "DELTA", "difficulty": 1 },
+    { "answer": "ECHO", "clue": "ECHO", "difficulty": 1 },
+    { "answer": "FOXTROT", "clue": "FOXTROT", "difficulty": 1 },
+    { "answer": "GOLF", "clue": "GOLF", "difficulty": 1 },
+    { "answer": "HOTEL", "clue": "HOTEL", "difficulty": 1 },
+    { "answer": "INDIA", "clue": "INDIA", "difficulty": 1 },
+    { "answer": "JULIET", "clue": "JULIET", "difficulty": 1 },
+    { "answer": "KILO", "clue": "KILO", "difficulty": 1 },
+    { "answer": "LIMA", "clue": "LIMA", "difficulty": 1 },
+    { "answer": "MIKE", "clue": "MIKE", "difficulty": 1 },
+    { "answer": "NOVEMBER", "clue": "NOVEMBER", "difficulty": 1 },
+    { "answer": "OSCAR", "clue": "OSCAR", "difficulty": 1 },
+    { "answer": "PAPA", "clue": "PAPA", "difficulty": 1 },
+    { "answer": "QUEBEC", "clue": "QUEBEC", "difficulty": 1 },
+    { "answer": "ROMEO", "clue": "ROMEO", "difficulty": 1 },
+    { "answer": "SIERRA", "clue": "SIERRA", "difficulty": 1 },
+    { "answer": "TANGO", "clue": "TANGO", "difficulty": 1 },
+    { "answer": "UNIFORM", "clue": "UNIFORM", "difficulty": 1 },
+    { "answer": "VICTOR", "clue": "VICTOR", "difficulty": 1 },
+    { "answer": "WHISKEY", "clue": "WHISKEY", "difficulty": 1 },
+    { "answer": "YANKEE", "clue": "YANKEE", "difficulty": 1 },
+    { "answer": "ZULU", "clue": "ZULU", "difficulty": 1 }
+  ]
+}

@@ -7,9 +7,6 @@ import PuzzleControls from '../PuzzleControls'
 import type { CrosswordGrid, CrosswordNumbering, SolveState } from '@/types/crossword'
 
 const pushMock = vi.fn()
-const checkSolutionMock = vi.fn()
-const clearWordMock = vi.fn()
-
 const grid: CrosswordGrid = {
   size: { rows: 2, cols: 2 },
   cells: [
@@ -59,16 +56,12 @@ vi.mock('@/lib/store', () => ({
     solveState,
     selectedTopic: { id: 'topic-1', name: 'Animals', icon: '🐾' },
     selectedList: { id: 'list-1', name: 'Wildlife', topic: { id: 'topic-1', name: 'Animals' } },
-    checkSolution: checkSolutionMock,
-    clearWord: clearWordMock,
   }),
 }))
 
 describe('PuzzleControls', () => {
   beforeEach(() => {
     pushMock.mockClear()
-    checkSolutionMock.mockClear()
-    clearWordMock.mockClear()
   })
 
   afterEach(() => {
@@ -84,6 +77,11 @@ describe('PuzzleControls', () => {
       screen.getByText((content) => content.includes('Seed seed-123')),
     ).toBeInTheDocument()
     expect(screen.getByText('2/3 cells filled (67%)')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Auto-check is on—correct letters lock automatically/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Check word/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Clear word/i)).not.toBeInTheDocument()
   })
 
   it('calls store actions and navigates when buttons are used', async () => {
@@ -97,12 +95,6 @@ describe('PuzzleControls', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /New puzzle/i }))
     expect(onNewPuzzle).toHaveBeenCalled()
-
-    await userEvent.click(screen.getByRole('button', { name: /Check word/i }))
-    expect(checkSolutionMock).toHaveBeenCalledWith('word')
-
-    await userEvent.click(screen.getByRole('button', { name: /Clear word/i }))
-    expect(clearWordMock).toHaveBeenCalledWith('across', 1)
 
     await userEvent.click(screen.getByRole('button', { name: /Export state/i }))
     expect(onExport).toHaveBeenCalled()

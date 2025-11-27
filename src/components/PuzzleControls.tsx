@@ -18,20 +18,8 @@ export default function PuzzleControls({
   onExport,
   isGenerating,
 }: PuzzleControlsProps) {
-  const { currentPuzzle, solveState, selectedTopic, selectedList, checkSolution, clearWord } =
-    useAppStore()
+  const { currentPuzzle, solveState, selectedTopic, selectedList } = useAppStore()
   const router = useRouter()
-
-  const handleCheck = (mode: 'letter' | 'word' | 'puzzle') => {
-    checkSolution(mode)
-  }
-
-  const handleClearWord = () => {
-    if (solveState?.selectedClue) {
-      const { direction, number } = solveState.selectedClue
-      clearWord(direction, number)
-    }
-  }
 
   const handleExitToTopics = () => {
     if (selectedTopic) {
@@ -96,6 +84,9 @@ export default function PuzzleControls({
               style={{ width: `${stats.percentage}%` }}
             />
           </div>
+          <div className="text-xs text-muted-foreground">
+            Auto-check is on—correct letters lock automatically.
+          </div>
         </div>
       </div>
 
@@ -105,50 +96,6 @@ export default function PuzzleControls({
             {isGenerating ? 'Generating…' : 'New puzzle'}
           </Button>
         )}
-        <button
-          onClick={() => handleCheck('letter')}
-          disabled={!solveState?.selectedCell}
-          className={buttonClasses({
-            variant: 'outline',
-            size: 'sm',
-            className: 'disabled:opacity-50',
-          })}
-        >
-          Check letter
-        </button>
-        <button
-          onClick={() => handleCheck('word')}
-          disabled={!solveState?.selectedClue}
-          className={buttonClasses({
-            variant: 'outline',
-            size: 'sm',
-            className: 'disabled:opacity-50',
-          })}
-        >
-          Check word
-        </button>
-        <button
-          onClick={() => handleCheck('puzzle')}
-          disabled={stats.filled === 0}
-          className={buttonClasses({
-            variant: 'outline',
-            size: 'sm',
-            className: 'disabled:opacity-50',
-          })}
-        >
-          Check puzzle
-        </button>
-        <button
-          onClick={handleClearWord}
-          disabled={!solveState?.selectedClue}
-          className={buttonClasses({
-            variant: 'outline',
-            size: 'sm',
-            className: 'text-red-600 hover:bg-red-50 disabled:opacity-50',
-          })}
-        >
-          Clear word
-        </button>
         {onSettings && (
           <button onClick={onSettings} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
             Settings
