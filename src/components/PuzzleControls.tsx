@@ -43,69 +43,79 @@ export default function PuzzleControls({
   const stats = getCompletionStats()
 
   return (
-    <div className="border-b border-border/70 bg-card/85 px-4 py-5 shadow-sm backdrop-blur">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          <button
-            onClick={handleExitToTopics}
-            className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'px-3 py-1.5' })}
-          >
-            ← Topics
-          </button>
-          {selectedTopic && (
-            <span className="inline-flex items-center gap-1 text-foreground">
-              <span aria-hidden="true">{selectedTopic.icon}</span>
-              {selectedTopic.name}
-            </span>
-          )}
-          {selectedList && (
-            <>
-              <span className="text-muted-foreground">•</span>
-              <span className="font-medium text-foreground">{selectedList.name}</span>
-            </>
-          )}
-          {currentPuzzle && (
-            <>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-xs uppercase tracking-wide">
-                Seed {currentPuzzle.seed.slice(0, 8)}
+    <div className="sticky top-0 z-30 border-b border-border/60 bg-card/90 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="container mx-auto flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-1 flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <button
+              onClick={handleExitToTopics}
+              className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'px-3 py-1.5' })}
+            >
+              ← Topics
+            </button>
+            {selectedTopic && (
+              <span className="inline-flex items-center gap-1 text-foreground">
+                <span aria-hidden="true">{selectedTopic.icon}</span>
+                {selectedTopic.name}
               </span>
-            </>
+            )}
+            {selectedList && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <span className="font-medium text-foreground">{selectedList.name}</span>
+              </>
+            )}
+            {currentPuzzle && (
+              <>
+                <span className="text-muted-foreground">•</span>
+                <span className="text-xs uppercase tracking-wide">
+                  Seed {currentPuzzle.seed.slice(0, 8)}
+                </span>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div>
+                {stats.filled}/{stats.total} cells filled ({stats.percentage}%)
+              </div>
+              <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  style={{ width: `${stats.percentage}%` }}
+                />
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Auto-check is on—correct letters lock automatically.
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          {onNewPuzzle && (
+            <Button onClick={onNewPuzzle} size="sm" disabled={isGenerating}>
+              {isGenerating ? 'Generating…' : 'New puzzle'}
+            </Button>
+          )}
+          {onSettings && (
+            <button
+              onClick={onSettings}
+              className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'px-3' })}
+            >
+              Settings
+            </button>
+          )}
+          {onExport && (
+            <button
+              onClick={onExport}
+              className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'px-3' })}
+            >
+              Export state
+            </button>
           )}
         </div>
-
-        <div className="flex items-center gap-3">
-          <div className="text-sm text-muted-foreground">
-            {stats.filled}/{stats.total} cells filled ({stats.percentage}%)
-          </div>
-          <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-300"
-              style={{ width: `${stats.percentage}%` }}
-            />
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Auto-check is on—correct letters lock automatically.
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {onNewPuzzle && (
-          <Button onClick={onNewPuzzle} size="sm" disabled={isGenerating}>
-            {isGenerating ? 'Generating…' : 'New puzzle'}
-          </Button>
-        )}
-        {onSettings && (
-          <button onClick={onSettings} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
-            Settings
-          </button>
-        )}
-        {onExport && (
-          <button onClick={onExport} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
-            Export state
-          </button>
-        )}
       </div>
     </div>
   )
