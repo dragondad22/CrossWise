@@ -42,6 +42,31 @@ describe('AutosaveManager', () => {
     manager.stopAutosave()
   })
 
+  it('emits lifecycle events for local saves and server syncs', async () => {
+    vi.useFakeTimers()
+    const manager = new AutosaveManager()
+    const state = createSolveState()
+    const listener = vi.fn()
+    const unsubscribe = manager.subscribe(listener)
+    const onServerSave = vi.fn().mockResolvedValue(undefined)
+
+    manager.startAutosave('puzzle-events', () => state, { onSave: onServerSave })
+    await Promise.resolve()
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'local-save', puzzleId: 'puzzle-events' }),
+    )
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'server-save-start', puzzleId: 'puzzle-events' }),
+    )
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'server-save-success', puzzleId: 'puzzle-events' }),
+    )
+
+    unsubscribe()
+    manager.stopAutosave()
+  })
+
   it('restores saved state and converts persisted dates', () => {
     const stored = JSON.stringify({
       ...createSolveState(),
@@ -121,6 +146,25 @@ describe('AutosaveManager', () => {
     manager.stopAutosave()
   })
 
+  it('emits failure events when server sync throws', async () => {
+    vi.useFakeTimers()
+    const manager = new AutosaveManager()
+    const state = createSolveState()
+    const listener = vi.fn()
+    manager.subscribe(listener)
+
+    const failingSave = vi.fn().mockRejectedValue(new Error('network down'))
+    manager.startAutosave('puzzle-fail', () => state, { onSave: failingSave })
+
+    await Promise.resolve()
+
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'server-save-failed', puzzleId: 'puzzle-fail' }),
+    )
+
+    manager.stopAutosave()
+  })
+
   it('omits corrupted entries when listing saved puzzles', () => {
     const manager = new AutosaveManager()
 
@@ -162,6 +206,7 @@ describe('AutosaveManager', () => {
   it('exposes bound helpers via useAutosave to call the shared manager', () => {
     const startSpy = vi.spyOn(autosaveManager, 'startAutosave').mockImplementation(() => {})
     const stopSpy = vi.spyOn(autosaveManager, 'stopAutosave').mockImplementation(() => {})
+    const subscribeSpy = vi.spyOn(autosaveManager, 'subscribe').mockReturnValue(() => {})
     const bindings = useAutosave()
 
     bindings.startAutosave('puzzle-7', () => createSolveState())
@@ -169,5 +214,9 @@ describe('AutosaveManager', () => {
 
     bindings.stopAutosave()
     expect(stopSpy).toHaveBeenCalled()
+
+    const unsub = bindings.subscribe(() => {})
+    expect(subscribeSpy).toHaveBeenCalled()
+    expect(typeof unsub).toBe('function')
   })
 })

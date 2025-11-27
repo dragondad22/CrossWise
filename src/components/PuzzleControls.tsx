@@ -10,6 +10,7 @@ interface PuzzleControlsProps {
   onSettings?: () => void
   onExport?: () => void
   isGenerating?: boolean
+  autosaveStatus?: { message: string; variant?: 'muted' | 'warning' }
 }
 
 export default function PuzzleControls({
@@ -17,6 +18,7 @@ export default function PuzzleControls({
   onSettings,
   onExport,
   isGenerating,
+  autosaveStatus,
 }: PuzzleControlsProps) {
   const { currentPuzzle, solveState, selectedTopic, selectedList } = useAppStore()
   const router = useRouter()
@@ -87,6 +89,23 @@ export default function PuzzleControls({
                 />
               </div>
             </div>
+            {autosaveStatus && (
+              <span
+                className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium leading-none ${
+                  autosaveStatus.variant === 'warning'
+                    ? 'border-amber-300/70 bg-amber-50 text-amber-900 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-50'
+                    : 'border-border/60 bg-muted/70 text-foreground'
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-2 w-2 rounded-full ${
+                    autosaveStatus.variant === 'warning' ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                />
+                {autosaveStatus.message}
+              </span>
+            )}
             <div className="text-xs text-muted-foreground">
               Auto-check is on—correct letters lock automatically.
             </div>

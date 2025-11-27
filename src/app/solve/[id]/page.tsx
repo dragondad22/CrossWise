@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
 import { autosaveManager } from '@/lib/autosave'
@@ -34,6 +34,12 @@ export default function SolvePage() {
   } = useAppStore()
 
   const [selectedTab, setSelectedTab] = useState<'across' | 'down'>('across')
+  const [autosaveMeta, setAutosaveMeta] = useState<{
+    lastLocalSave: Date | null
+    lastServerSave: Date | null
+    isSyncing: boolean
+    error: string | null
+  }>({ lastLocalSave: null, lastServerSave: null, isSyncing: false, error: null })
   const lastLoadedPuzzleRef = useRef<string | null>(null)
   const serverSyncWarningRef = useRef(false)
 
@@ -49,6 +55,42 @@ export default function SolvePage() {
       lastLoadedPuzzleRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    setAutosaveMeta({ lastLocalSave: null, lastServerSave: null, isSyncing: false, error: null })
+    serverSyncWarningRef.current = false
+  }, [currentPuzzle?.id])
+
+  useEffect(() => {
+    const puzzleId = currentPuzzle?.id
+    if (!puzzleId) return
+
+    const unsubscribe = autosaveManager.subscribe((event) => {
+      if (event.puzzleId !== puzzleId) return
+
+      setAutosaveMeta((prev) => {
+        switch (event.type) {
+          case 'local-save':
+            return { ...prev, lastLocalSave: new Date(event.savedAt) }
+          case 'server-save-start':
+            return { ...prev, isSyncing: true, error: null }
+          case 'server-save-success':
+            return {
+              ...prev,
+              isSyncing: false,
+              lastServerSave: new Date(event.savedAt),
+              error: null,
+            }
+          case 'server-save-failed':
+            return { ...prev, isSyncing: false, error: event.error.message }
+          default:
+            return prev
+        }
+      })
+    })
+
+    return unsubscribe
+  }, [currentPuzzle?.id])
 
   const loadPuzzle = useCallback(
     async (id: string) => {
@@ -214,10 +256,15 @@ export default function SolvePage() {
               )
               serverSyncWarningRef.current = true
             }
-            return
+            throw new Error('Session expired')
           }
           const errorText = await response.text()
-          console.error('Failed to sync solve state:', errorText)
+          throw new Error(errorText || 'Failed to sync solve state')
+        }
+
+        const result = await response.json()
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Failed to sync solve state')
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
@@ -236,14 +283,41 @@ export default function SolvePage() {
             )
             serverSyncWarningRef.current = true
           }
-          return
+          throw error
         }
 
-        console.error('Failed to sync solve state:', error)
+        throw error instanceof Error ? error : new Error(String(error))
       }
     },
     [puzzleId, user],
   )
+
+  const formatRelativeTime = useCallback((date: Date) => {
+    const diff = Date.now() - date.getTime()
+    if (diff < 45_000) return 'just now'
+    if (diff < 90_000) return '1 min ago'
+    if (diff < 60 * 60 * 1000) return `${Math.round(diff / 60_000)} mins ago`
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  }, [])
+
+  const autosaveStatus = useMemo(() => {
+    if (autosaveMeta.isSyncing) {
+      return { message: 'Syncing…', variant: 'muted' as const }
+    }
+    if (autosaveMeta.error) {
+      return { message: 'Saved locally · Sync pending', variant: 'warning' as const }
+    }
+    if (autosaveMeta.lastServerSave) {
+      return {
+        message: `Synced ${formatRelativeTime(autosaveMeta.lastServerSave)}`,
+        variant: 'muted' as const,
+      }
+    }
+    if (autosaveMeta.lastLocalSave) {
+      return { message: 'Saved locally · Sync pending', variant: 'muted' as const }
+    }
+    return { message: 'Autosave ready', variant: 'muted' as const }
+  }, [autosaveMeta, formatRelativeTime])
 
   useEffect(() => {
     if (!currentPuzzle || !solveState || !user) return
@@ -328,6 +402,7 @@ export default function SolvePage() {
         onNewPuzzle={handleNewPuzzle}
         onExport={handleExport}
         isGenerating={useAppStore.getState().isLoading}
+        autosaveStatus={autosaveStatus}
       />
 
       <div className="container mx-auto flex w-full flex-1 flex-col gap-6 px-4 pb-10 pt-6 lg:flex-row">

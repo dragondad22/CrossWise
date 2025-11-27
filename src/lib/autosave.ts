@@ -4,6 +4,11 @@ const AUTOSAVE_KEY_PREFIX = 'crosswise_solve_'
 const AUTOSAVE_INTERVAL = 5000 // 5 seconds
 
 type ServerSaveCallback = (state: SolveState) => Promise<void> | void
+type AutosaveEvent =
+  | { type: 'local-save'; puzzleId: string; savedAt: string }
+  | { type: 'server-save-start'; puzzleId: string }
+  | { type: 'server-save-success'; puzzleId: string; savedAt: string }
+  | { type: 'server-save-failed'; puzzleId: string; error: Error }
 
 export class AutosaveManager {
   private saveTimer: NodeJS.Timeout | null = null
@@ -12,6 +17,7 @@ export class AutosaveManager {
   private onServerSave: ServerSaveCallback | null = null
   private isServerSaving = false
   private handleBeforeUnload = () => this.forceSave()
+  private listeners = new Set<(event: AutosaveEvent) => void>()
 
   constructor() {
     // Auto-save on page unload
@@ -104,6 +110,11 @@ export class AutosaveManager {
       })
 
       localStorage.setItem(key, serialized)
+      this.emit({
+        type: 'local-save',
+        puzzleId,
+        savedAt: new Date().toISOString(),
+      })
     } catch (error) {
       console.error('Failed to save solve state:', error)
     }
@@ -204,12 +215,40 @@ export class AutosaveManager {
   private async saveToServerIfNeeded(state: SolveState) {
     if (!this.onServerSave || this.isServerSaving) return
     this.isServerSaving = true
+    if (this.currentPuzzleId) {
+      this.emit({ type: 'server-save-start', puzzleId: this.currentPuzzleId })
+    }
     try {
       await this.onServerSave(state)
+      if (this.currentPuzzleId) {
+        this.emit({
+          type: 'server-save-success',
+          puzzleId: this.currentPuzzleId,
+          savedAt: new Date().toISOString(),
+        })
+      }
     } catch (error) {
       console.error('Failed to sync solve state to server:', error)
+      if (this.currentPuzzleId) {
+        this.emit({
+          type: 'server-save-failed',
+          puzzleId: this.currentPuzzleId,
+          error: error instanceof Error ? error : new Error(String(error)),
+        })
+      }
     } finally {
       this.isServerSaving = false
+    }
+  }
+
+  private emit(event: AutosaveEvent) {
+    this.listeners.forEach((listener) => listener(event))
+  }
+
+  public subscribe(listener: (event: AutosaveEvent) => void) {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
     }
   }
 }
@@ -229,5 +268,6 @@ export function useAutosave() {
     cleanupOldSaves: autosaveManager.cleanupOldSaves.bind(autosaveManager),
     exportSolveState: autosaveManager.exportSolveState.bind(autosaveManager),
     importSolveState: autosaveManager.importSolveState.bind(autosaveManager),
+    subscribe: autosaveManager.subscribe.bind(autosaveManager),
   }
 }

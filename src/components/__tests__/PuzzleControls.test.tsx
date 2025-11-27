@@ -105,4 +105,10 @@ describe('PuzzleControls', () => {
     await userEvent.click(screen.getByRole('button', { name: /← Topics/i }))
     expect(pushMock).toHaveBeenCalledWith('/topics/topic-1/lists')
   })
+
+  it('shows autosave status when provided', () => {
+    render(<PuzzleControls autosaveStatus={{ message: 'Synced just now', variant: 'muted' }} />)
+
+    expect(screen.getByText(/Synced just now/)).toBeInTheDocument()
+  })
 })
