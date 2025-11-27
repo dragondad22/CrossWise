@@ -42,7 +42,11 @@ export default function ListCard({
   const [isProcessing, setIsProcessing] = useState(false)
   const setError = useAppStore((state) => state.setError)
   const setLoading = useAppStore((state) => state.setLoading)
-  const { clearSolveState } = useAutosave()
+  const currentPuzzle = useAppStore((state) => state.currentPuzzle)
+  const setPuzzle = useAppStore((state) => state.setPuzzle)
+  const setSolveState = useAppStore((state) => state.setSolveState)
+  const setWon = useAppStore((state) => state.setWon)
+  const { clearSolveState, stopAutosave } = useAutosave()
 
   const sortedHistory = [...userSolves].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -109,7 +113,17 @@ export default function ListCard({
       }
 
       if (action === 'reset' || action === 'delete') {
-        puzzlesToClear.forEach((puzzleId) => clearSolveState(puzzleId))
+        puzzlesToClear.forEach((puzzleId) => {
+          clearSolveState(puzzleId)
+
+          // If the currently loaded puzzle was just reset, wipe in-memory state too
+          if (currentPuzzle?.id === puzzleId) {
+            stopAutosave()
+            setSolveState(null)
+            setPuzzle(null)
+            setWon(false)
+          }
+        })
       }
 
       if (onRefresh) {

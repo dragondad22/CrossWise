@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach, type MockInstance } from 'vitest'
 import { NextRequest } from 'next/server'
 
 import { POST } from '../route'
@@ -32,7 +32,7 @@ describe('/api/v1/solves/bulk POST', () => {
       cookie: `${SESSION_COOKIE_NAME}=token-123`,
       'content-type': 'application/json',
     })
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let consoleSpy: MockInstance
 
   beforeEach(() => {
     vi.clearAllMocks()

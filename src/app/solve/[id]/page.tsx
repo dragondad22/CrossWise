@@ -162,6 +162,12 @@ export default function SolvePage() {
         // Clear old autosave
         autosaveManager.clearSolveState(currentPuzzle.id)
 
+        // Clear in-memory puzzle state before navigating to the new puzzle
+        autosaveManager.stopAutosave()
+        setPuzzle(null)
+        setSolveState(null)
+        setWon(false)
+
         // Load new puzzle
         router.push(`/solve/${result.data.puzzleId}`)
       } else {
