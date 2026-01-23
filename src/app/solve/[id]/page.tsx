@@ -4,12 +4,10 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
 import { autosaveManager } from '@/lib/autosave'
-import CrosswordGrid from '@/components/CrosswordGrid'
-import ClueList from '@/components/ClueList'
+import SolveSurface from '@/components/SolveSurface'
 import PuzzleControls from '@/components/PuzzleControls'
 import WinModal from '@/components/WinModal'
 import { buttonClasses } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import type { SolveState } from '@/types/crossword'
 import { normalizeSolveState, resolveSolveState } from '../solveState'
 import type { RemoteSolveState } from '../solveState'
@@ -415,55 +413,14 @@ export default function SolvePage() {
         autosaveStatus={autosaveStatus}
       />
 
-      <div className="container mx-auto flex w-full flex-1 flex-col gap-6 px-4 pb-10 pt-6 lg:flex-row">
-        {/* Main puzzle area */}
-        <div className="flex-1 rounded-3xl border border-border/70 bg-card shadow-card/20">
-          <div className="flex h-full flex-col">
-            <div className="flex-1 p-4 sm:p-6">
-              <CrosswordGrid
-                grid={currentPuzzle.grid}
-                numbering={currentPuzzle.numbering}
-                solveState={solveState}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Clues sidebar */}
-        <div className="flex w-full max-w-md flex-col gap-4 lg:max-w-sm">
-          <div className="flex rounded-full border border-border/70 bg-muted/60 p-1 text-sm font-medium">
-            <button
-              onClick={() => setSelectedTab('across')}
-              className={cn(
-                'flex-1 rounded-full px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
-                selectedTab === 'across'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              Across
-            </button>
-            <button
-              onClick={() => setSelectedTab('down')}
-              className={cn(
-                'flex-1 rounded-full px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60',
-                selectedTab === 'down'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              Down
-            </button>
-          </div>
-          <div className="flex-1">
-            <ClueList
-              clues={currentPuzzle.numbering[selectedTab]}
-              direction={selectedTab}
-              selectedClue={solveState.selectedClue}
-              solveState={solveState}
-            />
-          </div>
-        </div>
+      <div className="container mx-auto flex w-full flex-1 flex-col gap-6 px-4 pb-10 pt-6">
+        <SolveSurface
+          grid={currentPuzzle.grid}
+          numbering={currentPuzzle.numbering}
+          solveState={solveState}
+          selectedTab={selectedTab}
+          onSelectTab={setSelectedTab}
+        />
       </div>
 
       <WinModal isOpen={isWon} onNewPuzzle={handleNewPuzzle} onClose={() => setWon(false)} />

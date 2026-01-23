@@ -9,6 +9,7 @@ interface ClueListProps {
   direction: 'across' | 'down'
   selectedClue?: { direction: 'across' | 'down'; number: number }
   solveState?: SolveState
+  variant?: 'card' | 'embedded'
 }
 
 const statusMap = {
@@ -18,7 +19,13 @@ const statusMap = {
   empty: 'text-muted-foreground',
 } as const
 
-export default function ClueList({ clues, direction, selectedClue, solveState }: ClueListProps) {
+export default function ClueList({
+  clues,
+  direction,
+  selectedClue,
+  solveState,
+  variant = 'card',
+}: ClueListProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const { selectClue, selectCell } = useAppStore()
 
@@ -58,7 +65,13 @@ export default function ClueList({ clues, direction, selectedClue, solveState }:
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card shadow-card/10">
+    <div
+      data-testid="clue-list"
+      className={cn(
+        'flex h-full flex-col overflow-hidden rounded-3xl',
+        variant === 'card' ? 'border border-border/70 bg-card shadow-card/10' : 'bg-transparent',
+      )}
+    >
       <div className="border-b border-border/60 px-5 py-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
