@@ -18,6 +18,23 @@ export default function SolveSurface({
   selectedTab,
   onSelectTab,
 }: SolveSurfaceProps) {
+  const selected = solveState.selectedClue
+  const selectedEntry = selected
+    ? numbering[selected.direction].find((clue) => clue.number === selected.number)
+    : undefined
+  const filledCount = selectedEntry
+    ? Array.from({ length: selectedEntry.length }).reduce((count, _, index) => {
+        const row = selectedEntry.direction === 'down' ? selectedEntry.row + index : selectedEntry.row
+        const col = selectedEntry.direction === 'across' ? selectedEntry.col + index : selectedEntry.col
+        const key = `${row},${col}`
+        return solveState.filledCells[key] ? count + 1 : count
+      }, 0)
+    : 0
+
+  const captionText = selectedEntry
+    ? `${selectedEntry.number}. ${selectedEntry.clue} (${selectedEntry.length} letters)`
+    : 'Select a clue to see its details.'
+
   return (
     <div className="rounded-3xl border border-border/70 bg-card shadow-card/20">
       <div
@@ -25,7 +42,18 @@ export default function SolveSurface({
         className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[7fr_5fr] lg:gap-8"
       >
         <div className="flex flex-1 items-center justify-center">
-          <CrosswordGrid grid={grid} numbering={numbering} solveState={solveState} />
+          <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
+            <div
+              data-testid="solve-caption"
+              className="w-full rounded-2xl border border-border/60 bg-muted/40 px-4 py-3 text-sm font-medium text-foreground shadow-sm sm:text-base"
+            >
+              <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Selected clue
+              </span>
+              <span className="mt-1 block">{captionText}</span>
+            </div>
+            <CrosswordGrid grid={grid} numbering={numbering} solveState={solveState} />
+          </div>
         </div>
 
         <div className="flex w-full flex-col gap-4 lg:border-l lg:border-border/60 lg:pl-6">

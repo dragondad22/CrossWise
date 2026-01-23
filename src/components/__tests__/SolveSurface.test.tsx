@@ -68,4 +68,38 @@ describe('SolveSurface', () => {
     expect(getByTestId('clue-list')).toHaveClass('bg-transparent')
     expect(getByTestId('clue-list')).not.toHaveClass('border')
   })
+
+  it('renders selected clue caption and updates with selection changes', () => {
+    const { getByTestId, rerender } = render(
+      <SolveSurface
+        grid={grid}
+        numbering={numbering}
+        solveState={{
+          ...solveState,
+          filledCells: { '0,0': 'H' },
+          selectedClue: { direction: 'across', number: 1 },
+        }}
+        selectedTab="across"
+        onSelectTab={() => {}}
+      />,
+    )
+
+    expect(getByTestId('solve-caption')).toHaveTextContent('1. Greeting start (2 letters)')
+
+    rerender(
+      <SolveSurface
+        grid={grid}
+        numbering={numbering}
+        solveState={{
+          ...solveState,
+          filledCells: { '0,0': 'H', '1,0': 'A' },
+          selectedClue: { direction: 'down', number: 3 },
+        }}
+        selectedTab="down"
+        onSelectTab={() => {}}
+      />,
+    )
+
+    expect(getByTestId('solve-caption')).toHaveTextContent('3. Down one (2 letters)')
+  })
 })

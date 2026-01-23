@@ -105,6 +105,10 @@ export default function SolvePage() {
         // Fetch puzzle data from API
         const response = await fetch(`/api/v1/puzzles/${id}/solve`)
 
+        if (lastLoadedPuzzleRef.current !== id) {
+          return
+        }
+
         if (response.status === 401) {
           router.replace(`/login?next=${encodeURIComponent(`/solve/${id}`)}`)
           return
@@ -115,6 +119,10 @@ export default function SolvePage() {
 
           if (result.success) {
             const puzzleData = result.data.puzzle
+
+            if (lastLoadedPuzzleRef.current !== id) {
+              return
+            }
 
             setPuzzle({
               id: puzzleData.id,
@@ -131,6 +139,9 @@ export default function SolvePage() {
             const resolvedState = resolveSolveState(savedState, remoteState)
 
             if (resolvedState) {
+              if (lastLoadedPuzzleRef.current !== id) {
+                return
+              }
               setSolveState(resolvedState.state)
 
               if (resolvedState.source === 'remote') {
@@ -138,6 +149,9 @@ export default function SolvePage() {
               }
             } else {
               // Create new solve state
+              if (lastLoadedPuzzleRef.current !== id) {
+                return
+              }
               loadSolveState(id)
             }
           } else {
@@ -151,7 +165,9 @@ export default function SolvePage() {
         setError('Network error')
         console.error('Failed to load puzzle:', error)
       } finally {
-        setLoading(false)
+        if (lastLoadedPuzzleRef.current === id) {
+          setLoading(false)
+        }
       }
     },
     [loadSolveState, router, setError, setLoading, setPuzzle, setSolveState, setWon],
