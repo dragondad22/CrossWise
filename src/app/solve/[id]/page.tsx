@@ -335,21 +335,23 @@ export default function SolvePage() {
     return { message: 'Autosave ready', variant: 'muted' as const }
   }, [autosaveMeta, formatRelativeTime])
 
-  useEffect(() => {
-    if (!currentPuzzle || !solveState || !user) return
-    if (autosavePuzzleRef.current === currentPuzzle.id) return
+  const currentPuzzleId = currentPuzzle?.id
 
-    autosavePuzzleRef.current = currentPuzzle.id
-    autosaveManager.startAutosave(currentPuzzle.id, () => useAppStore.getState().solveState, {
+  useEffect(() => {
+    if (!currentPuzzleId || !solveState || !user) return
+    if (autosavePuzzleRef.current === currentPuzzleId) return
+
+    autosavePuzzleRef.current = currentPuzzleId
+    autosaveManager.startAutosave(currentPuzzleId, () => useAppStore.getState().solveState, {
       onSave: saveSolveStateToServer,
     })
     return () => {
-      if (autosavePuzzleRef.current === currentPuzzle.id) {
+      if (autosavePuzzleRef.current === currentPuzzleId) {
         autosaveManager.stopAutosave()
         autosavePuzzleRef.current = null
       }
     }
-  }, [currentPuzzle?.id, solveState, user, saveSolveStateToServer])
+  }, [currentPuzzleId, solveState, user, saveSolveStateToServer])
 
   if (!sessionHydrated) {
     return (

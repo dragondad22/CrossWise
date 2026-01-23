@@ -22,15 +22,6 @@ export default function SolveSurface({
   const selectedEntry = selected
     ? numbering[selected.direction].find((clue) => clue.number === selected.number)
     : undefined
-  const filledCount = selectedEntry
-    ? Array.from({ length: selectedEntry.length }).reduce((count, _, index) => {
-        const row = selectedEntry.direction === 'down' ? selectedEntry.row + index : selectedEntry.row
-        const col = selectedEntry.direction === 'across' ? selectedEntry.col + index : selectedEntry.col
-        const key = `${row},${col}`
-        return solveState.filledCells[key] ? count + 1 : count
-      }, 0)
-    : 0
-
   const captionText = selectedEntry
     ? `${selectedEntry.number}. ${selectedEntry.clue} (${selectedEntry.length} letters)`
     : 'Select a clue to see its details.'
