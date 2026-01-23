@@ -7,6 +7,8 @@ import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 import type { CrosswordGrid as CrosswordGridType, CrosswordNumbering, SolveState } from '@/types/crossword'
 
+const isValidLetter = (key: string): boolean => key.length === 1 && /^[A-Za-z]$/.test(key)
+
 interface CrosswordGridProps {
   grid: CrosswordGridType
   numbering: CrosswordNumbering
@@ -111,55 +113,19 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     }
   }
 
-  const isValidLetter = (key: string): boolean => {
-    return key.length === 1 && /^[A-Za-z]$/.test(key)
-  }
+  const focusCell = useCallback(
+    (row: number, col: number) => {
+      if (shouldUseVirtualKeyboard) return
 
-  const handleKeyPress = (e: React.KeyboardEvent, row: number, col: number) => {
-    // Debug: console.log('handleKeyPress', e.key, { row, col })
-    e.preventDefault()
-
-    const cellKey = `${row},${col}`
-    const isLocked = Boolean(solveState?.lockedCells?.[cellKey])
-
-    // Only allow single letters A-Z (case insensitive)
-    if (isValidLetter(e.key)) {
-      if (isLocked) return
-
-      updateCell(row, col, e.key.toUpperCase())
-      // Move to next cell in selected direction
-      moveToNextCell(row, col)
-    } else if (e.key === 'Backspace') {
-      if (isLocked) {
-        moveToPreviousCell(row, col)
-        return
+      const cellElement = document.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
+      if (cellElement) {
+        cellElement.focus()
       }
+    },
+    [shouldUseVirtualKeyboard],
+  )
 
-      const currentLetter = solveState?.filledCells[cellKey]
-
-      if (currentLetter) {
-        // Current cell has content, just clear it
-        clearCell(row, col)
-      } else {
-        // Current cell is empty, move to previous cell and clear it
-        moveToPreviousCell(row, col)
-      }
-    } else if (e.key === 'Delete') {
-      if (isLocked) return
-
-      clearCell(row, col)
-    } else if (e.key === 'Tab') {
-      e.preventDefault()
-      // Move to next clue
-      moveToNextClue(e.shiftKey)
-    } else if (e.key.startsWith('Arrow')) {
-      handleArrowKey(e.key, row, col)
-    }
-    // Explicitly ignore all other keys (Shift, Control, Alt, etc.)
-    return
-  }
-
-  const moveToNextCell = (row: number, col: number) => {
+  const moveToNextCell = useCallback((row: number, col: number) => {
     if (!solveState?.selectedClue) return
 
     const { direction, number } = solveState.selectedClue
@@ -195,9 +161,9 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     }
 
     // If no empty cell found, stay at current position
-  }
+  }, [focusCell, focusVirtualInput, numbering, selectCell, solveState])
 
-  const moveToPreviousCell = (row: number, col: number) => {
+  const moveToPreviousCell = useCallback((row: number, col: number) => {
     if (!solveState?.selectedClue) return
 
     const { direction, number } = solveState.selectedClue
@@ -223,19 +189,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
         focusVirtualInput()
       }, 0)
     }
-  }
-
-  const focusCell = useCallback(
-    (row: number, col: number) => {
-      if (shouldUseVirtualKeyboard) return
-
-      const cellElement = document.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
-      if (cellElement) {
-        cellElement.focus()
-      }
-    },
-    [shouldUseVirtualKeyboard],
-  )
+  }, [clearCell, focusCell, focusVirtualInput, numbering, selectCell, solveState])
 
   const selectedCell = solveState?.selectedCell
 
@@ -249,17 +203,20 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     }, 0)
   }, [focusCell, focusVirtualInput, selectedCell, shouldUseVirtualKeyboard])
 
-  const getClueCells = (clue: { row: number; col: number; length: number; direction: 'across' | 'down' }) => {
-    const cells: Array<{ row: number; col: number }> = []
-    for (let i = 0; i < clue.length; i++) {
-      const row = clue.direction === 'down' ? clue.row + i : clue.row
-      const col = clue.direction === 'across' ? clue.col + i : clue.col
-      cells.push({ row, col })
-    }
-    return cells
-  }
+  const getClueCells = useCallback(
+    (clue: { row: number; col: number; length: number; direction: 'across' | 'down' }) => {
+      const cells: Array<{ row: number; col: number }> = []
+      for (let i = 0; i < clue.length; i++) {
+        const row = clue.direction === 'down' ? clue.row + i : clue.row
+        const col = clue.direction === 'across' ? clue.col + i : clue.col
+        cells.push({ row, col })
+      }
+      return cells
+    },
+    [],
+  )
 
-  const moveToNextClue = (backward: boolean = false) => {
+  const moveToNextClue = useCallback((backward: boolean = false) => {
     const currentSelectedClue = selectedClueRef.current
     if (!currentSelectedClue) return
 
@@ -306,9 +263,9 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     selectedClueRef.current = { direction: nextDirection, number: nextClue.number }
     focusCell(targetRow, targetCol)
     focusVirtualInput()
-  }
+  }, [focusCell, focusVirtualInput, getClueCells, numbering, selectCell, selectClue, solveState])
 
-  const handleArrowKey = (key: string, row: number, col: number) => {
+  const handleArrowKey = useCallback((key: string, row: number, col: number) => {
     let newRow = row
     let newCol = col
 
@@ -339,7 +296,54 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     if (grid.cells[newRow][newCol].type === 'cell') {
       selectCell(newRow, newCol)
     }
-  }
+  }, [grid, selectCell])
+
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent, row: number, col: number) => {
+      // Debug: console.log('handleKeyPress', e.key, { row, col })
+      e.preventDefault()
+
+      const cellKey = `${row},${col}`
+      const isLocked = Boolean(solveState?.lockedCells?.[cellKey])
+
+      // Only allow single letters A-Z (case insensitive)
+      if (isValidLetter(e.key)) {
+        if (isLocked) return
+
+        updateCell(row, col, e.key.toUpperCase())
+        // Move to next cell in selected direction
+        moveToNextCell(row, col)
+      } else if (e.key === 'Backspace') {
+        if (isLocked) {
+          moveToPreviousCell(row, col)
+          return
+        }
+
+        const currentLetter = solveState?.filledCells[cellKey]
+
+        if (currentLetter) {
+          // Current cell has content, just clear it
+          clearCell(row, col)
+        } else {
+          // Current cell is empty, move to previous cell and clear it
+          moveToPreviousCell(row, col)
+        }
+      } else if (e.key === 'Delete') {
+        if (isLocked) return
+
+        clearCell(row, col)
+      } else if (e.key === 'Tab') {
+        e.preventDefault()
+        // Move to next clue
+        moveToNextClue(e.shiftKey)
+      } else if (e.key.startsWith('Arrow')) {
+        handleArrowKey(e.key, row, col)
+      }
+      // Explicitly ignore all other keys (Shift, Control, Alt, etc.)
+      return
+    },
+    [clearCell, handleArrowKey, moveToNextCell, moveToNextClue, moveToPreviousCell, solveState, updateCell],
+  )
 
   const getCellClasses = (row: number, col: number) => {
     const cell = grid.cells[row][col]
