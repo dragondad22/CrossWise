@@ -42,6 +42,7 @@ export default function SolvePage() {
   }>({ lastLocalSave: null, lastServerSave: null, isSyncing: false, error: null })
   const lastLoadedPuzzleRef = useRef<string | null>(null)
   const serverSyncWarningRef = useRef(false)
+  const autosavePuzzleRef = useRef<string | null>(null)
 
   useEffect(() => {
     const nextDirection = solveState?.selectedClue?.direction
@@ -53,6 +54,7 @@ export default function SolvePage() {
     return () => {
       autosaveManager.stopAutosave()
       lastLoadedPuzzleRef.current = null
+      autosavePuzzleRef.current = null
     }
   }, [])
 
@@ -321,11 +323,19 @@ export default function SolvePage() {
 
   useEffect(() => {
     if (!currentPuzzle || !solveState || !user) return
+    if (autosavePuzzleRef.current === currentPuzzle.id) return
 
+    autosavePuzzleRef.current = currentPuzzle.id
     autosaveManager.startAutosave(currentPuzzle.id, () => useAppStore.getState().solveState, {
       onSave: saveSolveStateToServer,
     })
-  }, [currentPuzzle, solveState, user, saveSolveStateToServer])
+    return () => {
+      if (autosavePuzzleRef.current === currentPuzzle.id) {
+        autosaveManager.stopAutosave()
+        autosavePuzzleRef.current = null
+      }
+    }
+  }, [currentPuzzle?.id, solveState, user, saveSolveStateToServer])
 
   if (!sessionHydrated) {
     return (

@@ -123,6 +123,20 @@ describe('useAppStore crossword interactions', () => {
     expect(updatedState.isWon).toBe(true)
   })
 
+  it('persists solve state snapshots when cells change', () => {
+    const store = primeStoreForPuzzle()
+
+    store.updateCell(0, 0, 'c')
+    const saved = localStorage.getItem('crosswise_solve_puzzle-1')
+    expect(saved).toBeTruthy()
+    expect(JSON.parse(saved!).filledCells['0,0']).toBe('C')
+
+    store.clearCell(0, 0)
+    const cleared = localStorage.getItem('crosswise_solve_puzzle-1')
+    expect(cleared).toBeTruthy()
+    expect(JSON.parse(cleared!).filledCells['0,0']).toBeUndefined()
+  })
+
   it('locks completed words and prevents edits or clears', () => {
     const store = primeStoreForPuzzle()
     store.selectClue('across', 1)

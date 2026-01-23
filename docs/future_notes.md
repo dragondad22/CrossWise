@@ -16,6 +16,8 @@
 - **Responsive captcha:** Mobile tweaks exist in CSS, yet crossword grid still relies on keyboard interactions (e.g., Tab handling). Consider on-screen controls for clue navigation and ARIA annotations for cells.
 - **Error handling:** Fetch failures surface generic toasts via `setError`, but there is no global notification component. Introduce consistent feedback and retry affordances.
 - **Keyboard shortcuts blocked in grid:** `CrosswordGrid.handleKeyPress` calls `preventDefault` for every key press (`src/components/CrosswordGrid.tsx:75`), so standard shortcuts (copy/paste, refresh, assistive tech commands) stop working whenever a cell is focused. Only suppress keystrokes that the grid handles and let modifiers bubble.
+- Validation of import files to make sure answers with valid charaters are imported. Show friendly error and deny import.
+
 
 ## Infrastructure & Tooling
 - [x] **Testing:** Added Vitest coverage for `CrosswordGrid` interactions, contract tests for `/api/v1/solves/bulk`, and a store-driven solve-flow smoke test so UI and API regressions are caught alongside the existing unit suite.

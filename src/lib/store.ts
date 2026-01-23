@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { Topic, ListWithItemsAndTopic } from '@/types/database'
 import type { AuthUser } from '@/types/auth'
 import { SolveState, CrosswordGrid, CrosswordNumbering } from '@/types/crossword'
+import { autosaveManager } from '@/lib/autosave'
 
 interface AppState {
   // Topics and Lists
@@ -302,11 +303,7 @@ export const useAppStore = create<AppState>()(
           set({ isWon: true })
         }
 
-        // Auto-save to localStorage
-        if (typeof window !== 'undefined') {
-          const key = `crosswise_solve_${currentPuzzle.id}`
-          localStorage.setItem(key, JSON.stringify(updatedState))
-        }
+        autosaveManager.forceSave(currentPuzzle.id, updatedState)
       },
 
       selectCell: (row, col) => {
@@ -356,11 +353,7 @@ export const useAppStore = create<AppState>()(
 
         set({ solveState: updatedState })
 
-        // Auto-save to localStorage
-        if (typeof window !== 'undefined') {
-          const key = `crosswise_solve_${state.currentPuzzle.id}`
-          localStorage.setItem(key, JSON.stringify(updatedState))
-        }
+        autosaveManager.forceSave(state.currentPuzzle.id, updatedState)
       },
 
       clearWord: (direction, number) => {
@@ -391,6 +384,7 @@ export const useAppStore = create<AppState>()(
         }
 
         set({ solveState: updatedState })
+        autosaveManager.forceSave(state.currentPuzzle.id, updatedState)
       },
 
       checkSolution: (mode) => {
@@ -487,9 +481,7 @@ export const useAppStore = create<AppState>()(
         const state = get()
         if (!state.currentPuzzle || !state.solveState) return
 
-        // Save to localStorage
-        const key = `crosswise_solve_${state.currentPuzzle.id}`
-        localStorage.setItem(key, JSON.stringify(state.solveState))
+        autosaveManager.saveToBrowser(state.currentPuzzle.id, state.solveState)
       },
 
       loadSolveState: (puzzleId) => {

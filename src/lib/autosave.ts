@@ -1,8 +1,6 @@
 import { SolveState } from '@/types/crossword'
 
 const AUTOSAVE_KEY_PREFIX = 'crosswise_solve_'
-const AUTOSAVE_INTERVAL = 5000 // 5 seconds
-
 type ServerSaveCallback = (state: SolveState) => Promise<void> | void
 type AutosaveEvent =
   | { type: 'local-save'; puzzleId: string; savedAt: string }
@@ -11,11 +9,11 @@ type AutosaveEvent =
   | { type: 'server-save-failed'; puzzleId: string; error: Error }
 
 export class AutosaveManager {
-  private saveTimer: NodeJS.Timeout | null = null
   private currentPuzzleId: string | null = null
   private getState: (() => SolveState | null) | null = null
   private onServerSave: ServerSaveCallback | null = null
   private isServerSaving = false
+  private pendingServerState: SolveState | null = null
   private handleBeforeUnload = () => this.forceSave()
   private listeners = new Set<(event: AutosaveEvent) => void>()
 
@@ -36,14 +34,6 @@ export class AutosaveManager {
     this.getState = getSolveState
     this.onServerSave = options?.onSave ?? null
 
-    this.saveTimer = setInterval(() => {
-      const state = getSolveState()
-      if (state) {
-        this.saveToBrowser(puzzleId, state)
-        void this.saveToServerIfNeeded(state)
-      }
-    }, AUTOSAVE_INTERVAL)
-
     // Save immediately
     const state = getSolveState()
     if (state) {
@@ -53,13 +43,10 @@ export class AutosaveManager {
   }
 
   public stopAutosave() {
-    if (this.saveTimer) {
-      clearInterval(this.saveTimer)
-      this.saveTimer = null
-    }
     this.getState = null
     this.onServerSave = null
     this.isServerSaving = false
+    this.pendingServerState = null
   }
 
   public forceSave(puzzleId?: string, state?: SolveState) {
@@ -213,7 +200,11 @@ export class AutosaveManager {
   }
 
   private async saveToServerIfNeeded(state: SolveState) {
-    if (!this.onServerSave || this.isServerSaving) return
+    if (!this.onServerSave) return
+    if (this.isServerSaving) {
+      this.pendingServerState = state
+      return
+    }
     this.isServerSaving = true
     if (this.currentPuzzleId) {
       this.emit({ type: 'server-save-start', puzzleId: this.currentPuzzleId })
@@ -238,6 +229,11 @@ export class AutosaveManager {
       }
     } finally {
       this.isServerSaving = false
+      if (this.pendingServerState) {
+        const nextState = this.pendingServerState
+        this.pendingServerState = null
+        void this.saveToServerIfNeeded(nextState)
+      }
     }
   }
 

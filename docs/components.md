@@ -18,8 +18,8 @@ selectClue('across', 12)
 
 ### `AutosaveManager` (`src/lib/autosave.ts`)
 - Browser-only singleton that:
-  - Starts an interval (default 5s) to snapshot `SolveState` into `localStorage`.
-  - Optionally invokes a provided `onSave` callback so pages can sync with the server.
+  - Registers the active puzzle and provides a `forceSave` hook for cell-change-driven saves to `localStorage`.
+  - Optionally invokes a provided `onSave` callback so pages can sync with the server on each change.
   - Normalises `Date` objects during save/load, ensuring hydration is correct.
 - Offers utilities such as `exportSolveState` (pretty JSON string), `importSolveState`, and `cleanupOldSaves`.
 

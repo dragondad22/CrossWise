@@ -69,7 +69,7 @@ sequenceDiagram
 
 ## Solve State Lifecycle
 - When the solver page mounts, it loads autosaved state from `localStorage` and requests `/api/v1/puzzles/:id/solve`. The API validates the session, returns puzzle data and any server-stored solve state.
-- The page merges data, seeds the Zustand store, and starts the autosave loop. Every 5 seconds the autosave manager writes to `localStorage` and invokes the server-sync callback. The callback posts a JSON-serialised solve state to the same endpoint; the server upserts a `Solve` row and stamps `completedAt` if the client reports completion.
+- The page merges data, seeds the Zustand store, and registers autosave handlers. On every cell change (keypress/clear), the autosave manager writes to `localStorage` and invokes the server-sync callback. The callback posts a JSON-serialised solve state to the same endpoint; the server upserts a `Solve` row and stamps `completedAt` if the client reports completion.
 - Manual checks (`letter`, `word`, `puzzle`) leverage the stored solution grid to annotate `checkResults` in the store, which powers clue status styling.
 
 ```mermaid
@@ -87,6 +87,7 @@ sequenceDiagram
     API-->>UI: { puzzle, state? }
     UI->>UI: useAppStore.setPuzzle/solveState
     UI->>Autosave: startAutosave(id, getState, onSave)
+    UI->>Autosave: cell change -> forceSave
     Autosave->>Storage: save JSON snapshot
     Autosave->>API: POST /api/v1/puzzles/:id/solve { state, completed? }
     API->>Prisma: upsert solve row

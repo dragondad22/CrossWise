@@ -24,8 +24,7 @@ describe('AutosaveManager', () => {
     vi.useRealTimers()
   })
 
-  it('saves immediately and on intervals, syncing to server once per tick', async () => {
-    vi.useFakeTimers()
+  it('saves immediately and on demand, syncing to server for each change', async () => {
     const manager = new AutosaveManager()
     const state = createSolveState()
     const onServerSave = vi.fn().mockResolvedValue(undefined)
@@ -36,14 +35,17 @@ describe('AutosaveManager', () => {
     expect(onServerSave).toHaveBeenCalledTimes(1)
     expect(localStorage.getItem('crosswise_solve_puzzle-1')).toBeTruthy()
 
-    await vi.advanceTimersByTimeAsync(5000)
+    manager.forceSave('puzzle-1', {
+      ...state,
+      filledCells: { ...state.filledCells, '0,1': 'B' },
+    })
+    await Promise.resolve()
     expect(onServerSave).toHaveBeenCalledTimes(2)
 
     manager.stopAutosave()
   })
 
   it('emits lifecycle events for local saves and server syncs', async () => {
-    vi.useFakeTimers()
     const manager = new AutosaveManager()
     const state = createSolveState()
     const listener = vi.fn()
@@ -104,7 +106,6 @@ describe('AutosaveManager', () => {
   })
 
   it('forces a save using current registrations when no parameters are provided', async () => {
-    vi.useFakeTimers()
     const manager = new AutosaveManager()
     const state = createSolveState()
     const onServerSave = vi.fn().mockResolvedValue(undefined)
@@ -119,7 +120,6 @@ describe('AutosaveManager', () => {
   })
 
   it('handles server sync failures without leaving the saving flag stuck', async () => {
-    vi.useFakeTimers()
     const manager = new AutosaveManager()
     const state = createSolveState()
     let attempt = 0
@@ -140,14 +140,14 @@ describe('AutosaveManager', () => {
       expect.any(Error),
     )
 
-    await vi.advanceTimersByTimeAsync(5000)
+    manager.forceSave('puzzle-sync', { ...state, filledCells: { '0,0': 'B' } })
+    await Promise.resolve()
     expect(failingSave).toHaveBeenCalledTimes(2)
 
     manager.stopAutosave()
   })
 
   it('emits failure events when server sync throws', async () => {
-    vi.useFakeTimers()
     const manager = new AutosaveManager()
     const state = createSolveState()
     const listener = vi.fn()

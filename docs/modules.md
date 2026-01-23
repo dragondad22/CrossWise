@@ -23,7 +23,7 @@
 | --- | --- | --- | --- |
 | `auth` | `src/lib/auth.ts` | Password hashing & verification, session CRUD, cookie metadata. | Prisma session & user models, crypto, bcrypt |
 | `db` | `src/lib/db.ts` | Exposes a singleton Prisma client to avoid hot-reload leaks. | Prisma |
-| `autosave` | `src/lib/autosave.ts` | Manages timed browser saves and optional server sync callbacks. | `localStorage`, `SolveState`, `SolvePage` |
+| `autosave` | `src/lib/autosave.ts` | Manages change-driven browser saves and optional server sync callbacks. | `localStorage`, `SolveState`, `SolvePage` |
 | `crossword-generator` | `src/lib/crossword-generator.ts` | Deterministic, heuristic backtracking generator for crossword grids and numbering. | `seedrandom`, crossword types |
 | `store` | `src/lib/store.ts` | Zustand store for topics, lists, puzzles, solve state, auth, and helper actions (check, clear, persistence). | `localStorage`, `SolvePage`, topic/list pages |
 | `validation` | `src/lib/validation.ts` | Zod schemas for API requests, list imports, and answer utilities. | API handlers, modals |
