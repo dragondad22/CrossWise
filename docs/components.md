@@ -60,7 +60,7 @@ if (outcome.success) {
 | --- | --- | --- |
 | `AppHeader` | `src/components/AppHeader.tsx` | Displays auth state, triggers logout flow, and navigates back to the homepage. |
 | `CreateTopicModal` / `ImportListModal` / `EditListModal` | `src/components/*Modal.tsx` | Form-heavy components handling validation feedback, dynamic item editing, and sample data loading. |
-| `CrosswordGrid` | `src/components/CrosswordGrid.tsx` | Adapts cell dimensions responsively, maps keyboard events to store actions, highlights selected clues, and renders numbering. |
+| `CrosswordGrid` | `src/components/CrosswordGrid.tsx` | Adapts cell dimensions responsively, maps keyboard events to store actions, highlights selected clues, and renders numbering above filled letters for clarity. |
 | `ClueList` | `src/components/ClueList.tsx` | Search filter, completion status indicator based on `checkResults`, and pointer/keyboard accessible selection. |
 | `PuzzleControls` | `src/components/PuzzleControls.tsx` | Exposes check/clear actions, displays progress stats, and re-routes to topics when needed. |
 | `WinModal` | `src/components/WinModal.tsx` | Simple completed-state CTA, integrates with router to start fresh puzzles or exit. |

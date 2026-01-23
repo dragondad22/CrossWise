@@ -127,6 +127,19 @@ describe('CrosswordGrid', () => {
     expect(selectClueMock).toHaveBeenCalledWith('across', 1)
   })
 
+  it('keeps clue numbers above filled letters', () => {
+    const { getByText } = render(
+      <CrosswordGrid
+        grid={baseGrid}
+        numbering={numbering}
+        solveState={createSolveState({ filledCells: { '0,0': 'H' } })}
+      />,
+    )
+
+    expect(getByText('1')).toHaveClass('z-10')
+    expect(getByText('H')).toHaveClass('z-0')
+  })
+
   it('falls back to selecting the down clue when no across clue matches', async () => {
     render(
       <CrosswordGrid grid={sequentialGrid} numbering={sequentialNumbering} solveState={createSolveState()} />,

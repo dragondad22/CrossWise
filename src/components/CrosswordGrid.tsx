@@ -484,11 +484,14 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
               {cell.type === 'cell' && (
                 <>
                   {getCellNumber(rowIndex, colIndex) && (
-                    <span className="absolute left-1 top-1 text-[10px] font-semibold leading-none text-gray-500">
+                    <span className="absolute left-1 top-1 z-10 text-[10px] font-semibold leading-none text-gray-500">
                       {getCellNumber(rowIndex, colIndex)}
                     </span>
                   )}
-                  <span className="font-mono" style={{ fontSize: Math.max(cellSize * 0.5, 12) }}>
+                  <span
+                    className="relative z-0 font-mono leading-none"
+                    style={{ fontSize: Math.max(cellSize * 0.5, 12) }}
+                  >
                     {getCellLetter(rowIndex, colIndex)}
                   </span>
                 </>
