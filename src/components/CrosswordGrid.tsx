@@ -459,6 +459,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
         className="absolute h-px w-px opacity-0"
         tabIndex={shouldUseVirtualKeyboard ? 0 : -1}
         autoComplete="off"
+        autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
         inputMode="text"

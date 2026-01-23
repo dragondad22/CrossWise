@@ -127,6 +127,16 @@ describe('CrosswordGrid', () => {
     expect(selectClueMock).toHaveBeenCalledWith('across', 1)
   })
 
+  it('disables auto-capitalization on the virtual keyboard input', () => {
+    const { container } = render(
+      <CrosswordGrid grid={baseGrid} numbering={numbering} solveState={createSolveState()} />,
+    )
+
+    const hiddenInput = container.querySelector('input[aria-hidden="true"]') as HTMLInputElement
+    expect(hiddenInput).toBeTruthy()
+    expect(hiddenInput.getAttribute('autocapitalize')).toBe('none')
+  })
+
   it('keeps clue numbers above filled letters', () => {
     const { getByText } = render(
       <CrosswordGrid

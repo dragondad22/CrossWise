@@ -10,16 +10,16 @@ CrossWise is a web application that allows you to upload JSON lists of terms and
 - **JSON Import**: Upload structured word lists with automatic validation
 - **Smart Generation**: Advanced backtracking algorithm creates connected crossword grids
 - **Interactive Solving**: Full-featured puzzle solver with keyboard and touch navigation
-- **Auto-save**: Progress automatically saved to localStorage with resume capability
+- **Auto-save**: Progress saved to localStorage on each cell change with resume capability
 - **User Accounts**: Sign in to sync puzzle progress and completion history per player
-- **Export/Import**: Export puzzles and lists for sharing or backup
+- **Export/Import**: Export lists and solve-state backups for sharing or recovery
 
 ### Technical Features
 
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 - **Accessibility**: Screen reader friendly with proper ARIA roles and keyboard navigation
 - **Performance**: Efficient generation algorithm with <2 second target for 25 words
-- **Data Persistence**: SQLite database with Prisma ORM
+- **Data Persistence**: PostgreSQL database with Prisma ORM
 - **Type Safety**: Full TypeScript implementation with Zod validation
 
 ## 🚀 Getting Started
@@ -44,27 +44,31 @@ cd crosswise
 npm install
 ```
 
-3. Set up the database:
+3. Configure environment variables:
+
+- Create/update `.env` with `DATABASE_URL` (PostgreSQL connection string).
+
+4. Set up the database:
 
 ```bash
 npm run db:push
 ```
 
-4. Seed with sample data (optional):
+5. Seed with sample data (optional):
 
 ```bash
 npm run seed
 ```
 
-5. Start the development server:
+6. Start the development server:
 
 ```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser
+7. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-7. Sign in with the demo account (`demo@crosswise.dev` / `password123`) or create your own profile from the sign-in page to enable per-user progress tracking.
+8. Sign in with the demo account (`demo@crosswise.dev` / `password123`) or create your own profile from the sign-in page to enable per-user progress tracking.
 
 ## 📝 Usage
 
@@ -135,14 +139,14 @@ src/
 │   ├── store.ts              # Zustand state management
 │   └── autosave.ts           # Auto-save functionality
 ├── types/                # TypeScript type definitions
-└── prisma/              # Database schema
+prisma/                   # Database schema & migrations
 ```
 
 ### Key Technologies
 
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
 - **State Management**: Zustand with persistence
-- **Database**: SQLite (dev) / PostgreSQL (prod) with Prisma ORM
+- **Database**: PostgreSQL with Prisma ORM
 - **Validation**: Zod for runtime type checking
 - **Generation**: Custom backtracking algorithm with seedrandom
 
@@ -174,15 +178,12 @@ CrossWise is fully responsive with:
 
 - Touch-friendly grid cells (44px minimum touch targets)
 - Optimized typography and spacing for mobile devices
-- Swipe navigation and gesture support
 - Adaptive clue panel for smaller screens
-- Progressive Web App capabilities (future enhancement)
 
 ## 🔒 Privacy & Security
 
-- **Local-First**: Single-user mode with localStorage persistence
-- **No PII**: No personal information required or stored
-- **Rate Limiting**: API protection against abuse (future enhancement)
+- **Auth-required solving**: Solve flows require an authenticated session.
+- **PII handling**: Email + password hash are stored for accounts; session cookies power auth.
 - **Input Validation**: Server-side validation with Zod
 - **HTTPS Ready**: Secure deployment configuration
 
@@ -223,7 +224,7 @@ CrossWise is fully responsive with:
 
 ## 🔮 Future Enhancements
 
-- **User Authentication**: Multi-user support with Clerk/Supabase Auth
+- **SSO/OAuth**: Add external identity providers
 - **Collaborative Features**: Shared solving sessions
 - **Advanced Export**: PDF and PNG puzzle export
 - **Analytics**: Generation success rates and solving statistics
