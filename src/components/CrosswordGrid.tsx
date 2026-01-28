@@ -452,7 +452,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
   }
 
   return (
-    <div className="flex justify-center p-4">
+    <div className="flex h-full w-full justify-center p-2 sm:p-4">
       <input
         ref={virtualKeyboardInputRef}
         aria-hidden="true"

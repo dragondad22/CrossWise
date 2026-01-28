@@ -36,14 +36,19 @@ export default function SolveSurface({
           <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
             <div
               data-testid="solve-caption"
-              className="w-full rounded-2xl border border-border/60 bg-muted/40 px-4 py-3 text-sm font-medium text-foreground shadow-sm sm:text-base"
+              className="w-full rounded-2xl border border-border/60 bg-muted/40 px-3 py-2 text-sm font-medium text-foreground shadow-sm sm:px-4 sm:py-3 sm:text-base"
             >
               <span className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Selected clue
               </span>
               <span className="mt-1 block">{captionText}</span>
             </div>
-            <CrosswordGrid grid={grid} numbering={numbering} solveState={solveState} />
+            <div
+              data-testid="solve-grid-wrap"
+              className="w-full max-w-[420px] aspect-square sm:aspect-auto sm:max-w-[520px] lg:max-w-[720px]"
+            >
+              <CrosswordGrid grid={grid} numbering={numbering} solveState={solveState} />
+            </div>
           </div>
         </div>
 

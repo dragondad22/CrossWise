@@ -45,10 +45,10 @@ export default function PuzzleControls({
   const stats = getCompletionStats()
 
   return (
-    <div className="sticky top-0 z-30 border-b border-border/60 bg-card/90 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="container mx-auto flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="sticky top-0 z-30 border-b border-border/60 bg-card/90 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-card/80 sm:py-4">
+      <div className="container mx-auto flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="flex flex-1 flex-col gap-2">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-3">
             <button
               onClick={handleExitToTopics}
               className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'px-3 py-1.5' })}
@@ -70,19 +70,19 @@ export default function PuzzleControls({
             {currentPuzzle && (
               <>
                 <span className="text-muted-foreground">•</span>
-                <span className="text-xs uppercase tracking-wide">
+                <span className="hidden text-xs uppercase tracking-wide sm:inline">
                   Seed {currentPuzzle.seed.slice(0, 8)}
                 </span>
               </>
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground sm:gap-3">
             <div className="flex items-center gap-2">
               <div>
                 {stats.filled}/{stats.total} cells filled ({stats.percentage}%)
               </div>
-              <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
+              <div className="h-2 w-24 overflow-hidden rounded-full bg-muted sm:w-32">
                 <div
                   className="h-full rounded-full bg-primary transition-all duration-300"
                   style={{ width: `${stats.percentage}%` }}
@@ -106,7 +106,7 @@ export default function PuzzleControls({
                 {autosaveStatus.message}
               </span>
             )}
-            <div className="text-xs text-muted-foreground">
+            <div className="hidden text-xs text-muted-foreground sm:block">
               Auto-check is on—correct letters lock automatically.
             </div>
           </div>
@@ -131,7 +131,8 @@ export default function PuzzleControls({
               onClick={onExport}
               className={buttonClasses({ variant: 'ghost', size: 'sm', className: 'px-3' })}
             >
-              Export state
+              <span className="hidden sm:inline">Export state</span>
+              <span className="sm:hidden">Export</span>
             </button>
           )}
         </div>
