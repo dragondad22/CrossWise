@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Determine number of items to use (random selection up to 25)
-    const maxItems = Math.min(25, list.items.length)
+    // Determine number of items to use (random selection up to 150)
+    const maxItems = Math.min(150, list.items.length)
     const itemsToUse = list.items
       .sort(() => Math.random() - 0.5) // Shuffle
       .slice(0, maxItems)

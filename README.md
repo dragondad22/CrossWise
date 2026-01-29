@@ -18,7 +18,7 @@ CrossWise is a web application that allows you to upload JSON lists of terms and
 
 - **Responsive Design**: Optimized for desktop, tablet, and mobile devices
 - **Accessibility**: Screen reader friendly with proper ARIA roles and keyboard navigation
-- **Performance**: Efficient generation algorithm with <2 second target for 25 words
+- **Performance**: Efficient generation algorithm with <2 second target for 150 words
 - **Data Persistence**: PostgreSQL database with Prisma ORM
 - **Type Safety**: Full TypeScript implementation with Zod validation
 
@@ -109,13 +109,13 @@ Word lists should follow this schema:
 
 - `answer`: 2-20 characters, A-Z only (auto-normalized)
 - `clue`: 3-200 characters
-- `items`: 5-50 items for best results (sweet spot: 10-25)
+- `items`: 5-150 items for best results (sweet spot: 10-150)
 - `difficulty`: 1-5 (optional)
 
 ### Generating Puzzles
 
 1. From a topic's list view, click "New Game" on any list
-2. The app will generate a crossword using up to 25 random words from the list
+2. The app will generate a crossword using up to 150 random words from the list
 3. Generation uses a deterministic seed for reproducible puzzles
 
 ### Solving Puzzles

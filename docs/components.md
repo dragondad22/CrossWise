@@ -52,7 +52,7 @@ if (outcome.success) {
 | Session probe | `src/app/api/v1/auth/session/route.ts` | Returns `{ user: null }` without error when unauthenticated for easier client hydration. |
 | Topics CRUD | `src/app/api/v1/topics/[id]/route.ts` | Uses Prisma includes for nested list metadata; handles uniqueness and not-found cases. |
 | List fetch/update | `src/app/api/v1/lists/route.ts`, `src/app/api/v1/lists/[id]/route.ts` | Augments results with `userSolves` when a session exists, prevents duplicate answers post-normalisation, maps numeric difficulty to enum values. |
-| Generate puzzle | `src/app/api/v1/puzzles/generate/route.ts` | Shuffles list items, limits to 25, stores generated grid/numbering/settings JSON strings. |
+| Generate puzzle | `src/app/api/v1/puzzles/generate/route.ts` | Shuffles list items, limits to 150, stores generated grid/numbering/settings JSON strings. |
 | Solve state sync | `src/app/api/v1/puzzles/[id]/solve/route.ts` | Enforces authentication, merges stored solve state, upserts completion status. |
 
 ## UI Components

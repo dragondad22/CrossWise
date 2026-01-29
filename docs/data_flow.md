@@ -48,7 +48,7 @@ sequenceDiagram
 - Edits go through `PUT /api/v1/lists/:id`, which normalises answers, enforces uniqueness, updates/deletes/creates items via a transaction, and returns the updated list plus user solve summaries.
 
 ## Puzzle Generation Pipeline
-- `POST /api/v1/puzzles/generate` accepts a list ID and optional seed/grid size. The handler fetches the list, picks up to 25 shuffled items, and feeds them to `CrosswordGenerator`.
+- `POST /api/v1/puzzles/generate` accepts a list ID and optional seed/grid size. The handler fetches the list, picks up to 150 shuffled items, and feeds them to `CrosswordGenerator`.
 - The generator preprocesses answers, evaluates placement candidates with heuristics (intersections, adjacency, connectivity), and keeps the best attempt across retries. On success, the handler persists the grid/numbering/settings JSON blobs and responds with the new puzzle ID.
 
 ```mermaid

@@ -3,155 +3,905 @@
   "name": "Prompt Engineering - Beginner",
   "version": 1,
   "items": [
-    { "answer": "PROMPT", "clue": "Instruction you give the model", "difficulty": 1 },
-    { "answer": "SYSTEMPROMPT", "clue": "Top-level instruction that sets behavior", "difficulty": 1 },
-    { "answer": "USERMESSAGE", "clue": "Content from the user in a chat", "difficulty": 1 },
-    { "answer": "ASSISTANTMESSAGE", "clue": "Model reply content in a chat", "difficulty": 1 },
-    { "answer": "INSTRUCTION", "clue": "Directive telling the model what to do", "difficulty": 1 },
-    { "answer": "CONTEXT", "clue": "Supporting information provided to the model", "difficulty": 1 },
-    { "answer": "CONTEXTWINDOW", "clue": "Maximum tokens the model can attend to", "difficulty": 1 },
-    { "answer": "TOKEN", "clue": "Smallest text chunk used by the model", "difficulty": 1 },
-    { "answer": "TOKENIZATION", "clue": "Process of splitting text into tokens", "difficulty": 1 },
-    { "answer": "TEMPERATURE", "clue": "Controls randomness of sampling", "difficulty": 1 },
-    { "answer": "TOPK", "clue": "Sample from the top K likely tokens", "difficulty": 1 },
-    { "answer": "TOPP", "clue": "Nucleus sampling by cumulative probability", "difficulty": 1 },
-    { "answer": "MAXTOKENS", "clue": "Upper limit for generated tokens", "difficulty": 1 },
-    { "answer": "STOPSEQUENCES", "clue": "Strings that stop further generation", "difficulty": 1 },
-    { "answer": "NGRAM", "clue": "A sequence of N tokens", "difficulty": 1 },
-    { "answer": "FEWSHOT", "clue": "Providing examples in the prompt", "difficulty": 1 },
-    { "answer": "ZEROSHOT", "clue": "No examples; rely on instruction alone", "difficulty": 1 },
-    { "answer": "ONESHOT", "clue": "A single example in the prompt", "difficulty": 1 },
-    { "answer": "CHAINOFTHOUGHT", "clue": "Ask for step-by-step reasoning", "difficulty": 1 },
-    { "answer": "REACT", "clue": "Reasoning and acting with tools", "difficulty": 1 },
-    { "answer": "TOOLUSE", "clue": "Direct the model to use external tools", "difficulty": 1 },
-    { "answer": "FUNCTIONCALLING", "clue": "Structured tool calls with arguments", "difficulty": 1 },
-    { "answer": "TEMPLATE", "clue": "Reusable prompt pattern with slots", "difficulty": 1 },
-    { "answer": "PROMPTTEMPLATE", "clue": "Template used to create prompts", "difficulty": 1 },
-    { "answer": "PLACEHOLDER", "clue": "A slot to be replaced with values", "difficulty": 1 },
-    { "answer": "SLOTFILLING", "clue": "Inserting values into placeholders", "difficulty": 1 },
-    { "answer": "VARIABLES", "clue": "Named values used in templates", "difficulty": 1 },
-    { "answer": "INCONTEXTLEARNING", "clue": "Model learns from examples in prompt", "difficulty": 1 },
-    { "answer": "SYSTEMROLE", "clue": "Declared role for the assistant", "difficulty": 1 },
-    { "answer": "USERROLE", "clue": "Declared role for the user", "difficulty": 1 },
-    { "answer": "ASSISTANTROLE", "clue": "Declared role for the assistant replies", "difficulty": 1 },
-    { "answer": "ROLEPLAYING", "clue": "Assign identities to guide style", "difficulty": 1 },
-    { "answer": "PRIMER", "clue": "Short preface orienting the model", "difficulty": 1 },
-    { "answer": "INSTRUCTIONS", "clue": "List of rules or tasks to follow", "difficulty": 1 },
-    { "answer": "GUIDELINES", "clue": "Stylistic or safety rules to obey", "difficulty": 1 },
-    { "answer": "STYLEGUIDE", "clue": "Rules for tone and formatting", "difficulty": 1 },
-    { "answer": "TONE", "clue": "Emotional voice of the response", "difficulty": 1 },
-    { "answer": "FORMAT", "clue": "Output structure requested", "difficulty": 1 },
-    { "answer": "JSONOUTPUT", "clue": "Ask for JSON-formatted output", "difficulty": 1 },
-    { "answer": "XMLOUTPUT", "clue": "Ask for XML-formatted output", "difficulty": 1 },
-    { "answer": "BULLETS", "clue": "Bullet list formatting", "difficulty": 1 },
-    { "answer": "STEPS", "clue": "Numbered steps formatting", "difficulty": 1 },
-    { "answer": "CHECKLIST", "clue": "A list of items to verify", "difficulty": 1 },
-    { "answer": "CRITERIA", "clue": "Explicit requirements for success", "difficulty": 1 },
-    { "answer": "EXPLICITNESS", "clue": "Be direct and unambiguous", "difficulty": 1 },
-    { "answer": "CLARITY", "clue": "Make the request easy to understand", "difficulty": 1 },
-    { "answer": "CONCISION", "clue": "Keep the prompt brief and focused", "difficulty": 1 },
-    { "answer": "SPECIFICITY", "clue": "Provide precise details and constraints", "difficulty": 1 },
-    { "answer": "CONSTRAINTS", "clue": "Hard requirements to follow", "difficulty": 1 },
-    { "answer": "DELIMITERS", "clue": "Markers to separate sections", "difficulty": 1 },
-    { "answer": "SAFETY", "clue": "Keep outputs harmless and compliant", "difficulty": 1 },
-    { "answer": "GUARDRAILS", "clue": "Rules to keep responses on policy", "difficulty": 1 },
-    { "answer": "REDTEAMING", "clue": "Testing prompts for safety issues", "difficulty": 1 },
-    { "answer": "HARMFULCONTENT", "clue": "Undesired unsafe output categories", "difficulty": 1 },
-    { "answer": "POLICY", "clue": "Rules the model should follow", "difficulty": 1 },
-    { "answer": "POLICYCOMPLIANCE", "clue": "Adhering to safety policies", "difficulty": 1 },
-    { "answer": "HALLUCINATION", "clue": "Confident but incorrect output", "difficulty": 1 },
-    { "answer": "FACTUALITY", "clue": "Accuracy of the generated content", "difficulty": 1 },
-    { "answer": "CITATIONS", "clue": "References that support claims", "difficulty": 1 },
-    { "answer": "SOURCES", "clue": "Documents that back up answers", "difficulty": 1 },
-    { "answer": "JSONSCHEMA", "clue": "Schema to validate JSON output", "difficulty": 1 },
-    { "answer": "VALIDATION", "clue": "Checking format or correctness", "difficulty": 1 },
-    { "answer": "PARSING", "clue": "Reading structured output reliably", "difficulty": 1 },
-    { "answer": "FORMATINSTRUCTIONS", "clue": "Directions for exact output format", "difficulty": 1 },
-    { "answer": "FEWSHOTEXAMPLES", "clue": "Example pairs placed in the prompt", "difficulty": 1 },
-    { "answer": "1PROMPTCHAINING", "clue": "Link outputs across multiple prompts", "difficulty": 1 },
-    { "answer": "SELFCONSISTENCY", "clue": "Sample multiple chains then vote", "difficulty": 1 },
-    { "answer": "REFLECTION", "clue": "Have the model review its answer", "difficulty": 1 },
-    { "answer": "SELFCRITIQUE", "clue": "Ask the model to critique itself", "difficulty": 1 },
-    { "answer": "CRITIQUELOOP", "clue": "Iterate critique and revision", "difficulty": 1 },
-    { "answer": "ITERATION", "clue": "Improve prompts across versions", "difficulty": 1 },
-    { "answer": "REFINEMENT", "clue": "Small edits to improve results", "difficulty": 1 },
-    { "answer": "REWRITE", "clue": "Ask to rewrite with constraints", "difficulty": 1 },
-    { "answer": "SUMMARIZATION", "clue": "Condense text while preserving meaning", "difficulty": 1 },
-    { "answer": "PARAPHRASING", "clue": "Restate text in new words", "difficulty": 1 },
-    { "answer": "EXTRACTION", "clue": "Pull key fields from text", "difficulty": 1 },
-    { "answer": "CLASSIFICATION", "clue": "Assign labels to text", "difficulty": 1 },
-    { "answer": "TRANSLATION", "clue": "Convert text to another language", "difficulty": 1 },
-    { "answer": "STYLETRANSFER", "clue": "Adopt a target writing style", "difficulty": 1 },
-    { "answer": "ROLEINSTRUCTIONS", "clue": "Rules tied to a specific role", "difficulty": 1 },
-    { "answer": "CONTENTPOLICY", "clue": "Rules about allowed content", "difficulty": 1 },
-    { "answer": "NONDISCLOSURE", "clue": "Avoid revealing sensitive info", "difficulty": 1 },
-    { "answer": "BIAS", "clue": "Systematic favoritism in outputs", "difficulty": 1 },
-    { "answer": "MITIGATION", "clue": "Reduce bias or risk", "difficulty": 1 },
-    { "answer": "PROMPTLEAKAGE", "clue": "Revealing hidden instructions", "difficulty": 1 },
-    { "answer": "PROMPTINJECTION", "clue": "User text tries to override rules", "difficulty": 1 },
-    { "answer": "SANDBOXING", "clue": "Isolate tool actions and data", "difficulty": 1 },
-    { "answer": "ESCALATION", "clue": "Hand off to a human when needed", "difficulty": 1 },
-    { "answer": "SYSTEMMESSAGE", "clue": "Special message that sets behavior", "difficulty": 1 },
-    { "answer": "FEEDBACK", "clue": "Information used to improve outputs", "difficulty": 1 },
-    { "answer": "RUBRIC", "clue": "Scoring guide for evaluation", "difficulty": 1 },
-    { "answer": "SCORING", "clue": "Assign a score to outputs", "difficulty": 1 },
-    { "answer": "EVALUATION", "clue": "Assess model quality", "difficulty": 1 },
-    { "answer": "TESTCASES", "clue": "Prompts used to test behavior", "difficulty": 1 },
-    { "answer": "BENCHMARKS", "clue": "Standard tasks for comparison", "difficulty": 1 },
-    { "answer": "METRICS", "clue": "Numbers that summarize performance", "difficulty": 1 },
-    { "answer": "LATENCY", "clue": "Time it takes to respond", "difficulty": 1 },
-    { "answer": "COST", "clue": "Tokens used or money spent", "difficulty": 1 },
-    { "answer": "RATELIMIT", "clue": "Maximum requests allowed per time", "difficulty": 1 },
-    { "answer": "RETRIEVAL", "clue": "Bring external knowledge to the prompt", "difficulty": 1 },
-    { "answer": "RAG", "clue": "Retrieval augmented generation", "difficulty": 1 },
-    { "answer": "EMBEDDINGS", "clue": "Vector representations of text", "difficulty": 1 },
-    { "answer": "CHUNKING", "clue": "Split docs into smaller parts", "difficulty": 1 },
-    { "answer": "CHUNKOVERLAP", "clue": "Overlap between adjacent chunks", "difficulty": 1 },
-    { "answer": "INDEX", "clue": "Structure to search chunks fast", "difficulty": 1 },
-    { "answer": "VECTORSTORE", "clue": "Database for embeddings", "difficulty": 1 },
-    { "answer": "SIMILARITY", "clue": "How close two vectors are", "difficulty": 1 },
-    { "answer": "TOPICS", "clue": "Subjects the text is about", "difficulty": 1 },
-    { "answer": "KEYWORDS", "clue": "Important words for search", "difficulty": 1 },
-    { "answer": "QUERY", "clue": "Search request to fetch docs", "difficulty": 1 },
-    { "answer": "QUERYEXPANSION", "clue": "Add terms to improve search", "difficulty": 1 },
-    { "answer": "RELEVANCE", "clue": "Match between docs and query", "difficulty": 1 },
-    { "answer": "CITATIONSTYLE", "clue": "Rules for formatting sources", "difficulty": 1 },
-    { "answer": "SOURCING", "clue": "Provide where information came from", "difficulty": 1 },
-    { "answer": "KNOWLEDGE", "clue": "Information used to answer", "difficulty": 1 },
-    { "answer": "MEMORY", "clue": "Persist helpful facts across turns", "difficulty": 1 },
-    { "answer": "PROMPTMEMORY", "clue": "Memory referenced in prompts", "difficulty": 1 },
-    { "answer": "SESSIONSTATE", "clue": "Data carried across messages", "difficulty": 1 },
-    { "answer": "STATE", "clue": "Stored context for continuity", "difficulty": 1 },
-    { "answe1r": "STEPBYSTEP", "clue": "Ask for a sequence of steps", "difficulty": 1 },
-    { "answer": "HINTS", "clue": "Small clues to guide answers", "difficulty": 1 },
-    { "answer": "EXPLANATION", "clue": "Describe why an answer is correct", "difficulty": 1 },
-    { "answer": "JUSTIFICATION", "clue": "Provide reasons behind a choice", "difficulty": 1 },
-    { "answer": "RATIONALE", "clue": "Underlying reasoning for output", "difficulty": 1 },
-    { "answer": "CHECKWORK", "clue": "Ask the model to verify itself", "difficulty": 1 },
-    { "answer": "ERRORANALYSIS", "clue": "Explain mistakes that occurred", "difficulty": 1 },
-    { "answer": "DEBUGGING", "clue": "Find and fix issues", "difficulty": 1 },
-    { "answer": "TRACE", "clue": "Follow steps taken to reach output", "difficulty": 1 },
-    { "answer": "DIAGNOSIS", "clue": "Identify the cause of an issue", "difficulty": 1 },
-    { "answer": "PLANNING", "clue": "Lay out tasks before answering", "difficulty": 1 },
-    { "answer": "SUBTASKS", "clue": "Smaller parts of a big task", "difficulty": 1 },
-    { "answer": "DECOMPOSITION", "clue": "Break a problem into parts", "difficulty": 1 },
-    { "answer": "OUTLINE", "clue": "High-level structure of an answer", "difficulty": 1 },
-    { "answer": "BULLETPOINTS", "clue": "List items as bullets", "difficulty": 1 },
-    { "answer": "HEADING", "clue": "Title at the top of a section", "difficulty": 1 },
-    { "answer": "MARKDOWN", "clue": "Lightweight text formatting", "difficulty": 1 },
-    { "answer": "CODEBLOCKS", "clue": "Fenced code sections in markdown", "difficulty": 1 },
-    { "answer": "ESCAPING", "clue": "Protect special characters", "difficulty": 1 },
-    { "answer": "EXAMPLES", "clue": "Concrete input-output pairs", "difficulty": 1 },
-    { "answer": "NEGATIVEPROMPT", "clue": "What to avoid in the output", "difficulty": 1 },
-    { "answer": "POSITIVEPROMPT", "clue": "What to emphasize in the output", "difficulty": 1 },
-    { "answer": "DISAMBIGUATION", "clue": "Resolve ambiguity in a request", "difficulty": 1 },
-    { "answer": "AMBIGUITY", "clue": "Unclear meaning in the prompt", "difficulty": 1 },
-    { "answer": "ASSUMPTIONS", "clue": "Background beliefs in an answer", "difficulty": 1 },
-    { "answer": "SCOPE", "clue": "Boundaries of what to cover", "difficulty": 1 },
-    { "answer": "CONSTRAINT", "clue": "A single required condition", "difficulty": 1 },
-    { "answer": "DELIMITER", "clue": "A marker that separates parts", "difficulty": 1 },
-    { "answer": "ANNOTATION", "clue": "Add notes to text or data", "difficulty": 1 },
-    { "answer": "FEEDBACKLOOP", "clue": "Use feedback to improve next run", "difficulty": 1 },
-    { "answer": "POSTPROCESSING", "clue": "Adjust output after generation", "difficulty": 1 }
+    {
+      "answer": "PROMPT",
+      "clue": "Instruction you give the model",
+      "difficulty": 1,
+      "note": "A prompt is the instruction you give the model, like a question on a worksheet. The clearer the prompt, the easier it is for the model to answer well."
+    },
+    {
+      "answer": "SYSTEMPROMPT",
+      "clue": "Top-level instruction that sets behavior (2 words [6,6])",
+      "difficulty": 1,
+      "note": "The system prompt is the foundation that guides the model\u2019s behavior across the whole chat. Think of it like the classroom rules on the wall\u2014always there and always in effect."
+    },
+    {
+      "answer": "USERMESSAGE",
+      "clue": "Content from the user in a chat (2 words [4,7])",
+      "difficulty": 1,
+      "note": "A user message is what the person types into the chat. It\u2019s like a student raising their hand and asking a question."
+    },
+    {
+      "answer": "ASSISTANTMESSAGE",
+      "clue": "Model reply content in a chat (2 words [9,7])",
+      "difficulty": 1,
+      "note": "An assistant message is the model\u2019s reply. It\u2019s the response you get back after you ask a question."
+    },
+    {
+      "answer": "INSTRUCTION",
+      "clue": "Directive telling the model what to do",
+      "difficulty": 1,
+      "note": "An instruction tells the model what to do. It\u2019s like giving a task in plain language so it knows the goal."
+    },
+    {
+      "answer": "CONTEXT",
+      "clue": "Supporting information provided to the model",
+      "difficulty": 1,
+      "note": "Context is the extra information that helps the model answer correctly. Think of it as the background story before the question."
+    },
+    {
+      "answer": "CONTEXTWINDOW",
+      "clue": "Maximum tokens the model can attend to (2 words [7,6])",
+      "difficulty": 1,
+      "note": "The context window is how much text the model can keep in mind at once. It\u2019s like the size of the model\u2019s short\u2011term memory."
+    },
+    {
+      "answer": "TOKEN",
+      "clue": "Smallest text chunk used by the model",
+      "difficulty": 1,
+      "note": "A token is a small chunk of text the model reads and writes. You can think of it as the model\u2019s basic building block."
+    },
+    {
+      "answer": "TOKENIZATION",
+      "clue": "Process of splitting text into tokens",
+      "difficulty": 1,
+      "note": "Tokenization is the process of splitting text into tokens. It\u2019s like cutting a sentence into bite\u2011size pieces."
+    },
+    {
+      "answer": "TEMPERATURE",
+      "clue": "Controls randomness of sampling",
+      "difficulty": 1,
+      "note": "Temperature controls how random or creative the model\u2019s answers are. Low temperature is steady and focused; high temperature is more playful."
+    },
+    {
+      "answer": "TOPK",
+      "clue": "Sample from the top K likely tokens (2 words [3,1])",
+      "difficulty": 1,
+      "note": "Top K means the model only considers the K most likely next tokens. It is like choosing from a short list of best guesses."
+    },
+    {
+      "answer": "TOPP",
+      "clue": "Nucleus sampling by cumulative probability (2 words [3,1])",
+      "difficulty": 1,
+      "note": "Top P means the model chooses from tokens that add up to a probability threshold. It is like picking from a flexible shortlist that changes each time."
+    },
+    {
+      "answer": "MAXTOKENS",
+      "clue": "Upper limit for generated tokens (2 words [3,6])",
+      "difficulty": 1,
+      "note": "Max tokens sets the upper limit on how long the response can be. It\u2019s like a word count cap for the model."
+    },
+    {
+      "answer": "STOPSEQUENCES",
+      "clue": "Strings that stop further generation (2 words [4,9])",
+      "difficulty": 1,
+      "note": "Stop sequences are strings that tell the model to stop generating. They\u2019re like a finish line the model won\u2019t cross."
+    },
+    {
+      "answer": "NGRAM",
+      "clue": "A sequence of N tokens",
+      "difficulty": 1,
+      "note": "An n\u2011gram is a sequence of N tokens. It\u2019s like looking at words in small groups, one window at a time."
+    },
+    {
+      "answer": "FEWSHOT",
+      "clue": "Providing examples in the prompt (2 words [3,4])",
+      "difficulty": 1,
+      "note": "Few\u2011shot means you include a few examples to guide the model. It\u2019s like showing a couple sample problems before the test."
+    },
+    {
+      "answer": "ZEROSHOT",
+      "clue": "No examples; rely on instruction alone (2 words [4,4])",
+      "difficulty": 1,
+      "note": "Zero\u2011shot means you give no examples, only the instruction. It\u2019s like asking a question cold with no practice."
+    },
+    {
+      "answer": "ONESHOT",
+      "clue": "A single example in the prompt (2 words [3,4])",
+      "difficulty": 1,
+      "note": "One\u2011shot means you include a single example. It\u2019s like giving just one worked example before the real task."
+    },
+    {
+      "answer": "CHAINOFTHOUGHT",
+      "clue": "Ask for step-by-step reasoning (3 words [5,2,7])",
+      "difficulty": 1,
+      "note": "Chain of thought asks the model to reason step by step. It\u2019s like showing your work on a math problem."
+    },
+    {
+      "answer": "REACT",
+      "clue": "Reasoning and acting with tools",
+      "difficulty": 1,
+      "note": "ReAct is a style where the model reasons and then takes actions with tools. Think of it as planning and doing, back\u2011to\u2011back."
+    },
+    {
+      "answer": "TOOLUSE",
+      "clue": "Direct the model to use external tools (2 words [4,3])",
+      "difficulty": 1,
+      "note": "Tool use means the model is directed to call external tools. It\u2019s like letting the model use a calculator or a search engine."
+    },
+    {
+      "answer": "FUNCTIONCALLING",
+      "clue": "Structured tool calls with arguments (2 words [8,7])",
+      "difficulty": 1,
+      "note": "Function calling is a structured way for the model to request tools. It\u2019s like filling out a form so the tool knows exactly what to do."
+    },
+    {
+      "answer": "TEMPLATE",
+      "clue": "Reusable prompt pattern with slots",
+      "difficulty": 1,
+      "note": "A template is a reusable prompt pattern with blanks to fill. It\u2019s like a worksheet with empty fields."
+    },
+    {
+      "answer": "PROMPTTEMPLATE",
+      "clue": "Template used to create prompts (2 words [6,8])",
+      "difficulty": 1,
+      "note": "A prompt template is a template made specifically for prompts. It helps you reuse a good prompt shape again and again."
+    },
+    {
+      "answer": "PLACEHOLDER",
+      "clue": "A slot to be replaced with values",
+      "difficulty": 1,
+      "note": "A placeholder is a spot where real values will be inserted later. It\u2019s like a blank line waiting for the answer."
+    },
+    {
+      "answer": "SLOTFILLING",
+      "clue": "Inserting values into placeholders (2 words [4,7])",
+      "difficulty": 1,
+      "note": "Slot filling means inserting values into placeholders. It\u2019s like completing the blanks in a form."
+    },
+    {
+      "answer": "VARIABLES",
+      "clue": "Named values used in templates",
+      "difficulty": 1,
+      "note": "Variables are named values you can swap in and out. They\u2019re like labels on jars so you know what goes where."
+    },
+    {
+      "answer": "INCONTEXTLEARNING",
+      "clue": "Model learns from examples in prompt (3 words [2,7,8])",
+      "difficulty": 1,
+      "note": "In\u2011context learning is when the model learns from examples inside the prompt. It\u2019s like learning by looking at worked examples right in the question."
+    },
+    {
+      "answer": "SYSTEMROLE",
+      "clue": "Declared role for the assistant (2 words [6,4])",
+      "difficulty": 1,
+      "note": "System role sets the assistant\u2019s role at the highest level. It\u2019s like the job title printed on the name badge."
+    },
+    {
+      "answer": "USERROLE",
+      "clue": "Declared role for the user (2 words [4,4])",
+      "difficulty": 1,
+      "note": "User role labels the user\u2019s messages. It\u2019s like tagging which side of a conversation a line belongs to."
+    },
+    {
+      "answer": "ASSISTANTROLE",
+      "clue": "Declared role for the assistant replies (2 words [9,4])",
+      "difficulty": 1,
+      "note": "Assistant role labels the assistant\u2019s messages. It\u2019s like marking which replies come from the model."
+    },
+    {
+      "answer": "ROLEPLAYING",
+      "clue": "Assign identities to guide style (2 words [4,7])",
+      "difficulty": 1,
+      "note": "Roleplaying assigns identities to shape style and tone. It\u2019s like telling the model to act as a teacher or coach."
+    },
+    {
+      "answer": "PRIMER",
+      "clue": "Short preface orienting the model",
+      "difficulty": 1,
+      "note": "A primer is a short preface that orients the model. It\u2019s like a warm\u2011up before the main question."
+    },
+    {
+      "answer": "INSTRUCTIONS",
+      "clue": "List of rules or tasks to follow",
+      "difficulty": 1,
+      "note": "Instructions are the list of rules or tasks to follow. They\u2019re like the checklist at the top of an assignment."
+    },
+    {
+      "answer": "GUIDELINES",
+      "clue": "Stylistic or safety rules to obey",
+      "difficulty": 1,
+      "note": "Guidelines are style or safety rules to obey. Think of them as friendly guardrails for the response."
+    },
+    {
+      "answer": "STYLEGUIDE",
+      "clue": "Rules for tone and formatting (2 words [5,5])",
+      "difficulty": 1,
+      "note": "A style guide sets tone and formatting rules. It\u2019s like a writing rubric for the model."
+    },
+    {
+      "answer": "TONE",
+      "clue": "Emotional voice of the response",
+      "difficulty": 1,
+      "note": "Tone is the emotional voice of a response. It\u2019s the difference between a friendly answer and a formal one."
+    },
+    {
+      "answer": "FORMAT",
+      "clue": "Output structure requested",
+      "difficulty": 1,
+      "note": "Format is the structure of the output you request. It\u2019s like asking for an answer in bullets or a table."
+    },
+    {
+      "answer": "JSONOUTPUT",
+      "clue": "Ask for JSON-formatted output (2 words [4,6])",
+      "difficulty": 1,
+      "note": "JSON output means the model should reply in JSON. It\u2019s like asking for the answer in a specific container."
+    },
+    {
+      "answer": "XMLOUTPUT",
+      "clue": "Ask for XML-formatted output (2 words [3,6])",
+      "difficulty": 1,
+      "note": "XML output means the model should reply in XML. It\u2019s another structured container, like a labeled tree."
+    },
+    {
+      "answer": "BULLETS",
+      "clue": "Bullet list formatting",
+      "difficulty": 1,
+      "note": "Bullets mean the answer should be a list. It\u2019s like turning ideas into easy\u2011to\u2011scan points."
+    },
+    {
+      "answer": "STEPS",
+      "clue": "Numbered steps formatting",
+      "difficulty": 1,
+      "note": "Steps mean the answer should be numbered in order. It\u2019s like a recipe with clear sequence."
+    },
+    {
+      "answer": "CHECKLIST",
+      "clue": "A list of items to verify",
+      "difficulty": 1,
+      "note": "A checklist is a list of items to verify. It\u2019s like a to\u2011do list for correctness."
+    },
+    {
+      "answer": "CRITERIA",
+      "clue": "Explicit requirements for success",
+      "difficulty": 1,
+      "note": "Criteria are the requirements for success. They\u2019re like the grading rules for the answer."
+    },
+    {
+      "answer": "EXPLICITNESS",
+      "clue": "Be direct and unambiguous",
+      "difficulty": 1,
+      "note": "Explicitness means being direct and unambiguous. It\u2019s like using clear signs instead of vague hints."
+    },
+    {
+      "answer": "CLARITY",
+      "clue": "Make the request easy to understand",
+      "difficulty": 1,
+      "note": "Clarity means making the request easy to understand. It\u2019s like using simple, clean handwriting."
+    },
+    {
+      "answer": "CONCISION",
+      "clue": "Keep the prompt brief and focused",
+      "difficulty": 1,
+      "note": "Concision means keeping the prompt brief and focused. It is like trimming extra words to get to the point."
+    },
+    {
+      "answer": "SPECIFICITY",
+      "clue": "Provide precise details and constraints",
+      "difficulty": 1,
+      "note": "Specificity means providing precise details and constraints. It\u2019s like giving exact measurements in a recipe."
+    },
+    {
+      "answer": "CONSTRAINTS",
+      "clue": "Hard requirements to follow",
+      "difficulty": 1,
+      "note": "Constraints are hard requirements to follow. They\u2019re like the rules in a game that define what\u2019s allowed."
+    },
+    {
+      "answer": "DELIMITERS",
+      "clue": "Markers to separate sections",
+      "difficulty": 1,
+      "note": "Delimiters are markers that separate sections. It\u2019s like using dividers between folders."
+    },
+    {
+      "answer": "SAFETY",
+      "clue": "Keep outputs harmless and compliant",
+      "difficulty": 1,
+      "note": "Safety means keeping outputs harmless and compliant. It\u2019s like wearing a seatbelt while you drive."
+    },
+    {
+      "answer": "GUARDRAILS",
+      "clue": "Rules to keep responses on policy",
+      "difficulty": 1,
+      "note": "Guardrails are rules that keep responses on policy. Think of them as the safety rails on a bridge."
+    },
+    {
+      "answer": "REDTEAMING",
+      "clue": "Testing prompts for safety issues (2 words [3,7])",
+      "difficulty": 1,
+      "note": "Red teaming is testing prompts for safety issues. It\u2019s like stress\u2011testing a bridge before people use it."
+    },
+    {
+      "answer": "HARMFULCONTENT",
+      "clue": "Undesired unsafe output categories (2 words [7,7])",
+      "difficulty": 1,
+      "note": "Harmful content refers to unsafe or undesired output types. It\u2019s like a list of things the model should avoid."
+    },
+    {
+      "answer": "POLICY",
+      "clue": "Rules the model should follow",
+      "difficulty": 1,
+      "note": "Policy is the set of rules the model should follow. It\u2019s like a school rulebook for responses."
+    },
+    {
+      "answer": "POLICYCOMPLIANCE",
+      "clue": "Adhering to safety policies (2 words [6,10])",
+      "difficulty": 1,
+      "note": "Policy compliance means following the safety rules correctly. It\u2019s like staying within the boundaries of the rulebook."
+    },
+    {
+      "answer": "HALLUCINATION",
+      "clue": "Confident but incorrect output",
+      "difficulty": 1,
+      "note": "A hallucination is a confident but incorrect output. It\u2019s like guessing and sounding sure even when you\u2019re wrong."
+    },
+    {
+      "answer": "FACTUALITY",
+      "clue": "Accuracy of the generated content",
+      "difficulty": 1,
+      "note": "Factuality is the accuracy of the generated content. It\u2019s like checking facts before you speak."
+    },
+    {
+      "answer": "CITATIONS",
+      "clue": "References that support claims",
+      "difficulty": 1,
+      "note": "Citations are references that support claims. They\u2019re like footnotes that show where information came from."
+    },
+    {
+      "answer": "SOURCES",
+      "clue": "Documents that back up answers",
+      "difficulty": 1,
+      "note": "Sources are the documents that back up answers. They\u2019re like the books you used to study."
+    },
+    {
+      "answer": "JSONSCHEMA",
+      "clue": "Schema to validate JSON output (2 words [4,6])",
+      "difficulty": 1,
+      "note": "A JSON schema is a blueprint to validate JSON output. It\u2019s like a mold that shapes and checks the data."
+    },
+    {
+      "answer": "VALIDATION",
+      "clue": "Checking format or correctness",
+      "difficulty": 1,
+      "note": "Validation is checking format or correctness. It\u2019s like a quick inspection before you submit work."
+    },
+    {
+      "answer": "PARSING",
+      "clue": "Reading structured output reliably",
+      "difficulty": 1,
+      "note": "Parsing means reading structured output reliably. It\u2019s like translating a form into usable data."
+    },
+    {
+      "answer": "FORMATINSTRUCTIONS",
+      "clue": "Directions for exact output format (2 words [6,12])",
+      "difficulty": 1,
+      "note": "Format instructions tell the model the exact output structure. It\u2019s like a template you must follow."
+    },
+    {
+      "answer": "FEWSHOTEXAMPLES",
+      "clue": "Example pairs placed in the prompt (3 words [3,4,8])",
+      "difficulty": 1,
+      "note": "Few\u2011shot examples are example pairs placed in the prompt. It\u2019s like showing a couple solved problems."
+    },
+    {
+      "answer": "1PROMPTCHAINING",
+      "clue": "Link outputs across multiple prompts (2 words [6,8])",
+      "difficulty": 1,
+      "note": "Prompt chaining links outputs across multiple prompts. It\u2019s like passing the baton from one step to the next."
+    },
+    {
+      "answer": "SELFCONSISTENCY",
+      "clue": "Sample multiple chains then vote (2 words [4,11])",
+      "difficulty": 1,
+      "note": "Self\u2011consistency samples multiple reasoning paths and then chooses the best. It\u2019s like taking several routes and picking the one that agrees most."
+    },
+    {
+      "answer": "REFLECTION",
+      "clue": "Have the model review its answer",
+      "difficulty": 1,
+      "note": "Reflection asks the model to review its answer. It\u2019s like proofreading before turning in homework."
+    },
+    {
+      "answer": "SELFCRITIQUE",
+      "clue": "Ask the model to critique itself (2 words [4,8])",
+      "difficulty": 1,
+      "note": "Self\u2011critique asks the model to critique itself. It\u2019s like having the model be its own teacher for a moment."
+    },
+    {
+      "answer": "CRITIQUELOOP",
+      "clue": "Iterate critique and revision (2 words [8,4])",
+      "difficulty": 1,
+      "note": "A critique loop repeats critique and revision. It\u2019s like drafting, getting feedback, and revising again."
+    },
+    {
+      "answer": "ITERATION",
+      "clue": "Improve prompts across versions",
+      "difficulty": 1,
+      "note": "Iteration means improving prompts across versions. It\u2019s like making drafts until it feels right."
+    },
+    {
+      "answer": "REFINEMENT",
+      "clue": "Small edits to improve results",
+      "difficulty": 1,
+      "note": "Refinement is a small edit to improve results. It\u2019s like polishing a sentence for clarity."
+    },
+    {
+      "answer": "REWRITE",
+      "clue": "Ask to rewrite with constraints",
+      "difficulty": 1,
+      "note": "Rewrite means asking for a new version with constraints. It\u2019s like rephrasing a sentence to fit a rule."
+    },
+    {
+      "answer": "SUMMARIZATION",
+      "clue": "Condense text while preserving meaning",
+      "difficulty": 1,
+      "note": "Summarization condenses text while preserving meaning. It\u2019s like shrinking a paragraph into a headline."
+    },
+    {
+      "answer": "PARAPHRASING",
+      "clue": "Restate text in new words",
+      "difficulty": 1,
+      "note": "Paraphrasing restates text in new words. It\u2019s like saying the same idea in your own voice."
+    },
+    {
+      "answer": "EXTRACTION",
+      "clue": "Pull key fields from text",
+      "difficulty": 1,
+      "note": "Extraction pulls key fields from text. It\u2019s like plucking the important facts from a story."
+    },
+    {
+      "answer": "CLASSIFICATION",
+      "clue": "Assign labels to text",
+      "difficulty": 1,
+      "note": "Classification assigns labels to text. It\u2019s like sorting cards into labeled piles."
+    },
+    {
+      "answer": "TRANSLATION",
+      "clue": "Convert text to another language",
+      "difficulty": 1,
+      "note": "Translation converts text to another language. It\u2019s like speaking the same thought in a different tongue."
+    },
+    {
+      "answer": "STYLETRANSFER",
+      "clue": "Adopt a target writing style (2 words [5,8])",
+      "difficulty": 1,
+      "note": "Style transfer adopts a target writing style. It\u2019s like dressing the same idea in a new outfit."
+    },
+    {
+      "answer": "ROLEINSTRUCTIONS",
+      "clue": "Rules tied to a specific role (2 words [4,12])",
+      "difficulty": 1,
+      "note": "Role instructions are rules tied to a specific role. It\u2019s like giving a character a script to follow."
+    },
+    {
+      "answer": "CONTENTPOLICY",
+      "clue": "Rules about allowed content (2 words [7,6])",
+      "difficulty": 1,
+      "note": "Content policy is the rules about allowed content. It\u2019s like a classroom list of what\u2019s okay to say."
+    },
+    {
+      "answer": "NONDISCLOSURE",
+      "clue": "Avoid revealing sensitive info (2 words [3,9])",
+      "difficulty": 1,
+      "note": "Nondisclosure means avoiding sensitive or private info. It\u2019s like keeping a secret that isn\u2019t yours to share."
+    },
+    {
+      "answer": "BIAS",
+      "clue": "Systematic favoritism in outputs",
+      "difficulty": 1,
+      "note": "Bias is systematic favoritism in outputs. It\u2019s like a scale that\u2019s tilted to one side."
+    },
+    {
+      "answer": "MITIGATION",
+      "clue": "Reduce bias or risk",
+      "difficulty": 1,
+      "note": "Mitigation reduces bias or risk. It\u2019s like putting cushions around sharp edges."
+    },
+    {
+      "answer": "PROMPTLEAKAGE",
+      "clue": "Revealing hidden instructions (2 words [6,7])",
+      "difficulty": 1,
+      "note": "Prompt leakage is revealing hidden instructions. It\u2019s like peeking at the teacher\u2019s answer key."
+    },
+    {
+      "answer": "PROMPTINJECTION",
+      "clue": "User text tries to override rules (2 words [6,9])",
+      "difficulty": 1,
+      "note": "Prompt injection is when user text tries to override the rules. It\u2019s like someone trying to sneak new rules into the game."
+    },
+    {
+      "answer": "SANDBOXING",
+      "clue": "Isolate tool actions and data",
+      "difficulty": 1,
+      "note": "Sandboxing isolates tool actions and data. It\u2019s like letting a kid play in a fenced area."
+    },
+    {
+      "answer": "ESCALATION",
+      "clue": "Hand off to a human when needed",
+      "difficulty": 1,
+      "note": "Escalation means handing off to a human when needed. It\u2019s like calling a specialist for a tough case."
+    },
+    {
+      "answer": "SYSTEMMESSAGE",
+      "clue": "Special message that sets behavior (2 words [6,7])",
+      "difficulty": 1,
+      "note": "A system message sets behavior for the model. Think of it like the teacher\u2019s opening announcement for the day."
+    },
+    {
+      "answer": "FEEDBACK",
+      "clue": "Information used to improve outputs",
+      "difficulty": 1,
+      "note": "Feedback is information used to improve outputs. It\u2019s like notes from a coach after practice."
+    },
+    {
+      "answer": "RUBRIC",
+      "clue": "Scoring guide for evaluation",
+      "difficulty": 1,
+      "note": "A rubric is a scoring guide for evaluation. It\u2019s like the checklist a teacher uses to grade."
+    },
+    {
+      "answer": "SCORING",
+      "clue": "Assign a score to outputs",
+      "difficulty": 1,
+      "note": "Scoring assigns a score to outputs. It\u2019s like giving points for a completed task."
+    },
+    {
+      "answer": "EVALUATION",
+      "clue": "Assess model quality",
+      "difficulty": 1,
+      "note": "Evaluation assesses model quality. It\u2019s like a report card for performance."
+    },
+    {
+      "answer": "TESTCASES",
+      "clue": "Prompts used to test behavior (2 words [4,5])",
+      "difficulty": 1,
+      "note": "Test cases are prompts used to test behavior. It\u2019s like practice quizzes to check understanding."
+    },
+    {
+      "answer": "BENCHMARKS",
+      "clue": "Standard tasks for comparison",
+      "difficulty": 1,
+      "note": "Benchmarks are standard tasks for comparison. It\u2019s like comparing runners on the same track."
+    },
+    {
+      "answer": "METRICS",
+      "clue": "Numbers that summarize performance",
+      "difficulty": 1,
+      "note": "Metrics are numbers that summarize performance. It\u2019s like a scoreboard of key stats."
+    },
+    {
+      "answer": "LATENCY",
+      "clue": "Time it takes to respond",
+      "difficulty": 1,
+      "note": "Latency is the time it takes to respond. It\u2019s like how long you wait for an answer."
+    },
+    {
+      "answer": "COST",
+      "clue": "Tokens used or money spent",
+      "difficulty": 1,
+      "note": "Cost is tokens used or money spent. It\u2019s like the price tag for running a task."
+    },
+    {
+      "answer": "RATELIMIT",
+      "clue": "Maximum requests allowed per time (2 words [4,5])",
+      "difficulty": 1,
+      "note": "Rate limit is the maximum requests allowed per time. It\u2019s like a speed limit for API calls."
+    },
+    {
+      "answer": "RETRIEVAL",
+      "clue": "Bring external knowledge to the prompt",
+      "difficulty": 1,
+      "note": "Retrieval brings external knowledge into the prompt. It\u2019s like looking up a fact in a book."
+    },
+    {
+      "answer": "RAG",
+      "clue": "Retrieval augmented generation",
+      "difficulty": 1,
+      "note": "RAG stands for Retrieval Augmented Generation. It\u2019s like answering with help from a library you just searched."
+    },
+    {
+      "answer": "EMBEDDINGS",
+      "clue": "Vector representations of text",
+      "difficulty": 1,
+      "note": "Embeddings are vector representations of text. Think of them as coordinates that capture meaning."
+    },
+    {
+      "answer": "CHUNKING",
+      "clue": "Split docs into smaller parts",
+      "difficulty": 1,
+      "note": "Chunking splits documents into smaller parts. It\u2019s like cutting a long article into index cards."
+    },
+    {
+      "answer": "CHUNKOVERLAP",
+      "clue": "Overlap between adjacent chunks (2 words [5,7])",
+      "difficulty": 1,
+      "note": "Chunk overlap means adjacent chunks share some text. It\u2019s like overlapping puzzle pieces so nothing is lost."
+    },
+    {
+      "answer": "INDEX",
+      "clue": "Structure to search chunks fast",
+      "difficulty": 1,
+      "note": "An index is a structure to search chunks fast. It\u2019s like the index at the back of a textbook."
+    },
+    {
+      "answer": "VECTORSTORE",
+      "clue": "Database for embeddings (2 words [6,5])",
+      "difficulty": 1,
+      "note": "A vector store is a database for embeddings. It\u2019s like a filing cabinet for meaning vectors."
+    },
+    {
+      "answer": "SIMILARITY",
+      "clue": "How close two vectors are",
+      "difficulty": 1,
+      "note": "Similarity measures how close two vectors are. It\u2019s like comparing how alike two ideas feel."
+    },
+    {
+      "answer": "TOPICS",
+      "clue": "Subjects the text is about",
+      "difficulty": 1,
+      "note": "Topics are the subjects a text is about. It\u2019s like the chapter title of a passage."
+    },
+    {
+      "answer": "KEYWORDS",
+      "clue": "Important words for search (2 words [3,5])",
+      "difficulty": 1,
+      "note": "Keywords are important words for search. They\u2019re like the main tags you\u2019d put on a folder."
+    },
+    {
+      "answer": "QUERY",
+      "clue": "Search request to fetch docs",
+      "difficulty": 1,
+      "note": "A query is a search request to fetch documents. It\u2019s like typing keywords into a search bar."
+    },
+    {
+      "answer": "QUERYEXPANSION",
+      "clue": "Add terms to improve search (2 words [5,9])",
+      "difficulty": 1,
+      "note": "Query expansion adds terms to improve search. It\u2019s like broadening your search with extra clues."
+    },
+    {
+      "answer": "RELEVANCE",
+      "clue": "Match between docs and query",
+      "difficulty": 1,
+      "note": "Relevance is how well a document matches a query. It\u2019s like how well a book answers your question."
+    },
+    {
+      "answer": "CITATIONSTYLE",
+      "clue": "Rules for formatting sources (2 words [8,5])",
+      "difficulty": 1,
+      "note": "Citation style is the rules for formatting sources. It\u2019s like choosing a uniform for your references."
+    },
+    {
+      "answer": "SOURCING",
+      "clue": "Provide where information came from",
+      "difficulty": 1,
+      "note": "Sourcing means providing where information came from. It\u2019s like showing your work with sources."
+    },
+    {
+      "answer": "KNOWLEDGE",
+      "clue": "Information used to answer",
+      "difficulty": 1,
+      "note": "Knowledge is the information used to answer. It\u2019s like what you bring to the table when you explain something."
+    },
+    {
+      "answer": "MEMORY",
+      "clue": "Persist helpful facts across turns",
+      "difficulty": 1,
+      "note": "Memory is the ability to persist helpful facts across turns. It\u2019s like remembering a student\u2019s name from last class."
+    },
+    {
+      "answer": "PROMPTMEMORY",
+      "clue": "Memory referenced in prompts (2 words [6,6])",
+      "difficulty": 1,
+      "note": "Prompt memory is memory referenced in prompts. It\u2019s like keeping a note card handy while you talk."
+    },
+    {
+      "answer": "SESSIONSTATE",
+      "clue": "Data carried across messages (2 words [7,5])",
+      "difficulty": 1,
+      "note": "Session state is data carried across messages. It\u2019s like the thread that keeps a conversation connected."
+    },
+    {
+      "answer": "STATE",
+      "clue": "Stored context for continuity",
+      "difficulty": 1,
+      "note": "State is stored context for continuity. It\u2019s like the current position in a story you\u2019re telling."
+    },
+    {
+      "clue": "Ask for a sequence of steps",
+      "difficulty": 1,
+      "note": "Step by step means the model should show a sequence of steps. It is like writing out each rung of a ladder so the path is clear.",
+      "answer": "STEPBYSTEP"
+    },
+    {
+      "answer": "HINTS",
+      "clue": "Small clues to guide answers",
+      "difficulty": 1,
+      "note": "Hints are small clues to guide answers. They\u2019re like breadcrumbs on a trail."
+    },
+    {
+      "answer": "EXPLANATION",
+      "clue": "Describe why an answer is correct",
+      "difficulty": 1,
+      "note": "An explanation describes why an answer is correct. It\u2019s like showing the thinking behind the result."
+    },
+    {
+      "answer": "JUSTIFICATION",
+      "clue": "Provide reasons behind a choice",
+      "difficulty": 1,
+      "note": "Justification provides reasons behind a choice. It\u2019s like defending your answer with evidence."
+    },
+    {
+      "answer": "RATIONALE",
+      "clue": "Underlying reasoning for output",
+      "difficulty": 1,
+      "note": "A rationale is the underlying reasoning for output. It\u2019s like the reason you picked a path."
+    },
+    {
+      "answer": "CHECKWORK",
+      "clue": "Ask the model to verify itself (2 words [5,4])",
+      "difficulty": 1,
+      "note": "Checkwork asks the model to verify itself. It\u2019s like double\u2011checking your homework before turning it in."
+    },
+    {
+      "answer": "ERRORANALYSIS",
+      "clue": "Explain mistakes that occurred (2 words [5,8])",
+      "difficulty": 1,
+      "note": "Error analysis explains mistakes that occurred. It\u2019s like reviewing what went wrong to learn from it."
+    },
+    {
+      "answer": "DEBUGGING",
+      "clue": "Find and fix issues",
+      "difficulty": 1,
+      "note": "Debugging means finding and fixing issues. It\u2019s like solving a mystery in your code."
+    },
+    {
+      "answer": "TRACE",
+      "clue": "Follow steps taken to reach output",
+      "difficulty": 1,
+      "note": "Trace means following steps taken to reach output. It\u2019s like retracing your path on a map."
+    },
+    {
+      "answer": "DIAGNOSIS",
+      "clue": "Identify the cause of an issue",
+      "difficulty": 1,
+      "note": "Diagnosis is identifying the cause of an issue. It\u2019s like figuring out why something is broken."
+    },
+    {
+      "answer": "PLANNING",
+      "clue": "Lay out tasks before answering",
+      "difficulty": 1,
+      "note": "Planning lays out tasks before answering. It\u2019s like sketching a route before a trip."
+    },
+    {
+      "answer": "SUBTASKS",
+      "clue": "Smaller parts of a big task (2 words [3,5])",
+      "difficulty": 1,
+      "note": "Subtasks are smaller parts of a big task. It\u2019s like splitting a big project into mini\u2011jobs."
+    },
+    {
+      "answer": "DECOMPOSITION",
+      "clue": "Break a problem into parts",
+      "difficulty": 1,
+      "note": "Decomposition breaks a problem into parts. It\u2019s like taking a big puzzle and sorting pieces."
+    },
+    {
+      "answer": "OUTLINE",
+      "clue": "High-level structure of an answer",
+      "difficulty": 1,
+      "note": "An outline is a high\u2011level structure of an answer. It\u2019s like the table of contents for your response."
+    },
+    {
+      "answer": "BULLETPOINTS",
+      "clue": "List items as bullets (2 words [6,6])",
+      "difficulty": 1,
+      "note": "Bullet points list items as bullets. It\u2019s like turning a paragraph into easy bites."
+    },
+    {
+      "answer": "HEADING",
+      "clue": "Title at the top of a section",
+      "difficulty": 1,
+      "note": "A heading is a title at the top of a section. It\u2019s like a signpost for the reader."
+    },
+    {
+      "answer": "MARKDOWN",
+      "clue": "Lightweight text formatting",
+      "difficulty": 1,
+      "note": "Markdown is lightweight text formatting. It\u2019s like a simple set of rules for making text readable."
+    },
+    {
+      "answer": "CODEBLOCKS",
+      "clue": "Fenced code sections in markdown (2 words [4,6])",
+      "difficulty": 1,
+      "note": "Code blocks are fenced sections for code. It\u2019s like putting code in a box so it stands out."
+    },
+    {
+      "answer": "ESCAPING",
+      "clue": "Protect special characters",
+      "difficulty": 1,
+      "note": "Escaping protects special characters. It\u2019s like putting quotes around tricky symbols."
+    },
+    {
+      "answer": "EXAMPLES",
+      "clue": "Concrete input-output pairs",
+      "difficulty": 1,
+      "note": "Examples are concrete input\u2011output pairs. It\u2019s like showing a few solved problems."
+    },
+    {
+      "answer": "NEGATIVEPROMPT",
+      "clue": "What to avoid in the output (2 words [8,6])",
+      "difficulty": 1,
+      "note": "A negative prompt says what to avoid. It\u2019s like the \u201cdon\u2019t do this\u201d part of instructions."
+    },
+    {
+      "answer": "POSITIVEPROMPT",
+      "clue": "What to emphasize in the output (2 words [8,6])",
+      "difficulty": 1,
+      "note": "A positive prompt says what to emphasize. It\u2019s like the \u201cdo this\u201d part of instructions."
+    },
+    {
+      "answer": "DISAMBIGUATION",
+      "clue": "Resolve ambiguity in a request",
+      "difficulty": 1,
+      "note": "Disambiguation resolves unclear meaning. It\u2019s like asking a follow\u2011up question to be sure."
+    },
+    {
+      "answer": "AMBIGUITY",
+      "clue": "Unclear meaning in the prompt",
+      "difficulty": 1,
+      "note": "Ambiguity is unclear meaning in a prompt. It\u2019s like a riddle with more than one answer."
+    },
+    {
+      "answer": "ASSUMPTIONS",
+      "clue": "Background beliefs in an answer",
+      "difficulty": 1,
+      "note": "Assumptions are background beliefs in an answer. It\u2019s like hidden premises you\u2019re relying on."
+    },
+    {
+      "answer": "SCOPE",
+      "clue": "Boundaries of what to cover",
+      "difficulty": 1,
+      "note": "Scope is the boundary of what to cover. It\u2019s like drawing a circle around the topic."
+    },
+    {
+      "answer": "CONSTRAINT",
+      "clue": "A single required condition",
+      "difficulty": 1,
+      "note": "A constraint is a single required condition. It\u2019s like a rule that must always be true."
+    },
+    {
+      "answer": "DELIMITER",
+      "clue": "A marker that separates parts",
+      "difficulty": 1,
+      "note": "A delimiter is a marker that separates parts. It\u2019s like a divider between sections."
+    },
+    {
+      "answer": "ANNOTATION",
+      "clue": "Add notes to text or data",
+      "difficulty": 1,
+      "note": "An annotation adds notes to text or data. It\u2019s like sticky notes on a page."
+    },
+    {
+      "answer": "FEEDBACKLOOP",
+      "clue": "Use feedback to improve next run (2 words [8,4])",
+      "difficulty": 1,
+      "note": "A feedback loop uses feedback to improve the next run. It\u2019s like practicing, getting tips, and trying again."
+    },
+    {
+      "answer": "POSTPROCESSING",
+      "clue": "Adjust output after generation (2 words [4,10])",
+      "difficulty": 1,
+      "note": "Post\u2011processing adjusts output after generation. It\u2019s like editing a first draft."
+    }
   ]
 }
