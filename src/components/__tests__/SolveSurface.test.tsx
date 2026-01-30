@@ -65,6 +65,7 @@ describe('SolveSurface', () => {
     )
 
     expect(getByTestId('solve-surface')).toHaveClass('grid', 'lg:grid-cols-[7fr_5fr]')
+    expect(getByTestId('solve-grid-column')).toHaveClass('lg:items-start', 'lg:justify-start')
     expect(getByTestId('solve-grid-wrap')).toHaveClass('aspect-square')
     expect(getByTestId('clue-list')).toHaveClass('bg-transparent')
     expect(getByTestId('clue-list')).not.toHaveClass('border')

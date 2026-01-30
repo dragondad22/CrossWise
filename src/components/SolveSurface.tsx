@@ -32,7 +32,10 @@ export default function SolveSurface({
         data-testid="solve-surface"
         className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[7fr_5fr] lg:gap-8"
       >
-        <div className="flex flex-1 items-center justify-center">
+        <div
+          data-testid="solve-grid-column"
+          className="flex flex-1 items-center justify-center lg:items-start lg:justify-start"
+        >
           <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
             <div
               data-testid="solve-caption"

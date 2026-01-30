@@ -64,7 +64,7 @@ if (outcome.success) {
 | `ClueList` | `src/components/ClueList.tsx` | Search filter, completion status indicator based on `checkResults`, and pointer/keyboard accessible selection. |
 | `PuzzleControls` | `src/components/PuzzleControls.tsx` | Exposes check/clear actions, displays progress stats, and re-routes to topics when needed. |
 | `WinModal` | `src/components/WinModal.tsx` | Simple completed-state CTA, integrates with router to start fresh puzzles or exit. |
-| `SolveSurface` | `src/components/SolveSurface.tsx` | Unified solve layout that aligns the grid and clue list on a shared surface with responsive CSS grid sizing plus a selected-clue caption and mobile-friendly grid sizing. |
+| `SolveSurface` | `src/components/SolveSurface.tsx` | Unified solve layout that aligns the grid and clue list on a shared surface; on desktop it top-aligns the grid with the clue list to avoid excess vertical whitespace while preserving centered spacing on smaller screens. |
 | `ListCard` / `TopicCard` | `src/components/ListCard.tsx`, `src/components/TopicCard.tsx` | Summaries using `date-fns`, handle quick navigation and actions (new game, export, edit). |
 | UI primitives | `src/components/ui` | Tailwind-based Button, Card, Badge with variants and focus styles. |
 
