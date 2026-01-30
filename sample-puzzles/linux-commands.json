@@ -1,0 +1,907 @@
+{
+  "topic": "Linux Commands",
+  "name": "Linux Commands and Terms",
+  "version": 1,
+  "items": [
+    {
+      "answer": "LS",
+      "clue": "List directory contents",
+      "difficulty": 2,
+      "note": "LS lists files in a directory. Think of LS as a quick roll call of files."
+    },
+    {
+      "answer": "CP",
+      "clue": "Copy files and directories",
+      "difficulty": 2,
+      "note": "CP copies files or folders. Think of CP as a photocopier for the filesystem."
+    },
+    {
+      "answer": "MV",
+      "clue": "Move or rename files",
+      "difficulty": 2,
+      "note": "MV moves or renames files. Think of MV as a file moving truck."
+    },
+    {
+      "answer": "RM",
+      "clue": "Remove files",
+      "difficulty": 2,
+      "note": "RM deletes files. Think of RM as a trash pickup for files."
+    },
+    {
+      "answer": "MKDIR",
+      "clue": "Create a directory",
+      "difficulty": 2,
+      "note": "MKDIR creates a new directory. Think of MKDIR as building a new folder."
+    },
+    {
+      "answer": "RMDIR",
+      "clue": "Remove an empty directory",
+      "difficulty": 2,
+      "note": "RMDIR removes empty directories. Think of RMDIR as taking down an empty folder."
+    },
+    {
+      "answer": "TOUCH",
+      "clue": "Create an empty file or update timestamp",
+      "difficulty": 2,
+      "note": "TOUCH creates empty files or updates timestamps. Think of TOUCH as a time stamp ink pad."
+    },
+    {
+      "answer": "CAT",
+      "clue": "Print file contents",
+      "difficulty": 2,
+      "note": "CAT prints file contents. Think of CAT as reading a book out loud."
+    },
+    {
+      "answer": "HEAD",
+      "clue": "Show first lines of a file",
+      "difficulty": 2,
+      "note": "HEAD shows the first lines of a file. Think of HEAD as a peek at the beginning."
+    },
+    {
+      "answer": "TAIL",
+      "clue": "Show last lines of a file",
+      "difficulty": 2,
+      "note": "TAIL shows the last lines of a file. Think of TAIL as a peek at the ending."
+    },
+    {
+      "answer": "LESS",
+      "clue": "Page through text",
+      "difficulty": 2,
+      "note": "LESS views text one screen at a time. Think of LESS as a slow scroll through a document."
+    },
+    {
+      "answer": "GREP",
+      "clue": "Search text by pattern",
+      "difficulty": 2,
+      "note": "GREP searches text for patterns. Think of GREP as a highlighter for matching lines."
+    },
+    {
+      "answer": "EGREP",
+      "clue": "Extended pattern search",
+      "difficulty": 2,
+      "note": "EGREP searches using extended regex. Think of EGREP as a stronger pattern spotlight."
+    },
+    {
+      "answer": "FGREP",
+      "clue": "Fixed string search",
+      "difficulty": 2,
+      "note": "FGREP searches for fixed strings. Think of FGREP as a literal string finder."
+    },
+    {
+      "answer": "SED",
+      "clue": "Stream editor for text",
+      "difficulty": 2,
+      "note": "SED edits text streams. Think of SED as a text editing conveyor belt."
+    },
+    {
+      "answer": "AWK",
+      "clue": "Pattern scanning and processing",
+      "difficulty": 2,
+      "note": "AWK processes structured text. Think of AWK as a tiny data slicer."
+    },
+    {
+      "answer": "CUT",
+      "clue": "Extract columns or fields",
+      "difficulty": 2,
+      "note": "CUT extracts fields from lines. Think of CUT as a column cutter."
+    },
+    {
+      "answer": "PASTE",
+      "clue": "Merge lines of files",
+      "difficulty": 2,
+      "note": "PASTE merges lines side by side. Think of PASTE as gluing columns together."
+    },
+    {
+      "answer": "SORT",
+      "clue": "Sort lines of text",
+      "difficulty": 2,
+      "note": "SORT sorts lines. Think of SORT as a line sorter."
+    },
+    {
+      "answer": "UNIQ",
+      "clue": "Filter duplicate lines",
+      "difficulty": 2,
+      "note": "UNIQ removes adjacent duplicates. Think of UNIQ as a duplicate filter."
+    },
+    {
+      "answer": "WC",
+      "clue": "Count lines words and bytes",
+      "difficulty": 2,
+      "note": "WC counts lines, words, and bytes. Think of WC as a text counter."
+    },
+    {
+      "answer": "TR",
+      "clue": "Translate or delete characters",
+      "difficulty": 2,
+      "note": "TR translates characters. Think of TR as a character swap tool."
+    },
+    {
+      "answer": "XARGS",
+      "clue": "Build and execute command lines",
+      "difficulty": 2,
+      "note": "XARGS builds commands from input. Think of XARGS as a pipeline command builder."
+    },
+    {
+      "answer": "FIND",
+      "clue": "Search files in a directory tree",
+      "difficulty": 2,
+      "note": "FIND searches for files by criteria. Think of FIND as a filesystem detective."
+    },
+    {
+      "answer": "LOCATE",
+      "clue": "Find files by name from database",
+      "difficulty": 2,
+      "note": "LOCATE finds files by name quickly. Think of LOCATE as a fast file index lookup."
+    },
+    {
+      "answer": "UPDATEDB",
+      "clue": "Update file name database",
+      "difficulty": 2,
+      "note": "UPDATEDB refreshes the locate database. Think of UPDATEDB as updating the file index."
+    },
+    {
+      "answer": "WHICH",
+      "clue": "Show path of a command",
+      "difficulty": 2,
+      "note": "WHICH shows the path of a command. Think of WHICH as a command locator."
+    },
+    {
+      "answer": "WHEREIS",
+      "clue": "Locate binaries sources and man pages",
+      "difficulty": 2,
+      "note": "WHEREIS locates binaries and docs. Think of WHEREIS as a full command address."
+    },
+    {
+      "answer": "FILE",
+      "clue": "Identify file type",
+      "difficulty": 2,
+      "note": "FILE detects file types. Think of FILE as a file type labeler."
+    },
+    {
+      "answer": "STAT",
+      "clue": "Show detailed file status",
+      "difficulty": 2,
+      "note": "STAT shows file metadata. Think of STAT as a file ID card."
+    },
+    {
+      "answer": "DU",
+      "clue": "Estimate file space usage",
+      "difficulty": 2,
+      "note": "DU shows disk usage per file. Think of DU as a space usage gauge."
+    },
+    {
+      "answer": "DF",
+      "clue": "Report filesystem disk space usage",
+      "difficulty": 2,
+      "note": "DF shows free disk space. Think of DF as a storage fuel gauge."
+    },
+    {
+      "answer": "TAR",
+      "clue": "Create or extract archives",
+      "difficulty": 2,
+      "note": "TAR creates and extracts archives. Think of TAR as a file bundling box."
+    },
+    {
+      "answer": "GZIP",
+      "clue": "Compress files",
+      "difficulty": 2,
+      "note": "GZIP compresses files. Think of GZIP as a file shrinker."
+    },
+    {
+      "answer": "GUNZIP",
+      "clue": "Decompress gzip files",
+      "difficulty": 2,
+      "note": "GUNZIP decompresses gzip files. Think of GUNZIP as an air pump for gzip."
+    },
+    {
+      "answer": "BZIPTWO",
+      "clue": "Compress files with bzip2",
+      "difficulty": 2,
+      "note": "BZIPTWO compresses files using bzip2. Think of BZIPTWO as a tighter file compressor."
+    },
+    {
+      "answer": "BUNZIPTWO",
+      "clue": "Decompress bzip2 files",
+      "difficulty": 2,
+      "note": "BUNZIPTWO decompresses bzip2 files. Think of BUNZIPTWO as a bzip2 unpacker."
+    },
+    {
+      "answer": "XZ",
+      "clue": "Compress files with xz",
+      "difficulty": 2,
+      "note": "XZ compresses files with xz. Think of XZ as a heavy duty compressor."
+    },
+    {
+      "answer": "UNXZ",
+      "clue": "Decompress xz files",
+      "difficulty": 2,
+      "note": "UNXZ decompresses xz files. Think of UNXZ as an xz unpacker."
+    },
+    {
+      "answer": "ZIP",
+      "clue": "Create zip archives",
+      "difficulty": 2,
+      "note": "ZIP creates zip archives. Think of ZIP as a file wrapper."
+    },
+    {
+      "answer": "UNZIP",
+      "clue": "Extract zip archives",
+      "difficulty": 2,
+      "note": "UNZIP extracts zip archives. Think of UNZIP as a zipper opener."
+    },
+    {
+      "answer": "SSH",
+      "clue": "Secure remote shell",
+      "difficulty": 2,
+      "note": "SSH opens a secure remote shell. Think of SSH as a secure remote doorway."
+    },
+    {
+      "answer": "SCP",
+      "clue": "Secure copy over SSH",
+      "difficulty": 2,
+      "note": "SCP copies files over SSH. Think of SCP as a secure file courier."
+    },
+    {
+      "answer": "RSYNC",
+      "clue": "Synchronize files and directories",
+      "difficulty": 2,
+      "note": "RSYNC syncs files efficiently. Think of RSYNC as a smart file mirror."
+    },
+    {
+      "answer": "CURL",
+      "clue": "Transfer data with URLs",
+      "difficulty": 2,
+      "note": "CURL fetches data from URLs. Think of CURL as a flexible data fetcher."
+    },
+    {
+      "answer": "WGET",
+      "clue": "Download files from the web",
+      "difficulty": 2,
+      "note": "WGET downloads files by URL. Think of WGET as a simple web downloader."
+    },
+    {
+      "answer": "PING",
+      "clue": "Test network reachability",
+      "difficulty": 2,
+      "note": "PING tests reachability with echo. Think of PING as a network sonar ping."
+    },
+    {
+      "answer": "TRACEROUTE",
+      "clue": "Trace network path",
+      "difficulty": 2,
+      "note": "TRACEROUTE traces network hops. Think of TRACEROUTE as a road map for packets."
+    },
+    {
+      "answer": "MTR",
+      "clue": "Network diagnostic combining ping and traceroute",
+      "difficulty": 2,
+      "note": "MTR monitors route quality. Think of MTR as a live network health chart."
+    },
+    {
+      "answer": "DIG",
+      "clue": "DNS lookup tool",
+      "difficulty": 2,
+      "note": "DIG queries DNS records. Think of DIG as a DNS lookup probe."
+    },
+    {
+      "answer": "HOST",
+      "clue": "DNS lookup utility",
+      "difficulty": 2,
+      "note": "HOST looks up DNS names. Think of HOST as a DNS address finder."
+    },
+    {
+      "answer": "NSLOOKUP",
+      "clue": "Query DNS servers",
+      "difficulty": 2,
+      "note": "NSLOOKUP queries DNS servers. Think of NSLOOKUP as an older DNS query tool."
+    },
+    {
+      "answer": "IFCONFIG",
+      "clue": "Configure network interfaces",
+      "difficulty": 2,
+      "note": "IFCONFIG shows or configures interfaces. Think of IFCONFIG as a network interface tuner."
+    },
+    {
+      "answer": "IP",
+      "clue": "Manage IP networking",
+      "difficulty": 2,
+      "note": "IP manages network settings. Think of IP as a modern network toolbox."
+    },
+    {
+      "answer": "SS",
+      "clue": "Socket statistics",
+      "difficulty": 2,
+      "note": "SS shows socket info. Think of SS as a socket status viewer."
+    },
+    {
+      "answer": "NETSTAT",
+      "clue": "Network statistics",
+      "difficulty": 2,
+      "note": "NETSTAT shows network connections. Think of NETSTAT as a network connection list."
+    },
+    {
+      "answer": "ROUTE",
+      "clue": "Show or change routing table",
+      "difficulty": 2,
+      "note": "ROUTE views or edits routes. Think of ROUTE as a route map editor."
+    },
+    {
+      "answer": "ARP",
+      "clue": "Manipulate ARP cache",
+      "difficulty": 2,
+      "note": "ARP shows ARP entries. Think of ARP as an address mapping table."
+    },
+    {
+      "answer": "TCPDUMP",
+      "clue": "Capture network packets",
+      "difficulty": 2,
+      "note": "TCPDUMP captures network traffic. Think of TCPDUMP as a packet sniffer."
+    },
+    {
+      "answer": "NMAP",
+      "clue": "Network mapper and scanner",
+      "difficulty": 2,
+      "note": "NMAP scans hosts and ports. Think of NMAP as a network explorer."
+    },
+    {
+      "answer": "IPTABLES",
+      "clue": "Packet filtering rules",
+      "difficulty": 2,
+      "note": "IPTABLES manages firewall rules. Think of IPTABLES as a traffic gatekeeper."
+    },
+    {
+      "answer": "FIREWALLD",
+      "clue": "Firewall management daemon",
+      "difficulty": 2,
+      "note": "FIREWALLD manages firewall zones. Think of FIREWALLD as a firewall control panel."
+    },
+    {
+      "answer": "NMCLI",
+      "clue": "NetworkManager command tool",
+      "difficulty": 2,
+      "note": "NMCLI controls NetworkManager. Think of NMCLI as a network manager remote."
+    },
+    {
+      "answer": "SYSTEMCTL",
+      "clue": "Control systemd services",
+      "difficulty": 2,
+      "note": "SYSTEMCTL manages system services. Think of SYSTEMCTL as a service control switchboard."
+    },
+    {
+      "answer": "JOURNALCTL",
+      "clue": "Query systemd journal",
+      "difficulty": 2,
+      "note": "JOURNALCTL reads system logs. Think of JOURNALCTL as a system log reader."
+    },
+    {
+      "answer": "PS",
+      "clue": "Report process status",
+      "difficulty": 2,
+      "note": "PS lists processes. Think of PS as a process roster."
+    },
+    {
+      "answer": "TOP",
+      "clue": "Show running processes",
+      "difficulty": 2,
+      "note": "TOP shows live process info. Think of TOP as a live process dashboard."
+    },
+    {
+      "answer": "HTOP",
+      "clue": "Interactive process viewer",
+      "difficulty": 2,
+      "note": "HTOP views processes interactively. Think of HTOP as a colorful process dashboard."
+    },
+    {
+      "answer": "NICE",
+      "clue": "Run with adjusted priority",
+      "difficulty": 2,
+      "note": "NICE runs with set priority. Think of NICE as a politeness knob for CPU."
+    },
+    {
+      "answer": "RENICE",
+      "clue": "Change process priority",
+      "difficulty": 2,
+      "note": "RENICE changes running priority. Think of RENICE as a priority dial."
+    },
+    {
+      "answer": "KILL",
+      "clue": "Send signal to process",
+      "difficulty": 2,
+      "note": "KILL sends signals to processes. Think of KILL as a process stop button."
+    },
+    {
+      "answer": "PKILL",
+      "clue": "Signal processes by name",
+      "difficulty": 2,
+      "note": "PKILL signals processes by name. Think of PKILL as a name based stop."
+    },
+    {
+      "answer": "KILLALL",
+      "clue": "Kill processes by name",
+      "difficulty": 2,
+      "note": "KILLALL signals all matching processes. Think of KILLALL as a mass process stop."
+    },
+    {
+      "answer": "UPTIME",
+      "clue": "Show system uptime",
+      "difficulty": 2,
+      "note": "UPTIME shows uptime and load. Think of UPTIME as a system age readout."
+    },
+    {
+      "answer": "WHO",
+      "clue": "Show logged in users",
+      "difficulty": 2,
+      "note": "WHO lists logged in users. Think of WHO as a sign in sheet."
+    },
+    {
+      "answer": "WHOIS",
+      "clue": "Lookup domain registration info",
+      "difficulty": 2,
+      "note": "WHOIS looks up domain registration info. Think of WHOIS as a domain ownership lookup."
+    },
+    {
+      "answer": "WHOAMI",
+      "clue": "Show current user name",
+      "difficulty": 2,
+      "note": "WHOAMI shows the current user. Think of WHOAMI as a self ID card."
+    },
+    {
+      "answer": "ID",
+      "clue": "Show user and group IDs",
+      "difficulty": 2,
+      "note": "ID shows user and group IDs. Think of ID as an identity badge."
+    },
+    {
+      "answer": "GROUPS",
+      "clue": "Show user groups",
+      "difficulty": 2,
+      "note": "GROUPS shows group memberships. Think of GROUPS as a group roster."
+    },
+    {
+      "answer": "PASSWD",
+      "clue": "Change user password",
+      "difficulty": 2,
+      "note": "PASSWD changes passwords. Think of PASSWD as a password change key."
+    },
+    {
+      "answer": "CHMOD",
+      "clue": "Change file permissions",
+      "difficulty": 2,
+      "note": "CHMOD changes permissions. Think of CHMOD as a file lock switch."
+    },
+    {
+      "answer": "CHOWN",
+      "clue": "Change file owner",
+      "difficulty": 2,
+      "note": "CHOWN changes file owner. Think of CHOWN as an ownership transfer."
+    },
+    {
+      "answer": "CHGRP",
+      "clue": "Change file group",
+      "difficulty": 2,
+      "note": "CHGRP changes file group. Think of CHGRP as a group label swap."
+    },
+    {
+      "answer": "UMASK",
+      "clue": "Set default permissions mask",
+      "difficulty": 2,
+      "note": "UMASK sets the default permission mask. Think of UMASK as a permission stencil."
+    },
+    {
+      "answer": "SU",
+      "clue": "Switch user",
+      "difficulty": 2,
+      "note": "SU switches user accounts. Think of SU as a different user hat."
+    },
+    {
+      "answer": "SUDO",
+      "clue": "Run command as another user",
+      "difficulty": 2,
+      "note": "SUDO runs commands as another user. Think of SUDO as a temporary privilege badge."
+    },
+    {
+      "answer": "CRON",
+      "clue": "Daemon for scheduled jobs",
+      "difficulty": 2,
+      "note": "CRON runs scheduled jobs. Think of CRON as a task scheduler engine."
+    },
+    {
+      "answer": "CRONTAB",
+      "clue": "Edit cron schedule",
+      "difficulty": 2,
+      "note": "CRONTAB edits cron jobs. Think of CRONTAB as a schedule editor."
+    },
+    {
+      "answer": "AT",
+      "clue": "Run a job once later",
+      "difficulty": 2,
+      "note": "AT schedules one time jobs. Think of AT as a one time alarm."
+    },
+    {
+      "answer": "BATCH",
+      "clue": "Run jobs when load permits",
+      "difficulty": 2,
+      "note": "BATCH queues jobs for later. Think of BATCH as a wait in line scheduler."
+    },
+    {
+      "answer": "SYSTEMD",
+      "clue": "Init system and service manager",
+      "difficulty": 2,
+      "note": "SYSTEMD manages system services. Think of SYSTEMD as the service conductor."
+    },
+    {
+      "answer": "INIT",
+      "clue": "Traditional init system",
+      "difficulty": 2,
+      "note": "INIT starts system services. Think of INIT as the old system starter."
+    },
+    {
+      "answer": "KMOD",
+      "clue": "Kernel module management",
+      "difficulty": 2,
+      "note": "KMOD manages kernel modules. Think of KMOD as a kernel add on manager."
+    },
+    {
+      "answer": "MODPROBE",
+      "clue": "Load kernel modules",
+      "difficulty": 2,
+      "note": "MODPROBE loads kernel modules. Think of MODPROBE as a module loader."
+    },
+    {
+      "answer": "LSMOD",
+      "clue": "List loaded kernel modules",
+      "difficulty": 2,
+      "note": "LSMOD lists loaded modules. Think of LSMOD as a module roster."
+    },
+    {
+      "answer": "DMESG",
+      "clue": "Print kernel ring buffer",
+      "difficulty": 2,
+      "note": "DMESG shows kernel messages. Think of DMESG as a kernel message log."
+    },
+    {
+      "answer": "DKMS",
+      "clue": "Dynamic kernel module support",
+      "difficulty": 2,
+      "note": "DKMS builds kernel modules. Think of DKMS as a module auto builder."
+    },
+    {
+      "answer": "SYSCTL",
+      "clue": "Configure kernel parameters",
+      "difficulty": 2,
+      "note": "SYSCTL tunes kernel parameters. Think of SYSCTL as a kernel settings panel."
+    },
+    {
+      "answer": "SYSLOG",
+      "clue": "System logging service",
+      "difficulty": 2,
+      "note": "SYSLOG handles system logs. Think of SYSLOG as a log collection hub."
+    },
+    {
+      "answer": "LOGGER",
+      "clue": "Write to system log",
+      "difficulty": 2,
+      "note": "LOGGER writes log messages. Think of LOGGER as a log note sender."
+    },
+    {
+      "answer": "LAST",
+      "clue": "Show last logged in users",
+      "difficulty": 2,
+      "note": "LAST shows recent logins. Think of LAST as a login history list."
+    },
+    {
+      "answer": "LASTLOG",
+      "clue": "Show last login for users",
+      "difficulty": 2,
+      "note": "LASTLOG shows each user last login. Think of LASTLOG as a last seen list."
+    },
+    {
+      "answer": "FUSER",
+      "clue": "Identify processes using files",
+      "difficulty": 2,
+      "note": "FUSER finds processes using files. Think of FUSER as a file usage detective."
+    },
+    {
+      "answer": "LSOF",
+      "clue": "List open files",
+      "difficulty": 2,
+      "note": "LSOF shows open files. Think of LSOF as an open file ledger."
+    },
+    {
+      "answer": "FREE",
+      "clue": "Display memory usage",
+      "difficulty": 2,
+      "note": "FREE shows memory usage. Think of FREE as a memory fuel gauge."
+    },
+    {
+      "answer": "VMSTAT",
+      "clue": "Virtual memory statistics",
+      "difficulty": 2,
+      "note": "VMSTAT shows memory and CPU stats. Think of VMSTAT as a system vitals report."
+    },
+    {
+      "answer": "IOSTAT",
+      "clue": "I O statistics",
+      "difficulty": 2,
+      "note": "IOSTAT shows disk IO stats. Think of IOSTAT as a disk activity meter."
+    },
+    {
+      "answer": "SAR",
+      "clue": "System activity reporter",
+      "difficulty": 2,
+      "note": "SAR reports system activity. Think of SAR as a system activity diary."
+    },
+    {
+      "answer": "NTPDATE",
+      "clue": "Set time via NTP",
+      "difficulty": 2,
+      "note": "NTPDATE syncs time once. Think of NTPDATE as a time sync tap."
+    },
+    {
+      "answer": "TIMEDATECTL",
+      "clue": "Control system time settings",
+      "difficulty": 2,
+      "note": "TIMEDATECTL manages time settings. Think of TIMEDATECTL as a time control panel."
+    },
+    {
+      "answer": "DATE",
+      "clue": "Display or set date and time",
+      "difficulty": 2,
+      "note": "DATE shows the current date and time. Think of DATE as a wall clock readout."
+    },
+    {
+      "answer": "CAL",
+      "clue": "Show calendar",
+      "difficulty": 2,
+      "note": "CAL prints a calendar. Think of CAL as a calendar page."
+    },
+    {
+      "answer": "BC",
+      "clue": "Arbitrary precision calculator",
+      "difficulty": 2,
+      "note": "BC runs a calculator. Think of BC as a command line calculator."
+    },
+    {
+      "answer": "EXPR",
+      "clue": "Evaluate expressions",
+      "difficulty": 2,
+      "note": "EXPR evaluates simple expressions. Think of EXPR as a tiny calculator."
+    },
+    {
+      "answer": "PRINTF",
+      "clue": "Formatted text output",
+      "difficulty": 2,
+      "note": "PRINTF prints formatted text. Think of PRINTF as a text formatter."
+    },
+    {
+      "answer": "TEE",
+      "clue": "Read from stdin and write to files",
+      "difficulty": 2,
+      "note": "TEE writes output to file and screen. Think of TEE as a pipeline splitter."
+    },
+    {
+      "answer": "DIFF",
+      "clue": "Compare files line by line",
+      "difficulty": 2,
+      "note": "DIFF compares files. Think of DIFF as a spot the difference tool."
+    },
+    {
+      "answer": "PATCH",
+      "clue": "Apply diff files",
+      "difficulty": 2,
+      "note": "PATCH applies patches. Think of PATCH as a change applicator."
+    },
+    {
+      "answer": "MDFIVESUM",
+      "clue": "Compute MD5 checksums",
+      "difficulty": 2,
+      "note": "MDFIVESUM computes MD5 sums. Think of MDFIVESUM as a file fingerprint tool."
+    },
+    {
+      "answer": "SHAONESUM",
+      "clue": "Compute SHA1 checksums",
+      "difficulty": 2,
+      "note": "SHAONESUM computes SHA1 sums. Think of SHAONESUM as a stronger fingerprint tool."
+    },
+    {
+      "answer": "SHATWOFIVESIXSUM",
+      "clue": "Compute SHA256 checksums",
+      "difficulty": 2,
+      "note": "SHATWOFIVESIXSUM computes SHA256 sums. Think of SHATWOFIVESIXSUM as a secure fingerprint tool."
+    },
+    {
+      "answer": "SHASUM",
+      "clue": "Compute SHA checksums",
+      "difficulty": 2,
+      "note": "SHASUM computes SHA sums. Think of SHASUM as a checksum toolbox."
+    },
+    {
+      "answer": "OPENSSL",
+      "clue": "TLS and crypto toolkit",
+      "difficulty": 2,
+      "note": "OPENSSL manages crypto tasks. Think of OPENSSL as a cryptography toolbox."
+    },
+    {
+      "answer": "GPG",
+      "clue": "Encrypt and sign data",
+      "difficulty": 2,
+      "note": "GPG encrypts and signs data. Think of GPG as a digital seal and lock."
+    },
+    {
+      "answer": "MKFS",
+      "clue": "Make a filesystem",
+      "difficulty": 2,
+      "note": "MKFS creates a filesystem. Think of MKFS as a blank disk formatter."
+    },
+    {
+      "answer": "FSCK",
+      "clue": "Check and repair filesystem",
+      "difficulty": 2,
+      "note": "FSCK checks and repairs filesystems. Think of FSCK as a disk repair kit."
+    },
+    {
+      "answer": "MOUNT",
+      "clue": "Mount a filesystem",
+      "difficulty": 2,
+      "note": "MOUNT mounts filesystems. Think of MOUNT as plugging in a drive."
+    },
+    {
+      "answer": "UMOUNT",
+      "clue": "Unmount a filesystem",
+      "difficulty": 2,
+      "note": "UMOUNT unmounts filesystems. Think of UMOUNT as safely unplugging a drive."
+    },
+    {
+      "answer": "BLKID",
+      "clue": "Print block device attributes",
+      "difficulty": 2,
+      "note": "BLKID shows block device IDs. Think of BLKID as a device ID scanner."
+    },
+    {
+      "answer": "LSBLK",
+      "clue": "List block devices",
+      "difficulty": 2,
+      "note": "LSBLK lists block devices. Think of LSBLK as a disk inventory list."
+    },
+    {
+      "answer": "FDISK",
+      "clue": "Partition a disk",
+      "difficulty": 2,
+      "note": "FDISK manages disk partitions. Think of FDISK as a disk slicer."
+    },
+    {
+      "answer": "PARTED",
+      "clue": "Partition editor",
+      "difficulty": 2,
+      "note": "PARTED edits partitions. Think of PARTED as a partition editor."
+    },
+    {
+      "answer": "SWAPON",
+      "clue": "Enable swap space",
+      "difficulty": 2,
+      "note": "SWAPON turns on swap. Think of SWAPON as a memory backup switch."
+    },
+    {
+      "answer": "SWAPOFF",
+      "clue": "Disable swap space",
+      "difficulty": 2,
+      "note": "SWAPOFF turns off swap. Think of SWAPOFF as a memory backup stop."
+    },
+    {
+      "answer": "SYNC",
+      "clue": "Flush filesystem buffers",
+      "difficulty": 2,
+      "note": "SYNC flushes disk buffers. Think of SYNC as a write out now button."
+    },
+    {
+      "answer": "EXPORT",
+      "clue": "Set environment variable for child processes",
+      "difficulty": 2,
+      "note": "EXPORT sets environment variables for child processes. Think of EXPORT as passing a variable forward."
+    },
+    {
+      "answer": "ENV",
+      "clue": "Show environment variables",
+      "difficulty": 2,
+      "note": "ENV shows environment variables. Think of ENV as an environment list."
+    },
+    {
+      "answer": "PRINTENV",
+      "clue": "Print environment variables",
+      "difficulty": 2,
+      "note": "PRINTENV prints environment variables. Think of PRINTENV as a focused env view."
+    },
+    {
+      "answer": "ALIAS",
+      "clue": "Define command aliases",
+      "difficulty": 2,
+      "note": "ALIAS creates command shortcuts. Think of ALIAS as a nickname maker."
+    },
+    {
+      "answer": "UNALIAS",
+      "clue": "Remove command aliases",
+      "difficulty": 2,
+      "note": "UNALIAS removes aliases. Think of UNALIAS as a nickname remover."
+    },
+    {
+      "answer": "HISTORY",
+      "clue": "Show command history",
+      "difficulty": 2,
+      "note": "HISTORY shows command history. Think of HISTORY as a shell memory list."
+    },
+    {
+      "answer": "CLEAR",
+      "clue": "Clear the terminal screen",
+      "difficulty": 2,
+      "note": "CLEAR clears the screen. Think of CLEAR as a clean slate."
+    },
+    {
+      "answer": "RESET",
+      "clue": "Reset the terminal",
+      "difficulty": 2,
+      "note": "RESET resets the terminal. Think of RESET as a terminal reboot."
+    },
+    {
+      "answer": "SCREEN",
+      "clue": "Terminal multiplexer",
+      "difficulty": 2,
+      "note": "SCREEN manages multiple terminals. Think of SCREEN as a terminal organizer."
+    },
+    {
+      "answer": "TMUX",
+      "clue": "Terminal multiplexer",
+      "difficulty": 2,
+      "note": "TMUX splits and manages terminals. Think of TMUX as a terminal window manager."
+    },
+    {
+      "answer": "NANO",
+      "clue": "Simple text editor",
+      "difficulty": 2,
+      "note": "NANO edits text simply. Think of NANO as a small notepad."
+    },
+    {
+      "answer": "VIM",
+      "clue": "Vi improved editor",
+      "difficulty": 2,
+      "note": "VIM edits text with modes. Think of VIM as a powerful text workshop."
+    },
+    {
+      "answer": "EMACS",
+      "clue": "Extensible text editor",
+      "difficulty": 2,
+      "note": "EMACS edits text and more. Think of EMACS as a Swiss army editor."
+    },
+    {
+      "answer": "VI",
+      "clue": "Classic text editor",
+      "difficulty": 2,
+      "note": "VI edits text in vi. Think of VI as a classic text editor."
+    },
+    {
+      "answer": "PICO",
+      "clue": "Simple text editor",
+      "difficulty": 2,
+      "note": "PICO edits text in a simple editor. Think of PICO as a tiny notepad."
+    }
+  ]
+}

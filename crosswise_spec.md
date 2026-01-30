@@ -67,7 +67,7 @@ This document is the authoritative product + engineering specification for the c
 ## System Architecture
 ### Frontend
 - **Framework:** Next.js 15 App Router (`src/app`).
-- **State management:** Zustand with persistence (`src/lib/store.ts`).
+- **State management:** Zustand with persistence (`src/lib/store.ts`) for non-puzzle UI state; puzzle progress is stored per puzzle via autosave.
 - **UI components:** `src/components` + Tailwind CSS.
 - **Auth hydration:** `AuthProvider` receives server-initial user from `app/layout.tsx`.
 - **Autosave:** `autosaveManager` handles local + server sync (`src/lib/autosave.ts`).
@@ -81,7 +81,7 @@ This document is the authoritative product + engineering specification for the c
 ### Data storage
 - **Database:** PostgreSQL (Prisma schema in `prisma/schema.prisma`).
 - **Local storage:**
-  - `crosswise-store`: persisted subset of Zustand store (selected topic/list, current puzzle, solveState, user).
+  - `crosswise-store`: persisted subset of Zustand store (selected topic/list, user).
   - `crosswise_solve_<puzzleId>`: local autosave state for a puzzle.
 
 ## Data Model (Prisma)
@@ -345,5 +345,6 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 ---
 
 ## Change Log
+- 2026-01-30: Updated persistence notes to reflect that `crosswise-store` no longer saves puzzle-scoped state; puzzle progress is stored per-puzzle via autosave keys.
 - 2026-01-29: Raised puzzle generation selection cap to 150 items across specs/docs.
 - 2026-01-29: Initial consolidated spec created from current codebase.

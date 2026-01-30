@@ -3,7 +3,7 @@
 ## Core Services
 ### `useAppStore` (`src/lib/store.ts`)
 - Zustand store encapsulating topics, lists, active puzzle metadata, solve state, loading flags, and authenticated user details.
-- Persists a subset of state (`selectedTopic`, `selectedList`, `currentPuzzle`, `solveState`, `user`) to `localStorage` (`crosswise-store` key).
+- Persists a subset of state (`selectedTopic`, `selectedList`, `user`) to `localStorage` (`crosswise-store` key).
 - Provides rich helpers:
   - `updateCell`, `selectCell`, `selectClue`, `clearCell`, `clearWord` mutate solve state and maintain selection synchronisation with UI components.
   - `checkSolution(mode)` inspects the canonical grid in `currentPuzzle`, writes per-cell results for UI highlighting, and supports letter/word/puzzle scopes.

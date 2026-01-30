@@ -97,6 +97,8 @@ export default function SolvePage() {
       setLoading(true)
       setError(null)
       setWon(false) // Reset win state when loading new puzzle
+      setPuzzle(null)
+      setSolveState(null)
 
       try {
         // First, try to load from localStorage

@@ -519,8 +519,6 @@ export const useAppStore = create<AppState>()(
         // Only persist non-sensitive state
         selectedTopic: state.selectedTopic,
         selectedList: state.selectedList,
-        currentPuzzle: state.currentPuzzle,
-        solveState: state.solveState,
         user: state.user,
       }),
     },
