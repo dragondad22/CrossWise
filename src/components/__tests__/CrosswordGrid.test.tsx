@@ -118,7 +118,11 @@ describe('CrosswordGrid', () => {
   })
 
   it('prefers across clues when the cell starts an across entry', async () => {
-    render(<CrosswordGrid grid={baseGrid} numbering={numbering} solveState={createSolveState()} />)
+    const { getByTestId } = render(
+      <CrosswordGrid grid={baseGrid} numbering={numbering} solveState={createSolveState()} />,
+    )
+
+    expect(getByTestId('crossword-grid')).toHaveClass('gap-px')
 
     const startingCell = document.querySelector('[data-cell="0-0"]') as HTMLElement
     await userEvent.click(startingCell)
@@ -148,6 +152,13 @@ describe('CrosswordGrid', () => {
 
     expect(getByText('1')).toHaveClass('z-10')
     expect(getByText('H')).toHaveClass('z-0')
+  })
+
+  it('ensures cells use border-box sizing to stay within the grid', () => {
+    render(<CrosswordGrid grid={baseGrid} numbering={numbering} solveState={createSolveState()} />)
+
+    const cell = document.querySelector('[data-cell="0-0"]') as HTMLElement
+    expect(cell).toHaveClass('box-border')
   })
 
   it('falls back to selecting the down clue when no across clue matches', async () => {

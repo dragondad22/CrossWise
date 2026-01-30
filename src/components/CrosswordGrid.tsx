@@ -67,12 +67,22 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
 
       const containerWidth = container.clientWidth
       const containerHeight = container.clientHeight - 100 // Account for controls
+      const gridGap = 1
+      const gridPadding = 4
+      const gridBorder = 1
 
-      const maxCellWidth = Math.floor((containerWidth - 20) / grid.size.cols)
-      const maxCellHeight = Math.floor((containerHeight - 20) / grid.size.rows)
+      const availableWidth =
+        containerWidth - gridPadding * 2 - gridBorder * 2 - gridGap * (grid.size.cols - 1)
+      const availableHeight =
+        containerHeight - gridPadding * 2 - gridBorder * 2 - gridGap * (grid.size.rows - 1)
+
+      const maxCellWidth = Math.floor(availableWidth / grid.size.cols)
+      const maxCellHeight = Math.floor(availableHeight / grid.size.rows)
       const newCellSize = Math.min(maxCellWidth, maxCellHeight, 50)
 
-      setCellSize(Math.max(newCellSize, 25))
+      if (newCellSize > 0) {
+        setCellSize(newCellSize)
+      }
     }
 
     updateSize()
@@ -371,7 +381,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
     const checkState = solveState?.checkResults?.[cellKey]
 
     return cn(
-      'relative flex items-center justify-center font-semibold uppercase tracking-wide border border-border/60 bg-card text-card-foreground transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      'relative flex items-center justify-center border border-border/60 bg-card text-card-foreground font-semibold uppercase tracking-wide transition-all duration-150 box-border focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       isHighlighted && 'bg-yellow-100',
       isSelected && 'ring-2 ring-primary',
       checkState === true && 'bg-emerald-100 text-emerald-700',
@@ -469,6 +479,7 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
       />
       <div
         ref={gridRef}
+        data-testid="crossword-grid"
         className="inline-grid select-none gap-px rounded-2xl border border-border bg-foreground/80 p-1 shadow-card"
         style={{
           gridTemplateColumns: `repeat(${grid.size.cols}, ${cellSize}px)`,

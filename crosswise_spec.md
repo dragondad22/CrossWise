@@ -352,6 +352,7 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 ---
 
 ## Change Log
+- 2026-01-30: Tightened crossword grid sizing to account for gap/padding/border and avoid mobile overflow; cells now use border-box sizing and the grid scales to the available container.
 - 2026-01-30: Adjusted solve page desktop layout to top-align the puzzle grid with the clue list to remove excess vertical spacing while keeping mobile spacing unchanged.
 - 2026-01-30: Updated persistence notes to reflect that `crosswise-store` no longer saves puzzle-scoped state; puzzle progress is stored per-puzzle via autosave keys.
 - 2026-01-30: Added list deletion (cascades to puzzles/solves), including DELETE `/api/v1/lists/:id` and topics list UI flow.
