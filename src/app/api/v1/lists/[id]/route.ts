@@ -211,3 +211,60 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     )
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await requireSession(request)
+    if (!session?.user) {
+      return unauthorizedResponse()
+    }
+
+    const { id } = await params
+
+    const existingList = await prisma.list.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        puzzles: {
+          select: { id: true },
+        },
+      },
+    })
+
+    if (!existingList) {
+      return NextResponse.json(
+        { success: false, error: { message: 'List not found' } },
+        { status: 404 },
+      )
+    }
+
+    await prisma.list.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        listId: existingList.id,
+        puzzleIds: existingList.puzzles.map((puzzle) => puzzle.id),
+      },
+    })
+  } catch (error) {
+    console.error('Failed to delete list:', error)
+
+    if (error instanceof Error && error.message.includes('Record to delete does not exist')) {
+      return NextResponse.json(
+        { success: false, error: { message: 'List not found' } },
+        { status: 404 },
+      )
+    }
+
+    return NextResponse.json(
+      { success: false, error: { message: 'Failed to delete list' } },
+      { status: 500 },
+    )
+  }
+}

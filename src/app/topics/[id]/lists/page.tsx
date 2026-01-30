@@ -7,8 +7,10 @@ import { ListWithItemsAndTopic } from '@/types/database'
 import ListCard from '@/components/ListCard'
 import ImportListModal, { ImportListSubmission } from '@/components/ImportListModal'
 import EditListModal from '@/components/EditListModal'
+import DeleteListModal from '@/components/DeleteListModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
+import { useAutosave } from '@/lib/autosave'
 
 export default function ListsPage() {
   const router = useRouter()
@@ -21,6 +23,10 @@ export default function ListsPage() {
     setLists,
     selectTopic,
     selectList,
+    currentPuzzle,
+    setPuzzle,
+    setSolveState,
+    setWon,
     setLoading,
     setError,
     topics,
@@ -32,6 +38,10 @@ export default function ListsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editingList, setEditingList] = useState<ListWithItemsAndTopic | null>(null)
   const [isSavingEdit, setIsSavingEdit] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deletingList, setDeletingList] = useState<ListWithItemsAndTopic | null>(null)
+  const [isDeletingList, setIsDeletingList] = useState(false)
+  const { clearSolveState, stopAutosave } = useAutosave()
 
   const fetchTopicAndLists = useCallback(
     async (id: string) => {
@@ -194,6 +204,78 @@ export default function ListsPage() {
     }
   }
 
+  const handleOpenDeleteModal = (list: ListWithItemsAndTopic) => {
+    setDeletingList(list)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleCloseDeleteModal = () => {
+    if (isDeletingList) return
+    setIsDeleteModalOpen(false)
+    setDeletingList(null)
+  }
+
+  const handleDeleteList = async () => {
+    if (!deletingList) {
+      return
+    }
+
+    setIsDeletingList(true)
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/v1/lists/${deletingList.id}`, {
+        method: 'DELETE',
+      })
+
+      const text = await response.text()
+      let result: { success?: boolean; data?: { listId: string; puzzleIds: string[] }; error?: { message?: string } }
+
+      try {
+        result = JSON.parse(text)
+      } catch (parseError) {
+        console.error('Failed to parse delete response:', parseError, text)
+        setError('Invalid response from server')
+        return
+      }
+
+      if (!response.ok || !result.success) {
+        setError(result.error?.message || 'Failed to delete list')
+        return
+      }
+
+      const deletedListId = result.data?.listId ?? deletingList.id
+      const puzzleIds = result.data?.puzzleIds ?? []
+
+      puzzleIds.forEach((puzzleId) => clearSolveState(puzzleId))
+
+      if (currentPuzzle?.listId === deletedListId) {
+        stopAutosave()
+        setSolveState(null)
+        setPuzzle(null)
+        setWon(false)
+      }
+
+      const nextLists = useAppStore.getState().lists.filter((list) => list.id !== deletedListId)
+      setLists(nextLists)
+
+      const currentSelectedList = useAppStore.getState().selectedList
+      if (currentSelectedList?.id === deletedListId) {
+        selectList(null)
+      }
+
+      setIsDeleteModalOpen(false)
+      setDeletingList(null)
+    } catch (error) {
+      console.error('Failed to delete list:', error)
+      setError('Network error while deleting list')
+    } finally {
+      setIsDeletingList(false)
+      setLoading(false)
+    }
+  }
+
   const handleNewGame = async (list: ListWithItemsAndTopic) => {
     selectList(list)
 
@@ -318,6 +400,7 @@ export default function ListsPage() {
                 onNewGame={() => handleNewGame(list)}
                 onEdit={() => handleOpenEditModal(list)}
                 onExport={() => handleExportList(list)}
+                onDelete={() => handleOpenDeleteModal(list)}
                 onRefresh={() => fetchTopicAndLists(topicId)}
               />
             ))}
@@ -336,6 +419,13 @@ export default function ListsPage() {
           isSaving={isSavingEdit}
           onClose={handleCloseEditModal}
           onSubmit={handleUpdateList}
+        />
+        <DeleteListModal
+          isOpen={isDeleteModalOpen}
+          list={deletingList}
+          isDeleting={isDeletingList}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleDeleteList}
         />
       </div>
     </div>

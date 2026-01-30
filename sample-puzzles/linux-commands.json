@@ -323,7 +323,7 @@
     },
     {
       "answer": "IP",
-      "clue": "Manage IP networking",
+      "clue": "Manage networking settings",
       "difficulty": 2,
       "note": "IP manages network settings. Think of IP as a modern network toolbox."
     },
@@ -347,7 +347,7 @@
     },
     {
       "answer": "ARP",
-      "clue": "Manipulate ARP cache",
+      "clue": "Manipulate address resolution cache",
       "difficulty": 2,
       "note": "ARP shows ARP entries. Think of ARP as an address mapping table."
     },
@@ -467,7 +467,7 @@
     },
     {
       "answer": "ID",
-      "clue": "Show user and group IDs",
+      "clue": "Show user and group identifiers",
       "difficulty": 2,
       "note": "ID shows user and group IDs. Think of ID as an identity badge."
     },

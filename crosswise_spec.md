@@ -31,6 +31,7 @@ This document is the authoritative product + engineering specification for the c
    - Lists belong to a topic and contain items (answer + clue + optional note/difficulty).
    - Import via JSON (and CSV parsing exists client-side in `export.ts`).
    - Update list items, add/remove items, update name/version.
+   - Delete lists, which also removes associated puzzles/solves.
    - Export list as JSON per import schema.
 
 3. **Puzzle generation**
@@ -221,6 +222,12 @@ Authentication: cookie `crosswise_session` required for most endpoints.
   - Returns JSON file download in import schema format.
   - Errors: 404, 500.
 
+- `DELETE /api/v1/lists/:id`
+  - Auth required.
+  - Deletes the list and cascades to list items, puzzles, and solves.
+  - Returns `{ listId, puzzleIds }`.
+  - Errors: 404, 500.
+
 - `GET /api/v1/lists/:id/puzzles`
   - Auth required.
   - Returns 10 most recent puzzles for list.
@@ -346,5 +353,6 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 
 ## Change Log
 - 2026-01-30: Updated persistence notes to reflect that `crosswise-store` no longer saves puzzle-scoped state; puzzle progress is stored per-puzzle via autosave keys.
+- 2026-01-30: Added list deletion (cascades to puzzles/solves), including DELETE `/api/v1/lists/:id` and topics list UI flow.
 - 2026-01-29: Raised puzzle generation selection cap to 150 items across specs/docs.
 - 2026-01-29: Initial consolidated spec created from current codebase.

@@ -48,6 +48,7 @@ RULES (from crosswise_spec + validation):
   - Use the provided DIFFICULTY value for every item.
   - Valid values: 1,2,3,4,5 or EASY, MEDIUM, HARD.
 - Keep all answers unique and relevant to the TOPIC and DIFFICULTY.
+- The answer should **never** appear in the `clue`, but may appear in the `note`
 
 CHECK BEFORE OUTPUT:
 - JSON is valid (no trailing commas).

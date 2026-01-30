@@ -25,6 +25,7 @@ interface ListCardProps {
   onEdit?: () => void
   onExport?: () => void
   onDuplicate?: () => void
+  onDelete?: () => void
   onRefresh?: () => Promise<void> | void
 }
 
@@ -34,6 +35,7 @@ export default function ListCard({
   onEdit,
   onExport,
   onDuplicate,
+  onDelete,
   onRefresh,
 }: ListCardProps) {
   const itemCount = list.items.length
@@ -288,6 +290,18 @@ export default function ListCard({
           {onExport && (
             <button onClick={onExport} className={buttonClasses({ variant: 'ghost', size: 'sm' })}>
               Export
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className={buttonClasses({
+                variant: 'ghost',
+                size: 'sm',
+                className: 'text-red-600 hover:bg-red-50',
+              })}
+            >
+              Delete
             </button>
           )}
         </div>
