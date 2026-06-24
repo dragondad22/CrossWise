@@ -19,7 +19,6 @@ a persistent memory system.
 - `ai/CHECKLISTS/validation.md` — security + performance gate
 
 ## Slash-Command Skills
-- `/bootstrap` — one-time: fill the kit's placeholders for this project
 - `/preflight` — pre-commit build + test + security + changelog check
 - `/qa` — QA validation against recent changes
 - `/security` — security validation

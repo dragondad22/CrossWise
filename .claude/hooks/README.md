@@ -36,4 +36,4 @@ exit 0
 ```
 
 Other useful hook points: `PreToolUse` (block/guard a command), `Stop` (notify when
-Claude finishes). The `/bootstrap` command can set these up interactively.
+Claude finishes). Configure them in `.claude/settings.json`.
