@@ -35,10 +35,10 @@ owns it, and whether it's met.
 
 | Trigger | Verdict | Reasoning |
 |---|---|---|
-| Mobile store requirements (Apple/Google) | ➖ N/A | No mobile binary — web only. Revisit if a native/PWA-store build ships. |
+| Mobile store requirements (Apple/Google) | ⚠ Planned trigger | No mobile binary today, but **native Android + iOS apps are a stated roadmap goal**. Apple App Store / Google Play obligations (privacy nutrition labels / Data safety form, account-deletion requirement, age ratings, and the **minors tier** per Decision 1) **will fire** when a native build ships. Revisit before mobile work begins — see ADR-004 (planned). |
 | Messaging / UGC safety (report/block/moderation, DSA/OSA) | ➖ N/A | No user-to-user content. Sharing, collaboration, public links, and guest play are explicitly out of scope in the spec. **Revisit immediately if "shareable puzzles / public sharing links" (a stated stretch goal) is built** — that would fire UGC + the minors tier hard. |
 | Payments / PCI DSS | ➖ N/A | No monetization. |
-| OpenAPI 3.x spec | ➖ Optional | The `/api/v1` API is **first-party** (consumed only by CrossWise's own frontend; typed via `src/types/api.ts`). "Where it makes sense" ⇒ OpenAPI is low-value here. Promote to required only if the API is opened to third parties. |
+| OpenAPI 3.x spec | ➖ Optional (reconsider for mobile) | The `/api/v1` API is **first-party** and today consumed only by the web frontend (typed via `src/types/api.ts`) ⇒ OpenAPI is currently low-value. **Reconsideration triggers:** (a) opening the API to third parties, or (b) the planned **native mobile clients** (Android/iOS) — multiple first-party clients that can't share TS types make a language-neutral contract worthwhile. Intended path: standardize the contract on Zod (#44), then generate OpenAPI + client codegen from those schemas if promoted. See ADR-004 (planned). |
 | Tracking / App Tracking Transparency | ➖ N/A | No analytics/tracking SDKs in the codebase. |
 
 ## Decisions & scoping notes
