@@ -18,7 +18,7 @@ Status labels: **Proposed** | **Accepted** | **Rejected** | **Superseded**
 
 | ADR # | Title | Status | File |
 |-------|-------|--------|------|
-| ADR-001 | Per-user ownership of topics, lists, and puzzles | Proposed | `ADR-001-user-data-ownership-model.md` |
+| ADR-001 | Per-user ownership of topics, lists, and puzzles | Accepted | `ADR-001-user-data-ownership-model.md` |
 
 ---
 

@@ -1,8 +1,9 @@
 # ADR-001: Per-user ownership of topics, lists, and puzzles
 
-**Status:** Proposed
+**Status:** Accepted
 **Date:** 2026-06-24
-**Deciders:** Project owner (pending approval)
+**Accepted:** 2026-06-24
+**Deciders:** Project owner (dragondad22)
 **Related ADRs:** —
 **Related issues:** #34 (enforce user-data isolation)
 
