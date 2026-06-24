@@ -1,9 +1,8 @@
-<!-- Generic template from the Claude starter kit. Replace {{TOKENS}}; see bootstrap/PLACEHOLDERS.md -->
 # Architecture Decision Record (ADR) Index
 
 CrossWise
 
-**Updated:** YYYY-MM-DD
+**Updated:** 2026-06-24
 
 This index tracks all architectural decisions for CrossWise:
 - Completed ADRs
@@ -19,7 +18,7 @@ Status labels: **Proposed** | **Accepted** | **Rejected** | **Superseded**
 
 | ADR # | Title | Status | File |
 |-------|-------|--------|------|
-| ADR-001 | (first decision title) | Proposed | `ADR-001-<slug>.md` |
+| ADR-001 | Per-user ownership of topics, lists, and puzzles | Accepted | `ADR-001-user-data-ownership-model.md` |
 
 ---
 
@@ -27,7 +26,8 @@ Status labels: **Proposed** | **Accepted** | **Rejected** | **Superseded**
 
 | ADR # | Decision Area | Notes |
 |-------|---------------|-------|
-| ADR- | (area to be decided later) | |
+| ADR-002 | Production DB migration & backfill strategy | `prisma migrate` vs `db push`; backfilling owner columns (depends on ADR-001) |
+| ADR-003 | Curated library & copy-on-pull | Read-only team-published source lists; deep-copy into user account on pull; `sourceListId` provenance; **no** user-publishing (UGC deferred per Decision 1). Depends on ADR-001 |
 
 ---
 
@@ -35,8 +35,8 @@ Status labels: **Proposed** | **Accepted** | **Rejected** | **Superseded**
 
 Topics that influence architecture but do not yet have ADRs:
 
-- (gap 1)
-- (gap 2)
+- JSON-as-`String` columns (`Puzzle.grid/numbering/settings`, `List.tags`, `Solve.state`) vs Prisma `Json` type — revisit if queryability/validation is needed.
+- Anonymous vs authenticated solves: `Solve.userId` is nullable with `@@unique([puzzleId, userId])` — decide whether anonymous solves are supported.
 
 ---
 

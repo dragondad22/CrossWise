@@ -54,7 +54,7 @@ Work through the tasks in order. Capture notes or screenshots whenever something
 ### D. Solve the Puzzle
 1. Click a cell and type letter answers.  
 2. Use arrow keys and Tab to move around.  
-3. Try the “Check letter/word” buttons.  
+3. Note that checking is automatic — there are no “Check letter/word” buttons; correct entries are confirmed for you as you type.  
 4. Fill in a full word and confirm it highlights in green, locks to prevent accidental edits, and focus jumps to the next clue automatically.  
 5. Close the page or refresh—autosave should restore progress.  
 6. Solve the whole puzzle and confirm you see a win state.
@@ -99,7 +99,7 @@ Describe the issue:
 - Additional notes:
 ```
 
-4. Add any labels suggested by the team (e.g., `bug`, `feedback`, `UI`).  
+4. Add any labels suggested by the team (e.g., `bug`, `UI/UX`).  
 5. Click **Submit new issue**.
 
 ### Track Progress

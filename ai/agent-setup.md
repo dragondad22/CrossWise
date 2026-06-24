@@ -51,7 +51,7 @@ GitHub Actions (.github/workflows/deploy.yml): lint + test + build on PRs to mai
 schedule, which gates block merge vs are advisory, and where artifacts are uploaded. -->
 
 ## One-Time Setup
-1. Run `/bootstrap` to fill placeholders, or fill by hand per `bootstrap/SETUP.md`.
+1. Bootstrap is complete — the starter-kit placeholders are filled for CrossWise, and the one-time `bootstrap/` scaffolding has been removed (see git history if you need the token reference).
 2. Install required CLIs the scripts use: `jq` (version scripts), `gh` (if using GitHub).
 3. Install project dependencies and set up local env (`.env` from `.env.example`).
 4. Configure `.claude/settings.json` permissions for this project's commands.
