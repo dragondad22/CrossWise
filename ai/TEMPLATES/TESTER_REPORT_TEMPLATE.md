@@ -18,7 +18,7 @@
 | Suite Type | Command | Result | Evidence |
 |---|---|---|---|
 | Unit / Integration | `npm test` |  |  |
-| End-to-end (if applicable) | `{{E2E_COMMAND}}` |  |  |
+| End-to-end (if applicable) | `N/A` |  |  |
 | Other (describe) | `<command>` |  |  |
 
 ## 3. Test Integrity Audit

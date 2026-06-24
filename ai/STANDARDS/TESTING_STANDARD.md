@@ -23,7 +23,7 @@ When guidance conflicts, follow the higher source:
 ## Project Test Inventory
 Fill this in with the project's real entry points:
 - Full / primary test suite: `npm test`
-- End-to-end / browser suite (if any): `{{E2E_COMMAND}}`
+- End-to-end / browser suite (if any): `N/A`
 - Build / typecheck (must pass before tests are meaningful): `npm run build`
 - Data-layer codegen / migration prep (if the `Prisma + PostgreSQL` requires it before tests run):
   e.g. generate the ORM client / apply migrations to the test database.
@@ -34,7 +34,7 @@ Fill this in with the project's real entry points:
 ## Required Execution Matrix
 Run all applicable suites for the impacted components:
 - **Backend changes:** run any required data-layer codegen, then `npm test` for the backend.
-- **Frontend changes:** run the frontend unit suite (and `{{E2E_COMMAND}}` if the change is user-visible flow).
+- **Frontend changes:** run the frontend unit suite (and `N/A` if the change is user-visible flow).
 - **Mobile / other-surface changes:** run that surface's suite (or report `BLOCKED` with reason if the toolchain is unavailable).
 - **Cross-cutting auth / session / authorization changes:** *all* affected surfaces' suites are mandatory, not just one.
 
@@ -92,7 +92,7 @@ Minimum artifacts:
   code cells within tables; escape as `\|` when unavoidable.
 
 > The kit ships helper-script stubs (e.g. an evidence-collection script). Wire them to
-> `npm test` / `{{E2E_COMMAND}}` for this project, or run the commands directly.
+> `npm test` / `N/A` for this project, or run the commands directly.
 
 ## Outcome Definitions
 - `PASS`: required suites passed, no critical findings.

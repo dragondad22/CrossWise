@@ -11,7 +11,7 @@ Use this checklist when validating changes — after implementation or as a dedi
 
 ### Test Execution
 - [ ] Test suite passes: `npm test`
-- [ ] End-to-end passes (if flows changed): `{{E2E_COMMAND}}`
+- [ ] End-to-end passes (if flows changed): `N/A`
 
 ### Coverage Assessment
 - [ ] New code paths have test coverage

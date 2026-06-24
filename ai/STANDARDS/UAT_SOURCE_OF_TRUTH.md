@@ -57,7 +57,7 @@ Store artifacts under a dated, per-run directory, e.g.:
 - `testing-reports/artifacts/<date>_<work-item>_<feature>_<timestamp>/`
 
 ## Default Test Automation (Web UAT)
-- Web UAT runs should execute the project's E2E smoke by default: `{{E2E_COMMAND}}`.
+- Web UAT runs should execute the project's E2E smoke by default: `N/A`.
 - The E2E configuration must retain failure artifacts:
   - screenshot on failure,
   - trace on failure,
