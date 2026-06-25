@@ -119,6 +119,7 @@ Use these as completion gates:
 - Verify security/authorization boundaries with negative-path checks on every feature.
 - Loading/empty/error states required for all data-driven views (if there's a UI).
 - Destructive actions require explicit confirmation.
+- **API contract is Zod-first**: request/response shapes for `src/app/api/v1` are defined as Zod schemas in `src/lib/validation.ts` (the single source of truth); TypeScript types are derived from them via `z.input`/`z.infer` in `src/types/api.ts`. Do not hand-write request interfaces — they drift. (See #44; OpenAPI/codegen for future clients is ADR-004.)
 - **CHANGELOG discipline**: every PR that ships user-visible behavior adds a one-line entry under `## [Unreleased]` in `CHANGELOG.md` in the same PR. Skip only for purely internal work. Versions bump only at release time, in lockstep — use `/release` (wraps `ai/scripts/release.sh`), don't hand-edit version files. Full rules: `ai/STANDARDS/VERSIONING_AND_CHANGELOG_STANDARD.md`.
 
 ## Anti-Drift Rules

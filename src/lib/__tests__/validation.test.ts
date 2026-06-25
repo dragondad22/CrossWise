@@ -108,4 +108,25 @@ describe('validation helpers', () => {
     expect(result.valid).toBe(false)
     expect(result.issues).toContain('Answer too long (maximum 20 letters)')
   })
+
+  it('accepts both numeric (1-5) and string difficulty on import, but rejects out-of-range values', () => {
+    const base = {
+      topic: 'Animals',
+      name: 'Mammals',
+      items: [
+        { answer: 'otter', clue: 'Playful river mammal', difficulty: 3 },
+        { answer: 'Sealion', clue: 'Barks loudly on the shore', difficulty: 'HARD' },
+        { answer: 'Fennec', clue: 'Desert fox with big ears' },
+        { answer: 'Badger', clue: 'Builds complex burrows underground' },
+        { answer: 'Panda', clue: 'Eats mostly bamboo', difficulty: 'EASY' },
+      ],
+    }
+    expect(validateListJSON(base).success).toBe(true)
+
+    const bad = {
+      ...base,
+      items: [{ ...base.items[0], difficulty: 6 }, ...base.items.slice(1)],
+    }
+    expect(validateListJSON(bad).success).toBe(false)
+  })
 })

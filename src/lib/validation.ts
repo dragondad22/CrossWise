@@ -37,7 +37,7 @@ const DifficultyInputSchema = z.union([
   z.literal('HARD'),
 ])
 
-const ListItemInputSchema = z.object({
+export const ListItemInputSchema = z.object({
   answer: z
     .string()
     .min(2, 'Answer must be at least 2 characters')
