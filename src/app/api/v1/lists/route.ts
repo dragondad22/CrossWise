@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
     const userId = session.user.id
 
-    const where = topicId ? { topicId } : {}
+    const where = { topic: { userId }, ...(topicId ? { topicId } : {}) }
 
     const lists = await prisma.list.findMany({
       where,
@@ -108,12 +108,13 @@ export async function POST(request: NextRequest) {
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const body = await request.json()
     const validated = CreateListSchema.parse(body)
 
-    // Check if topic exists
-    const topic = await prisma.topic.findUnique({
-      where: { id: validated.topicId },
+    // Check if topic exists and is owned by the user
+    const topic = await prisma.topic.findFirst({
+      where: { id: validated.topicId, userId },
     })
 
     if (!topic) {

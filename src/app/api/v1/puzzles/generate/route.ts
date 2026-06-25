@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const body = await request.json()
     const validated = GeneratePuzzleSchema.parse(body)
     const gridSize = validated.gridSize
@@ -27,8 +28,8 @@ export async function POST(request: NextRequest) {
       : { rows: 15, cols: 15 }
 
     // Fetch list with items
-    const list = await prisma.list.findUnique({
-      where: { id: validated.listId },
+    const list = await prisma.list.findFirst({
+      where: { id: validated.listId, topic: { userId } },
       include: {
         items: true,
       },

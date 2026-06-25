@@ -27,8 +27,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // First, get the puzzle data
-    const puzzle = await prisma.puzzle.findUnique({
-      where: { id },
+    const puzzle = await prisma.puzzle.findFirst({
+      where: { id, list: { topic: { userId: session.user.id } } },
       include: {
         list: {
           include: {
@@ -119,8 +119,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Check if puzzle exists
-    const puzzle = await prisma.puzzle.findUnique({
-      where: { id },
+    const puzzle = await prisma.puzzle.findFirst({
+      where: { id, list: { topic: { userId: session.user.id } } },
     })
 
     if (!puzzle) {

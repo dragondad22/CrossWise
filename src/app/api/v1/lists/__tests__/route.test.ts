@@ -8,13 +8,13 @@ const {
   listFindMany,
   listFindUnique,
   solveFindMany,
-  topicFindUnique,
+  topicFindFirst,
   prismaTransaction,
 } = vi.hoisted(() => ({
   listFindMany: vi.fn(),
   listFindUnique: vi.fn(),
   solveFindMany: vi.fn(),
-  topicFindUnique: vi.fn(),
+  topicFindFirst: vi.fn(),
   prismaTransaction: vi.fn(),
 }))
 
@@ -30,7 +30,7 @@ vi.mock('@/lib/db', () => ({
       findMany: solveFindMany,
     },
     topic: {
-      findUnique: topicFindUnique,
+      findFirst: topicFindFirst,
     },
     $transaction: prismaTransaction,
   },
@@ -113,7 +113,7 @@ describe('/api/v1/lists route handlers', () => {
 
   it('creates a list with normalized items on POST', async () => {
     const topicId = 'ctopic1234567890123456789'
-    topicFindUnique.mockResolvedValueOnce({ id: topicId, name: 'Animals' })
+    topicFindFirst.mockResolvedValueOnce({ id: topicId, name: 'Animals' })
 
     const createdList = { id: 'clist1234567890123456789', topicId, name: 'Wildlife', source: 'UPLOAD' }
 
@@ -180,7 +180,7 @@ describe('/api/v1/lists route handlers', () => {
     const body = await response.json()
 
     expect(response.status).toBe(201)
-    expect(topicFindUnique).toHaveBeenCalledWith({ where: { id: topicId } })
+    expect(topicFindFirst).toHaveBeenCalledWith({ where: { id: topicId, userId: 'user-1' } })
     expect(prismaTransaction).toHaveBeenCalled()
     expect(body.data.items).toHaveLength(2)
     expect(body.data.items[0].answer).toBe('CAT')
@@ -188,7 +188,7 @@ describe('/api/v1/lists route handlers', () => {
   })
 
   it('returns 404 when posting to a missing topic', async () => {
-    topicFindUnique.mockResolvedValueOnce(null)
+    topicFindFirst.mockResolvedValueOnce(null)
 
     const request = new NextRequest('http://localhost/api/v1/lists', {
       method: 'POST',
@@ -208,7 +208,7 @@ describe('/api/v1/lists route handlers', () => {
   })
 
   it('handles transactional failures gracefully', async () => {
-    topicFindUnique.mockResolvedValueOnce({ id: 'ctopic1234567890123456789' })
+    topicFindFirst.mockResolvedValueOnce({ id: 'ctopic1234567890123456789' })
     prismaTransaction.mockRejectedValueOnce(new Error('transaction failed'))
 
     const request = new NextRequest('http://localhost/api/v1/lists', {
