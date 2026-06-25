@@ -52,3 +52,48 @@ Treat CrossWise as a service **intended for and likely to be accessed by minors*
 
 <!-- Append new dated entries below. Never edit a recorded decision in place to mean
      something different — supersede it with a new entry and mark the old one Superseded. -->
+
+## Decision 2: Roadmap includes native mobile apps (planned) and AI-assisted list generation (exploratory)
+**Date:** 2026-06-24
+
+**Context:**
+CrossWise is web-first today (Next.js on Vercel, consumed only by its own React
+frontend). The owner intends to ship **native Android and iOS apps**, and is
+**exploring AI-assisted list generation** — a user enters a topic and an LLM generates
+the word/clue list (the manual prompt already exists at
+`sample-puzzles/ai-list-generation-prompt.md`). These goals are recorded now because
+they shape decisions being made today — chiefly the shape of the `/api/v1` contract.
+
+**Decision:**
+Treat native **Android + iOS** as a **planned** direction, and **AI-assisted list
+generation** as an **exploratory** direction under consideration. This entry records the
+direction to inform — not yet fully specify — architectural choices; the technical
+decisions are deferred to the ADRs below.
+
+**Rationale:**
+- Surfacing the multi-client and AI goals early avoids baking in web-only assumptions
+  (e.g. a cookie-only auth model, a TypeScript-only API contract) that are expensive to
+  unwind once native clients exist.
+- Recording AI generation now ensures its minors-audience safety obligation (Decision 1)
+  is considered before any build, not retrofitted.
+
+**Impact:**
+- **API contract:** `/api/v1` becomes multi-client (web + native). Standardize the
+  request/response shapes on **Zod as the single source of truth** (#44); revisit the
+  OpenAPI "optional" scoping (native clients are a reconsideration trigger), API
+  versioning/deprecation (mobile clients lag the backend), and a mobile-friendly auth
+  strategy (the current `httpOnly` cookie session is web-centric; native apps typically
+  need token-based auth). Captured in **ADR-004 (planned)**.
+- **AI generation:** introduces a server-side LLM provider integration + a new endpoint;
+  adds an **AI-content safety/moderation** obligation given the minors audience
+  (Decision 1), plus provider data-processing to disclose in the privacy notice
+  (CW-C-002), and cost/rate controls. Captured in **ADR-005 (planned)**.
+- **Determinism boundary:** the AI-generated *list* is non-deterministic content; the
+  *puzzle* generated from a list remains seeded and reproducible (#35). Keep the two
+  separate.
+- **Mobile store compliance:** Apple App Store / Google Play obligations and the minors
+  tier will fire when a native build ships (see `docs/compliance/COMPLIANCE_REGISTER.md`).
+
+**Status:** Active — Mobile = Planned · AI generation = Exploratory
+
+**Scope:** In
