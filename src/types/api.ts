@@ -1,49 +1,49 @@
+/**
+ * API contract types for `/api/v1`.
+ *
+ * SINGLE SOURCE OF TRUTH: request shapes are **derived** from the Zod schemas in
+ * `src/lib/validation.ts` — do not hand-write request interfaces here. Define a new
+ * endpoint's contract as a Zod schema in `validation.ts`, then derive its type below.
+ * This keeps runtime validation and compile-time types from drifting (issue #44).
+ *
+ * Note on `z.input` vs `z.infer`: request types use `z.input` (the shape the *client
+ * sends*, before defaults/transforms run), so optional-with-default fields stay optional.
+ *
+ * Response types have no schema yet and are declared directly; give them schemas (and
+ * derive their types the same way) when response validation or OpenAPI generation is
+ * introduced — see ADR-004 (planned).
+ */
+import { z } from 'zod'
+import {
+  CreateTopicSchema,
+  CreateListSchema,
+  ListItemInputSchema,
+  GeneratePuzzleSchema,
+  ImportListSchema,
+  UpdateSolveStateSchema,
+  RegisterSchema,
+  LoginSchema,
+} from '@/lib/validation'
 import type { CrosswordGrid, CrosswordNumbering, PuzzleSettings } from '@/types/crossword'
 
-// API request/response types
-export interface CreateTopicRequest {
-  name: string
-  description?: string
-  color?: string
-  icon?: string
-}
+// --- Request types (derived from Zod schemas) ---
 
-export interface CreateListRequest {
-  topicId: string
-  name: string
-  items: ListItemInput[]
-}
+export type CreateTopicRequest = z.input<typeof CreateTopicSchema>
+export type CreateListRequest = z.input<typeof CreateListSchema>
+export type ListItemInput = z.input<typeof ListItemInputSchema>
+export type GeneratePuzzleRequest = z.input<typeof GeneratePuzzleSchema>
+export type ImportListRequest = z.input<typeof ImportListSchema>
+export type UpdateSolveStateRequest = z.input<typeof UpdateSolveStateSchema>
+export type RegisterRequest = z.input<typeof RegisterSchema>
+export type LoginRequest = z.input<typeof LoginSchema>
 
-export interface ListItemInput {
-  answer: string
-  clue: string
-  note?: string
-  difficulty?: 'EASY' | 'MEDIUM' | 'HARD'
-}
-
-export interface GeneratePuzzleRequest {
-  listId: string
-  gridSize?: { rows?: number; cols?: number }
-  seed?: string
-}
+// --- Response types (no schema yet; declared directly) ---
 
 export interface GeneratePuzzleResponse {
   puzzleId: string
   grid: CrosswordGrid
   numbering: CrosswordNumbering
   settings: PuzzleSettings
-}
-
-export interface ImportListRequest {
-  topic: string
-  name: string
-  version?: number
-  items: {
-    answer: string
-    clue: string
-    note?: string
-    difficulty?: number
-  }[]
 }
 
 export interface ExportListResponse {
@@ -54,17 +54,13 @@ export interface ExportListResponse {
     answer: string
     clue: string
     note?: string
+    // Export emits numeric difficulty (1-3); persisted storage uses the EASY/MEDIUM/HARD enum.
     difficulty?: number
   }[]
 }
 
-export interface UpdateSolveStateRequest {
-  puzzleId: string
-  state: string // JSON stringified solve state
-  completed?: boolean
-}
+// --- Response envelope / error types ---
 
-// API error types
 export interface ApiError {
   message: string
   code?: string
