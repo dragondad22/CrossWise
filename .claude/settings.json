@@ -28,5 +28,9 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "prisma@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true
   }
 }
