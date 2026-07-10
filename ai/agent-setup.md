@@ -18,7 +18,34 @@ a persistent memory system.
 - `ai/CHECKLISTS/qa.md` — QA/testing gate
 - `ai/CHECKLISTS/validation.md` — security + performance gate
 
+## Session-Start Protocol
+
+The **single home** for session-start checks (referenced from `CLAUDE.md`). Run
+these in order at the start of a working session. Every check is
+**non-interruptive**: its output is one status line or a filed issue — never a
+derailment of the task the human arrived with (they may be here for an
+emergency). **New session-start checks may only be added to this list**, not
+scattered into other docs.
+
+1. **Board drift** — glance at the project board for closed-but-not-Done and stale
+   In-progress items; fix the statuses or note the drift in one line
+   (`ai/STANDARDS/TASK_ISSUE_STANDARD.md`).
+2. **Release trigger** — if `[Unreleased]` in `CHANGELOG.md` is non-empty and ~2 weeks
+   have passed or a batch has accumulated, propose a cut in one line
+   (`ai/STANDARDS/VERSIONING_AND_CHANGELOG_STANDARD.md` → Release trigger).
+3. **Evergreen cadence** — if the newest entry in `docs/evergreen-log.md` is older
+   than ~30 days, run `/evergreen` in the background / at a natural pause — it files
+   its findings as an issue, never an interactive review.
+4. **Scaffold triggers** — if a first-of-its-kind artifact exists whose module isn't
+   installed (`bash ai/scripts/scaffold-module.sh list`; trigger table:
+   `bootstrap/modules/manifest.yml`), **offer** the install in one line — never
+   apply a module silently.
+
 ## Slash-Command Skills
+- `/bootstrap` — inception close-out / retrofit-upgrade path (re-run safe)
+- `/conform` — tidy the repo (or, with `github`, the tracker) to kit standards
+- `/rebaseline` — salvage-and-rebuild tier for major course corrections
+- `/evergreen` — periodic standards & process health review (files an issue)
 - `/preflight` — pre-commit build + test + security + changelog check
 - `/qa` — QA validation against recent changes
 - `/security` — security validation
@@ -38,6 +65,8 @@ Scaffold with `ai/scripts/new-report.sh <type> <id> <slug>`. Reports land in `te
 
 ## Scripts (`ai/scripts/`)
 - `release.sh` / `check-version-sync.sh` — versioning (driven by `version-files.txt`)
+- `bootstrap-labels.sh` — apply the issue-label taxonomy (idempotent; the label manifest)
+- `scaffold-module.sh` — list/install staged kit modules from `bootstrap/modules/`
 - `new-report.sh` — scaffold a quality report from a template
 - `log-self-correction.sh` — record a self-correction (see below)
 - `security-review.sh` / `performance-smoke.sh` — **stubs**; customize for this stack
@@ -50,7 +79,7 @@ GitHub Actions (.github/workflows/deploy.yml): lint + test + build on PRs to mai
 schedule, which gates block merge vs are advisory, and where artifacts are uploaded. -->
 
 ## One-Time Setup
-1. Bootstrap is complete — the starter-kit placeholders are filled for CrossWise, and the one-time `bootstrap/` scaffolding has been removed (see git history if you need the token reference).
+1. Bootstrap is complete — the starter-kit placeholders are filled for CrossWise. The `bootstrap/` directory is the kit's staging area (token reference, staged modules, `KIT_VERSION` upgrade marker) — keep it; it is not one-time scaffolding.
 2. Install required CLIs the scripts use: `jq` (version scripts), `gh` (if using GitHub).
 3. Install project dependencies and set up local env (`.env` from `.env.example`).
 4. Configure `.claude/settings.json` permissions for this project's commands.

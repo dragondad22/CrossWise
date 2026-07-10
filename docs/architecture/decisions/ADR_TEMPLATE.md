@@ -1,4 +1,4 @@
-<!-- ADR template. Copy to ADR-NNN-<slug>.md, fill in, and register it in ADR-INDEX.md. -->
+<!-- ADR template. Copy to ADR-NNN-<slug>.md, fill in, and register it in ADR_INDEX.md. -->
 # ADR-NNN: Title of the Decision
 
 **Status:** Proposed | Accepted | Rejected | Superseded
