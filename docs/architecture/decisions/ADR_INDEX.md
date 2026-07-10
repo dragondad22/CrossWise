@@ -46,4 +46,4 @@ Topics that influence architecture but do not yet have ADRs:
 
 ## ADR Template
 
-See: `ADR-TEMPLATE.md`
+See: `ADR_TEMPLATE.md`

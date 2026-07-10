@@ -340,7 +340,7 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 - API endpoints generally assume authenticated users; UI redirects to login when needed.
 
 ## AI Maintenance Instructions
-- **Always update this file (`crosswise_spec.md`) when you change:**
+- **Always update this file (`docs/specs/CROSSWISE_SPEC.md`) when you change:**
   - Prisma schema or any persisted data shape.
   - API routes (paths, request/response formats, status codes).
   - Crossword generation logic or constraints.

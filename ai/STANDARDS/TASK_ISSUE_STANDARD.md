@@ -197,5 +197,5 @@ original quality issue should be left open and linked from the task issue as
 
 - `ai/TEMPLATES/TASK_ISSUE_TEMPLATE.md` — fill-in body template
 - `ai/STANDARDS/GITHUB_ISSUES.md` — quality agent bug reports
-- `ai/STANDARDS/ISSUE_TRIAGE_SLA.md` — SLA governance for quality board
+- `ai/STANDARDS/ISSUE_SLA_STANDARD.md` — SLA governance for quality board
 - `ai/agent-setup.md` — full AI tooling context

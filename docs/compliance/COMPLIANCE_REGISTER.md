@@ -15,7 +15,7 @@ owns it, and whether it's met.
 | Field | Value |
 |---|---|
 | Target platforms | Web only (Next.js, Vercel) — no mobile binary |
-| Audience (incl. age) | **Intended for / likely accessed by minors** (Decision 1, 2026-06-24, `docs/decision_log.md`). Strict child-safety/privacy tier applies. |
+| Audience (incl. age) | **Intended for / likely accessed by minors** (Decision 1, 2026-06-24, `docs/decision-log.md`). Strict child-safety/privacy tier applies. |
 | Regulated data handled | PII (email, bcrypt password hash, session token, request IP), user content (word lists/clues), solve progress. No payments / health / location. |
 | Obligation-bearing features | Web UI; accounts + session cookies; first-party REST API (`/api/v1`); JSON/CSV import-export. **No** messaging/UGC, payments, or tracking/analytics. |
 
@@ -46,4 +46,4 @@ owns it, and whether it's met.
 - **RESOLVED — audience decision (Decision 1, 2026-06-24).** CrossWise is treated as
   **intended for / likely accessed by minors** (option b). CW-C-005 is therefore **active**:
   DPIA, high-privacy defaults, and a parental-consent path for EU under-age users are required.
-  Full record in `docs/decision_log.md`.
+  Full record in `docs/decision-log.md`.

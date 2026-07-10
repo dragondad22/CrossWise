@@ -134,7 +134,7 @@ Read these before writing code. Listed in dependency order.
 
 - [ ] `docs/uat/UAT_CW-NNN.md` — create or update acceptance test doc
 - [ ] `docs/architecture/decisions/ADR-NNN.md` — [create/update if decision changed]
-- [ ] `docs/decision_log.md` — [update if product/scope changed]
+- [ ] `docs/decision-log.md` — [update if product/scope changed]
 - [ ] [Any gap/tracking doc] — mark gap as resolved
 
 ---

@@ -104,4 +104,4 @@ specified in **ADR-003** (planned).
 - Specify the curated library + copy-on-pull model in **ADR-003** (read-only,
   team-published source lists; deep-copy into the user's account on pull; `sourceListId`
   provenance; no user-publishing).
-- On acceptance, flip Status to **Accepted** and update `ADR-INDEX.md`.
+- On acceptance, flip Status to **Accepted** and update `ADR_INDEX.md`.

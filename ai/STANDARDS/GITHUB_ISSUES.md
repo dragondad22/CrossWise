@@ -92,7 +92,7 @@ Every created issue must be linked in the corresponding report under `Issues
 Created` with severity and area.
 
 ## Triage SLA Governance
-- Follow `ai/STANDARDS/ISSUE_TRIAGE_SLA.md` for board workflow and SLA targets.
+- Follow `ai/STANDARDS/ISSUE_SLA_STANDARD.md` for board workflow and SLA targets.
 - Every new issue must include one severity label and one flow label (`testing`,
   `uat`, `security-review`, or `performance`).
 

@@ -31,7 +31,7 @@ shipping a silent behavior change is the expensive mistake.
 
 Pick **one** authoritative home for user-facing documentation and name it here:
 
-> **Source of truth for this project:** `crosswise_spec.md` (the authoritative
+> **Source of truth for this project:** `docs/specs/CROSSWISE_SPEC.md` (the authoritative
 > product+engineering spec) plus the `docs/` flow docs; no separate end-user manual site.
 
 Whatever you choose, the rule is the same: there is exactly one canonical place a
@@ -47,7 +47,7 @@ Larger products benefit from **two surfaces over one source of truth**. This is 
 to justify it:
 
 1. **Reference manual / long form** — beginner-level, example-rich, one page per
-   screen or command plus task tutorials. Lives in `crosswise_spec.md` (the
+   screen or command plus task tutorials. Lives in `docs/specs/CROSSWISE_SPEC.md` (the
    authoritative product+engineering spec) plus the `docs/` flow docs.
 2. **In-app / inline help** — short, contextual help shown next to the thing it
    explains (a help panel, per-page help, inline `?` field tooltips, `--help`
