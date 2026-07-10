@@ -73,10 +73,26 @@ Scaffold with `ai/scripts/new-report.sh <type> <id> <slug>`. Reports land in `te
 - `lib/redact.sh` — strip secrets from artifacts before persisting
 
 ## CI Quality Gates
-GitHub Actions (.github/workflows/deploy.yml): lint + test + build on PRs to main; deploy to Vercel on push to main
+GitHub Actions, two workflows:
 
-<!-- Document the actual gates here once CI exists: what runs on PR vs on merge vs on a
-schedule, which gates block merge vs are advisory, and where artifacts are uploaded. -->
+**On PRs to main:**
+- `pr-validation.yml` → `validate`: build/typecheck, lint, tests, version sync
+  (`ai/scripts/check-version-sync.sh`), dependency scan (`npm audit
+  --audit-level=high --omit=dev` — fails on high/critical runtime vulns per
+  `ai/STANDARDS/SECURITY_REVIEW_STANDARD.md`). On failure, diagnostics upload to
+  the `failure-diagnostics` CI artifact. E2E (Playwright) is stubbed, pending #42.
+- `deploy.yml` → `migrations-check`: squawk lint on `prisma/migrations/**/*.sql`
+  (results posted as a PR comment); applies migrations to an ephemeral Neon
+  branch when `NEON_API_KEY`/`NEON_PROJECT_ID` secrets are set (self-skips with
+  a warning until then).
+
+**On push to main:** `deploy.yml` → `build-test` (lint + test + build) →
+`migrate` (`prisma migrate deploy` against the Dev-environment DB, serialized
+via the `db-migrate-prod` concurrency group) → `deploy` (Vercel `--prod`). A
+failed migration blocks the deploy.
+
+All gates block merge/deploy; none are advisory. Branch protection is not yet
+configured, so gates are enforced by convention (don't merge red).
 
 ## One-Time Setup
 1. Bootstrap is complete — the starter-kit placeholders are filled for CrossWise. The `bootstrap/` directory is the kit's staging area (token reference, staged modules, `KIT_VERSION` upgrade marker) — keep it; it is not one-time scaffolding.

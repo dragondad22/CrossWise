@@ -1,0 +1,60 @@
+# PR-validation gates (kit decision T10.1) — environment-independent checks that run
+# on every PR to main. Deploy/CD and DB-touching checks live in deploy.yml
+# (migrations-check on PRs; build-test → migrate → deploy on push to main).
+# Gates are documented in ai/agent-setup.md → CI Quality Gates.
+
+name: PR validation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build / typecheck
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npm test
+
+      - name: Version sync
+        run: bash ai/scripts/check-version-sync.sh
+
+      - name: Dependency scan (SCA)
+        # Fail on high/critical runtime vulnerabilities — gate definition in
+        # ai/STANDARDS/SECURITY_REVIEW_STANDARD.md (CI Security Gates).
+        run: npm audit --audit-level=high --omit=dev
+
+      # --- E2E ----------------------------------------------------------------
+      # Uncomment when Playwright lands (#42). Its on-failure screenshot/trace/video
+      # defaults produce the failure evidence the kit's diagnostics rules expect.
+      # - name: E2E tests
+      #   run: npx playwright test
+
+      # --- Failure diagnostics -------------------------------------------------
+      # Success is silent. On failure, upload whatever diagnostics the gates
+      # wrote so the failure can be fixed without re-running it.
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-diagnostics
+          path: |
+            testing-reports/
+            test-results/
+          if-no-files-found: ignore

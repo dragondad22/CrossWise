@@ -7,7 +7,10 @@ on:
     branches: [main]
 
 jobs:
+  # Push-to-main gate for migrate/deploy. PR validation (build/lint/test, version
+  # sync, dependency scan) runs in pr-validation.yml — not duplicated here.
   build-test:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
