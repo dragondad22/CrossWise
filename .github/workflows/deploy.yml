@@ -82,6 +82,9 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           branch_name: ci-pr-${{ github.event.pull_request.number }}
           api_key: ${{ secrets.NEON_API_KEY }}
+          username: neondb_owner
+          database: crosswise
+          prisma: 'true'
 
       - name: Apply + verify migrations on the branch
         if: steps.neon_secrets.outputs.present == 'true'
