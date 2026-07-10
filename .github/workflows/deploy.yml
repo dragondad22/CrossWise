@@ -33,6 +33,11 @@ jobs:
   migrations-check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    # squawk posts its lint results as a PR comment; the default token is read-only
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
