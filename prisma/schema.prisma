@@ -12,14 +12,17 @@ datasource db {
 
 model Topic {
   id          String   @id @default(cuid())
-  name        String   @unique
+  userId      String   @map("user_id")
+  name        String
   description String?
   color       String   @default("#3B82F6")
   icon        String   @default("📚")
   createdAt   DateTime @default(now()) @map("created_at")
-  
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lists       List[]
 
+  @@unique([userId, name])
   @@map("topics")
 }
 
@@ -93,6 +96,7 @@ model User {
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
+  topics       Topic[]
   solves       Solve[]
   sessions     Session[]
 

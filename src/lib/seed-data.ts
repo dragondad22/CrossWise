@@ -16,24 +16,26 @@ export async function seedSampleData() {
 
     // Create sample topics
     const contextEngineeringTopic = await prisma.topic.upsert({
-      where: { name: 'Context Engineering' },
+      where: { userId_name: { userId: demoUser.id, name: 'Context Engineering' } },
       update: {},
       create: {
         name: 'Context Engineering',
         description: 'Terms and concepts related to prompt engineering and LLM context management',
         color: '#3B82F6',
         icon: '🤖',
+        userId: demoUser.id,
       },
     })
 
     const webDevTopic = await prisma.topic.upsert({
-      where: { name: 'Web Development' },
+      where: { userId_name: { userId: demoUser.id, name: 'Web Development' } },
       update: {},
       create: {
         name: 'Web Development',
         description: 'Frontend and backend web development concepts',
         color: '#10B981',
         icon: '💻',
+        userId: demoUser.id,
       },
     })
 

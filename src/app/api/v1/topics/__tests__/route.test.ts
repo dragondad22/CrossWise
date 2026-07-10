@@ -85,7 +85,7 @@ describe('/api/v1/topics route handlers', () => {
 
     expect(response.status).toBe(201)
     expect(topicCreate).toHaveBeenCalledWith({
-      data: body,
+      data: { ...body, userId: 'user-1' },
       include: { _count: { select: { lists: true } } },
     })
     expect(payload.success).toBe(true)

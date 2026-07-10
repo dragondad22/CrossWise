@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
+
     const topics = await prisma.topic.findMany({
+      where: { userId },
       include: {
         _count: {
           select: { lists: true },
@@ -48,9 +51,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('Received topic creation request:', body)
     const validated = CreateTopicSchema.parse(body)
+    const userId = session.user.id
 
     const topic = await prisma.topic.create({
-      data: validated,
+      data: { ...validated, userId },
       include: {
         _count: {
           select: { lists: true },
