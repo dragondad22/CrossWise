@@ -1,2 +1,3 @@
 # One version-file path per line; kept in lockstep by release.sh
 package.json
+VERSION

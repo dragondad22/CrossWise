@@ -28,8 +28,103 @@ jobs:
       - name: Build
         run: npm run build
 
-  deploy:
+  # PR-only: prove migrations are safe BEFORE they can reach production.
+  # Lints migration SQL for dangerous ops and applies them to a throwaway Neon branch.
+  migrations-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # squawk posts its lint results as a PR comment; the default token is read-only
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      # Flags unsafe operations (NOT NULL without default, table rewrites, drops, ...)
+      - name: Lint migrations (squawk)
+        uses: sbdchd/squawk-action@v1
+        with:
+          pattern: 'prisma/migrations/**/*.sql'
+
+      # Only run the ephemeral-DB validation if the Neon secrets are configured.
+      - name: Check Neon secrets
+        id: neon_secrets
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+        run: |
+          if [ -n "$NEON_API_KEY" ] && [ -n "$NEON_PROJECT_ID" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::NEON_API_KEY / NEON_PROJECT_ID not set — skipping ephemeral-DB migration validation (squawk lint still ran)."
+          fi
+
+      - name: Create ephemeral Neon branch
+        id: neon
+        if: steps.neon_secrets.outputs.present == 'true'
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch_name: ci-pr-${{ github.event.pull_request.number }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Apply + verify migrations on the branch
+        if: steps.neon_secrets.outputs.present == 'true'
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        run: |
+          npx prisma migrate deploy
+          npx prisma migrate status
+
+      - name: Delete ephemeral Neon branch
+        if: always() && steps.neon_secrets.outputs.present == 'true'
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          branch: ci-pr-${{ github.event.pull_request.number }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+  # main-only: apply migrations to production BEFORE the app is deployed.
+  migrate:
     needs: build-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: Dev
+    concurrency:
+      group: db-migrate-prod
+      cancel-in-progress: false
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Apply migrations (prisma migrate deploy)
+        run: npx prisma migrate deploy
+
+  deploy:
+    needs: migrate
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment: Dev

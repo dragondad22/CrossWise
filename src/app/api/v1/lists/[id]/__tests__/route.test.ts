@@ -4,8 +4,8 @@ import { NextRequest } from 'next/server'
 import { DELETE } from '../route'
 import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
-const { listFindUnique, listDelete } = vi.hoisted(() => ({
-  listFindUnique: vi.fn(),
+const { listFindFirst, listDelete } = vi.hoisted(() => ({
+  listFindFirst: vi.fn(),
   listDelete: vi.fn(),
 }))
 
@@ -14,7 +14,7 @@ const mockSession = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/db', () => ({
   prisma: {
     list: {
-      findUnique: listFindUnique,
+      findFirst: listFindFirst,
       delete: listDelete,
     },
   },
@@ -36,7 +36,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
   })
 
   it('deletes a list and returns puzzle ids', async () => {
-    listFindUnique.mockResolvedValueOnce({
+    listFindFirst.mockResolvedValueOnce({
       id: 'list-1',
       puzzles: [{ id: 'puzzle-1' }, { id: 'puzzle-2' }],
     })
@@ -50,8 +50,8 @@ describe('/api/v1/lists/:id DELETE handler', () => {
     const payload = await response.json()
 
     expect(response.status).toBe(200)
-    expect(listFindUnique).toHaveBeenCalledWith({
-      where: { id: 'list-1' },
+    expect(listFindFirst).toHaveBeenCalledWith({
+      where: { id: 'list-1', topic: { userId: 'user-1' } },
       select: { id: true, puzzles: { select: { id: true } } },
     })
     expect(listDelete).toHaveBeenCalledWith({ where: { id: 'list-1' } })
@@ -59,7 +59,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
   })
 
   it('returns 404 when list is missing', async () => {
-    listFindUnique.mockResolvedValueOnce(null)
+    listFindFirst.mockResolvedValueOnce(null)
 
     const request = new NextRequest('http://localhost/api/v1/lists/missing', {
       method: 'DELETE',
@@ -73,6 +73,27 @@ describe('/api/v1/lists/:id DELETE handler', () => {
     expect(listDelete).not.toHaveBeenCalled()
   })
 
+  it('returns 404 and scopes the lookup by owner when the list belongs to another user', async () => {
+    listFindFirst.mockResolvedValueOnce(null)
+
+    const request = new NextRequest('http://localhost/api/v1/lists/other-users-list', {
+      method: 'DELETE',
+      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+    })
+    const response = await DELETE(request, {
+      params: Promise.resolve({ id: 'other-users-list' }),
+    })
+    const payload = await response.json()
+
+    expect(response.status).toBe(404)
+    expect(payload.error.message).toMatch(/List not found/)
+    expect(listFindFirst).toHaveBeenCalledWith({
+      where: { id: 'other-users-list', topic: { userId: 'user-1' } },
+      select: { id: true, puzzles: { select: { id: true } } },
+    })
+    expect(listDelete).not.toHaveBeenCalled()
+  })
+
   it('rejects DELETE requests without authentication', async () => {
     mockSession.mockResolvedValueOnce(null)
     const request = new NextRequest('http://localhost/api/v1/lists/list-1', { method: 'DELETE' })
@@ -81,7 +102,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
   })
 
   it('handles delete failures gracefully', async () => {
-    listFindUnique.mockResolvedValueOnce({
+    listFindFirst.mockResolvedValueOnce({
       id: 'list-1',
       puzzles: [],
     })

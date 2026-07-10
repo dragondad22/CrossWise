@@ -18,9 +18,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const { id } = await params
-    const list = await prisma.list.findUnique({
-      where: { id },
+    const list = await prisma.list.findFirst({
+      where: { id, topic: { userId } },
       include: {
         topic: true,
         items: {

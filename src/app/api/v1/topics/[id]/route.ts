@@ -19,9 +19,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const { id } = await params
-    const topic = await prisma.topic.findUnique({
-      where: { id },
+    const topic = await prisma.topic.findFirst({
+      where: { id, userId },
       include: {
         lists: {
           include: {
@@ -58,9 +59,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const { id } = await params
     const body = await request.json()
     const validated = CreateTopicSchema.parse(body)
+
+    const owned = await prisma.topic.findFirst({ where: { id, userId } })
+    if (!owned) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Topic not found' } },
+        { status: 404 },
+      )
+    }
 
     const topic = await prisma.topic.update({
       where: { id },
@@ -100,7 +110,17 @@ export async function DELETE(
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const { id } = await params
+
+    const owned = await prisma.topic.findFirst({ where: { id, userId } })
+    if (!owned) {
+      return NextResponse.json(
+        { success: false, error: { message: 'Topic not found' } },
+        { status: 404 },
+      )
+    }
+
     await prisma.topic.delete({
       where: { id },
     })

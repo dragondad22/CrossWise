@@ -19,11 +19,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const { id: listId } = await params
 
     const puzzles = await prisma.puzzle.findMany({
       where: {
         listId,
+        list: { topic: { userId } },
       },
       orderBy: {
         createdAt: 'desc',

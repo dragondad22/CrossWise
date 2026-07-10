@@ -38,10 +38,11 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: listData } = validation
+    const userId = session.user.id
 
     // Find or create topic
     let topic = await prisma.topic.findFirst({
-      where: { name: listData.topic },
+      where: { name: listData.topic, userId },
     })
 
     if (!topic) {
@@ -51,6 +52,7 @@ export async function POST(request: NextRequest) {
           description: `Auto-created from import`,
           color: '#3B82F6',
           icon: '📚',
+          userId,
         },
       })
     }

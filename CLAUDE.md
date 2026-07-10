@@ -30,7 +30,9 @@ npm test            # Run the test suite (Vitest)
 npm run build       # Build / typecheck (Next.js)
 npm run dev         # Start locally
 npm run lint        # Lint (next lint); npm run format for Prettier
-npm run db:push     # Push the Prisma schema to the database
+npm run db:migrate  # Author a migration locally (prisma migrate dev) — the prod-safe path (ADR-002)
+npm run db:reset    # Reset + replay migrations + reseed (dev only)
+npm run db:push     # Prototype-only schema sync (prisma db push) — never against shared/prod DBs (ADR-002)
 
 # Project automation (from repo root)
 ai/scripts/new-report.sh <type> <id> <slug>     # Scaffold a quality report

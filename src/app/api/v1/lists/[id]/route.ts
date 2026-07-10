@@ -44,8 +44,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json()
     const validated = UpdateListSchema.parse(body)
 
-    const existingList = await prisma.list.findUnique({
-      where: { id },
+    const existingList = await prisma.list.findFirst({
+      where: { id, topic: { userId } },
       include: { items: true },
     })
 
@@ -222,10 +222,11 @@ export async function DELETE(
       return unauthorizedResponse()
     }
 
+    const userId = session.user.id
     const { id } = await params
 
-    const existingList = await prisma.list.findUnique({
-      where: { id },
+    const existingList = await prisma.list.findFirst({
+      where: { id, topic: { userId } },
       select: {
         id: true,
         puzzles: {
