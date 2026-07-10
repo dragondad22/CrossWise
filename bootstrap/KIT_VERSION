@@ -1,0 +1,6 @@
+# Kit upgrade marker — written by the kit scaffold engine at inception.
+# Records the kit version this project was scaffolded from and every module
+# installed since; the kit-delta upgrade check reads it. Do not delete.
+kit_version: 0.6.0
+scaffolded: 2026-07-10
+modules:
