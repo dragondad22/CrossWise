@@ -1,0 +1,120 @@
+# template/manifest.yml — the shipped-file allowlist (T23.2)
+#
+# Maps each module to the files it ships and the trigger that scaffolds it.
+# ALLOWLIST MODEL: only files listed here ever land in a project. Anything in
+# template/ that is not listed (module READMEs, this file) is kit metadata and
+# does not ship — new kit-dev files are safe by default.
+#
+# Paths are relative to the module's directory (template/core/ or
+# template/modules/<name>/) and equal the file's destination relative to the
+# project root: core/CLAUDE.md -> <project>/CLAUDE.md.
+#
+# Triggers follow the T3.9 trigger table: modules are AI-detected at session
+# start / preflight and OFFERED, never silently applied. The kit self-test CI
+# (issue #6) validates this manifest: every listed file exists, and no listed
+# file references a kit-dev path.
+#
+# STAGING (T3.10): module paths above are the ACTIVE destinations. At
+# inception the scaffold engine additionally stages every module file
+# verbatim at <project>/bootstrap/modules/<name>/<path>, plus a copy of this
+# manifest, so trigger-time installs (ai/scripts/scaffold-module.sh) work
+# offline and version-consistent. The engine also generates
+# <project>/bootstrap/KIT_VERSION (T18) — generated, not copied, so not
+# listed here.
+#
+# Decision record: docs/plans/2026-07-08-kit-review-topics.md (T23.2, T3.7, T3.9).
+
+version: 1
+
+core:
+  trigger: always            # installed at project inception, every project
+  files:
+    - CLAUDE.md
+    - CHANGELOG.md
+    - VERSION
+    - .gitignore
+    - .github/workflows/pr-validation.yml.example
+    - .claude/settings.json
+    - .claude/commands/bootstrap.md
+    - .claude/commands/compliance.md
+    - .claude/commands/conform.md
+    - .claude/commands/evergreen.md
+    - .claude/commands/perf.md
+    - .claude/commands/preflight.md
+    - .claude/commands/qa.md
+    - .claude/commands/rebaseline.md
+    - .claude/commands/release.md
+    - .claude/commands/security.md
+    - .claude/hooks/README.md
+    - ai/agent-setup.md
+    - ai/CHECKLISTS/coding.md
+    - ai/CHECKLISTS/qa.md
+    - ai/CHECKLISTS/validation.md
+    - ai/scripts/bootstrap-labels.sh
+    - ai/scripts/check-version-sync.sh
+    - ai/scripts/lib/redact.sh
+    - ai/scripts/performance-smoke.sh
+    - ai/scripts/release.sh
+    - ai/scripts/scaffold-module.sh
+    - ai/scripts/security-review.sh
+    - ai/scripts/version-files.txt
+    - ai/STANDARDS/DOCUMENTATION_STANDARD.md
+    - ai/STANDARDS/EXTERNAL_STANDARDS_AND_COMPLIANCE.md
+    - ai/STANDARDS/GIT_WORKFLOW_STANDARD.md
+    - ai/STANDARDS/GITHUB_ISSUES.md
+    - ai/STANDARDS/INTERVIEW_STANDARD.md
+    - ai/STANDARDS/LOGGING_STANDARD.md
+    - ai/STANDARDS/PERFORMANCE_SMOKE_STANDARD.md
+    - ai/STANDARDS/ROADMAP_STANDARD.md
+    - ai/STANDARDS/SECURITY_REVIEW_STANDARD.md
+    - ai/STANDARDS/TASK_ISSUE_STANDARD.md
+    - ai/STANDARDS/TESTING_STANDARD.md
+    - ai/STANDARDS/VERSIONING_AND_CHANGELOG_STANDARD.md
+    - ai/TEMPLATES/DIAGNOSTIC_BUNDLE_TEMPLATE.md
+    - ai/TEMPLATES/FEATURE_SPEC_TEMPLATE.md
+    - ai/TEMPLATES/GITHUB_ISSUE_TEMPLATE.md
+    - ai/TEMPLATES/TASK_ISSUE_TEMPLATE.md
+    - bootstrap/INTERVIEW.md
+    - bootstrap/QUESTION_BANK.md
+    - bootstrap/modules/README.md
+    - bootstrap/PAVED_ROAD.md
+    - bootstrap/PLACEHOLDERS.md
+    - bootstrap/SETUP.md
+    - docs/architecture/decisions/ADR_INDEX.md
+    - docs/architecture/decisions/ADR_TEMPLATE.md
+    - docs/compliance/COMPLIANCE_REGISTER.md
+    - docs/decision-log.md
+    - docs/evergreen-log.md
+    - docs/GLOSSARY.md
+    - docs/PERSONAS.md
+    - docs/plans/README.md
+    - docs/runbooks/README.md
+    - docs/specs/README.md
+    - testing-reports/README.md
+
+modules:
+  db:
+    trigger: first schema/migration file
+    files:
+      - ai/STANDARDS/DATABASE_SCHEMA_STANDARD.md
+
+  ui:
+    trigger: first UI code
+    files:
+      - ai/STANDARDS/UI_STANDARD.md
+
+  reports:
+    trigger: first formal QA/UAT need (e.g. external stakeholder acceptance)
+    files:
+      - ai/STANDARDS/UAT_SOURCE_OF_TRUTH.md
+      - docs/uat/README.md
+
+  deploy-ci:
+    trigger: first deploy target
+    files: []               # placeholder — deploy/CD config + runbooks arrive when the
+                            # environments answer exists (T10.4); PR-validation CI is core, not here
+
+  sla:
+    trigger: team formation
+    files:
+      - ai/STANDARDS/ISSUE_SLA_STANDARD.md
