@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { CrosswordGenerator } from '../crossword-generator'
+import { CrosswordGenerator, deriveListSeed } from '../crossword-generator'
 
 const intersectingWords = [
   { answer: 'Crossword', clue: 'Type of word puzzle' },
@@ -93,5 +93,56 @@ describe('CrosswordGenerator', () => {
     expect(result.success).toBe(false)
     expect(result.placedWords).toBe(0)
     expect(result.totalWords).toBe(0)
+  })
+
+  it('produces identical output for the same words and seed', () => {
+    const options = { gridSize: { rows: 10, cols: 10 }, seed: 'determinism', maxAttempts: 50 }
+    const first = new CrosswordGenerator(options).generate(intersectingWords)
+    const second = new CrosswordGenerator(options).generate(intersectingWords)
+
+    expect(second).toEqual(first)
+  })
+
+  it('selects the same maxWords subset for the same seed', () => {
+    const options = {
+      gridSize: { rows: 10, cols: 10 },
+      seed: 'subset-determinism',
+      maxAttempts: 50,
+      maxWords: 4,
+    }
+    const first = new CrosswordGenerator(options).generate(intersectingWords)
+    const second = new CrosswordGenerator(options).generate(intersectingWords)
+
+    expect(first.totalWords).toBe(4)
+    expect(second).toEqual(first)
+  })
+
+  it('is deterministic when no seed is provided', () => {
+    const options = { gridSize: { rows: 10, cols: 10 }, maxAttempts: 50 }
+    const first = new CrosswordGenerator(options).generate(intersectingWords)
+    const second = new CrosswordGenerator(options).generate(intersectingWords)
+
+    expect(second).toEqual(first)
+  })
+})
+
+describe('deriveListSeed', () => {
+  const items = [
+    { answer: 'Crossword', clue: 'Type of word puzzle' },
+    { answer: 'Words', clue: 'Units of language' },
+  ]
+
+  it('is stable regardless of item order', () => {
+    const reversed = [...items].reverse()
+    expect(deriveListSeed('list1', reversed)).toBe(deriveListSeed('list1', items))
+  })
+
+  it('changes when list content changes', () => {
+    const edited = [items[0], { answer: 'Words', clue: 'A different clue' }]
+    expect(deriveListSeed('list1', edited)).not.toBe(deriveListSeed('list1', items))
+  })
+
+  it('changes when the list id changes', () => {
+    expect(deriveListSeed('list2', items)).not.toBe(deriveListSeed('list1', items))
   })
 })

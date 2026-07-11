@@ -27,6 +27,33 @@ export interface GeneratorOptions {
   gridSize?: { rows: number; cols: number }
   maxAttempts?: number
   seed?: string
+  maxWords?: number
+}
+
+// Fallback when a caller constructs a generator without a seed. A constant (not a
+// random value) so generation stays reproducible for a given word set (#35).
+export const DEFAULT_GENERATOR_SEED = 'crosswise'
+
+// FNV-1a 32-bit — cheap, dependency-free, stable across runs. Not cryptographic;
+// only used to derive default seeds.
+function fnv1a(input: string): number {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return hash
+}
+
+// Default seed for a puzzle generated without an explicit seed: stable for a given
+// list id + content, independent of item order and of when the request is made.
+// Editing the list's items changes the default seed (and thus the default puzzle).
+export function deriveListSeed(listId: string, items: { answer: string; clue: string }[]): string {
+  const canonical = items
+    .map((item) => `${item.answer}\u0000${item.clue}`)
+    .sort()
+    .join('\u0001')
+  return `list:${listId}:${fnv1a(canonical).toString(36)}`
 }
 
 export class CrosswordGenerator {
@@ -35,12 +62,14 @@ export class CrosswordGenerator {
   private placedWords: WordPlacement[] = []
   private gridSize: { rows: number; cols: number }
   private maxAttempts: number
+  private maxWords?: number
 
   constructor(options: GeneratorOptions = {}) {
-    const seed = options.seed || Math.random().toString()
+    const seed = options.seed || DEFAULT_GENERATOR_SEED
     this.rng = seedrandom(seed)
     this.gridSize = options.gridSize || { rows: 15, cols: 15 }
     this.maxAttempts = options.maxAttempts || 300
+    this.maxWords = options.maxWords
     this.grid = this.createEmptyGrid()
   }
 
@@ -52,10 +81,17 @@ export class CrosswordGenerator {
     totalWords: number
     conflictingWords?: string[]
   } {
+    // Step 0: Select the candidate pool through the seeded RNG so word selection
+    // is as reproducible as placement (#35).
+    const pool =
+      this.maxWords && words.length > this.maxWords
+        ? this.shuffleArray(words).slice(0, this.maxWords)
+        : words
+
     // Step 1: Preprocess words
-    const processedWords = this.preprocessWords(words)
+    const processedWords = this.preprocessWords(pool)
     if (processedWords.length === 0) {
-      return { success: false, placedWords: 0, totalWords: words.length }
+      return { success: false, placedWords: 0, totalWords: pool.length }
     }
 
     // Step 2: Try generation with multiple attempts
@@ -74,7 +110,7 @@ export class CrosswordGenerator {
       }
 
       // Success criteria: placed at least 90% of words
-      if (result.length >= Math.floor(words.length * 0.9)) {
+      if (result.length >= Math.floor(pool.length * 0.9)) {
         break
       }
 
@@ -82,14 +118,14 @@ export class CrosswordGenerator {
     }
 
     this.placedWords = bestResult
-    const successRate = bestResult.length / words.length
+    const successRate = bestResult.length / pool.length
 
     if (successRate < 0.9) {
       const conflictingWords = this.findConflictingWords(processedWords, bestResult)
       return {
         success: false,
         placedWords: bestResult.length,
-        totalWords: words.length,
+        totalWords: pool.length,
         conflictingWords,
       }
     }
@@ -104,7 +140,7 @@ export class CrosswordGenerator {
       grid: finalGrid,
       numbering,
       placedWords: bestResult.length,
-      totalWords: words.length,
+      totalWords: pool.length,
     }
   }
 
