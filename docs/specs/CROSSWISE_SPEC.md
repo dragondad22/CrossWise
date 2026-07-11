@@ -35,7 +35,7 @@ This document is the authoritative product + engineering specification for the c
    - Export list as JSON per import schema.
 
 3. **Puzzle generation**
-   - Generate from a list using up to 150 items, randomized selection, seeded placement.
+   - Generate from a list using up to 150 items; selection and placement are seeded and reproducible (ADR-006).
    - Grid size defaults to 15x15, with optional 9–19 range per axis.
    - Algorithm prioritizes longest words, requires connected component, avoids adjacent touching except intersections, and targets 90%+ placement.
    - Store puzzle grid, numbering, and settings in database as JSON strings.
@@ -266,6 +266,10 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 
 ## Puzzle Generation Details
 - Uses `CrosswordGenerator` with backtracking + scoring.
+- Fully deterministic (ADR-006): a single seeded RNG drives word selection (up to 150
+  items) and placement, so the same (list content, seed, grid size) always reproduces
+  the same puzzle. An explicit request seed is used verbatim; an omitted seed defaults
+  to a stable hash of list id + item content, never the clock.
 - Places longest words first. First word placed at center, across.
 - Valid placement rules:
   - No out-of-bounds.

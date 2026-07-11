@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { GeneratePuzzleSchema } from '@/lib/validation'
-import { CrosswordGenerator } from '@/lib/crossword-generator'
+import { CrosswordGenerator, deriveListSeed } from '@/lib/crossword-generator'
 import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
 
 const unauthorizedResponse = () =>
@@ -49,24 +49,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Determine number of items to use (random selection up to 150)
-    const maxItems = Math.min(150, list.items.length)
-    const itemsToUse = list.items
-      .sort(() => Math.random() - 0.5) // Shuffle
-      .slice(0, maxItems)
-      .map((item) => ({
-        answer: item.answer,
-        clue: item.clue,
-      }))
+    const items = list.items.map((item) => ({
+      answer: item.answer,
+      clue: item.clue,
+    }))
 
-    // Generate puzzle
+    // Seed contract (#35, ADR-006): an explicit seed is used verbatim; otherwise the
+    // default is derived from the list id + content, never from the clock. The same
+    // (list, seed) always reproduces the same puzzle — the generator's seeded RNG
+    // drives both word selection (up to 150 items) and placement.
+    const seed = validated.seed || deriveListSeed(list.id, items)
+
     const generator = new CrosswordGenerator({
       gridSize,
-      seed: validated.seed || `${Date.now()}_${list.id}`,
+      seed,
       maxAttempts: 300,
+      maxWords: 150,
     })
 
-    const result = generator.generate(itemsToUse)
+    const result = generator.generate(items)
 
     if (!result.success) {
       return NextResponse.json(
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
     const puzzle = await prisma.puzzle.create({
       data: {
         listId: validated.listId,
-        seed: validated.seed || `${Date.now()}_${list.id}`,
+        seed,
         grid: JSON.stringify(result.grid),
         numbering: JSON.stringify(result.numbering),
         settings: JSON.stringify({
