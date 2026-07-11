@@ -97,3 +97,35 @@ decisions are deferred to the ADRs below.
 **Status:** Active — Mobile = Planned · AI generation = Exploratory
 
 **Scope:** In
+
+---
+
+## Decision 3: Versioning starts at 0.1.0; no release backfill; 1.0 deferred
+**Date:** 2026-07-10
+
+**Context:**
+The repo reached its first release cut (#68) with `VERSION`/`package.json` at a
+scaffold-default `1.0.0` that was never a deliberate stability decision, no git tags,
+no published releases, and no changelog entries predating the kit adoption. The
+versioning standard requires MAJOR (`1.0.0`) to be a deliberate "API is stable" call.
+
+**Decision:**
+The first release is **v0.1.0**. Version files are reset from the placeholder `1.0.0`.
+Pre-release history is **not backfilled** with synthetic versions or tags. `1.0.0`
+remains a future, deliberate decision.
+
+**Rationale:**
+- Backfill would invent version boundaries for versions nobody consumed, tagged, or
+  deployed against; pre-kit commit messages can't be reconstructed into honest
+  changelog sections.
+- Nothing external pins `1.0.0` (never published to npm; no tags/releases), so the
+  downward reset has no consumers to break.
+- Pre-1.0 semantics (breaking changes bump MINOR) fit the planned churn: #34 shipped a
+  breaking ownership change, and #22/#33/#7/#26 will further reshape the contract.
+
+**Impact:**
+- `CHANGELOG.md`'s `[0.1.0]` section notes it covers all functionality shipped to date.
+- Releases follow the standard from here: timeboxed cuts, mechanical bump rubric,
+  tag + GitHub release for every shipped version.
+
+**Status:** Active
