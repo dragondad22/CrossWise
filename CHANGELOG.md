@@ -7,6 +7,14 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-10
+
+First tracked release. Covers all functionality shipped to date — topics, word
+lists (import/export), seeded crossword generation, the solve UI with local
+autosave + server sync, and user accounts — plus the entries below, which record
+changes made after the changelog was introduced. Versioning starts at 0.1.0 by
+decision (see `docs/decision-log.md`, Decision 3); earlier history is untagged.
+
 ### Added
 ### Changed
 - **BREAKING:** Topics are now owned per-user — an owner column is added and topic names are unique per user rather than globally. Requires a database migration plus an ownership backfill for existing data before deploy (#34).
