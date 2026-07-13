@@ -12,6 +12,7 @@ and this project adheres to SemVer.
 - Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
 
 ### Fixed
+- Solve progress can no longer be overwritten by a stale device or tab: saves carry a revision counter the server enforces (409 on stale writes), sync is batched instead of firing on every keystroke, and the last changes before closing the page now reliably reach the server (#84)
 - Failed loads on the topics, lists, and solve screens now show a visible, dismissible error with a retry action instead of a blank or silently-empty page; the solve screen's loading state also updates reactively (#36)
 - Importing a list with an answer containing characters outside A–Z (accents, digits, hyphens, spaces) now fails with an error naming the word, instead of silently stripping characters and corrupting the list (#17)
 - Visiting your topics or lists while signed out now redirects to login (and back after signing in) instead of showing a false "No topics yet" screen; the topics page also gained a proper loading state (#82)

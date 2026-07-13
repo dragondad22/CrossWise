@@ -24,7 +24,8 @@ describe('AutosaveManager', () => {
     vi.useRealTimers()
   })
 
-  it('saves immediately and on demand, syncing to server for each change', async () => {
+  it('saves locally per change but debounces the server sync (#84)', async () => {
+    vi.useFakeTimers()
     const manager = new AutosaveManager()
     const state = createSolveState()
     const onServerSave = vi.fn().mockResolvedValue(undefined)
@@ -32,17 +33,77 @@ describe('AutosaveManager', () => {
     manager.startAutosave('puzzle-1', () => state, { onSave: onServerSave })
 
     await Promise.resolve()
-    expect(onServerSave).toHaveBeenCalledTimes(1)
+    expect(onServerSave).toHaveBeenCalledTimes(1) // initial sync on start
     expect(localStorage.getItem('crosswise_solve_puzzle-1')).toBeTruthy()
 
-    manager.forceSave('puzzle-1', {
-      ...state,
-      filledCells: { ...state.filledCells, '0,1': 'B' },
-    })
+    // Steady typing: three changes inside the debounce window...
+    for (const letter of ['B', 'C', 'D']) {
+      manager.forceSave('puzzle-1', {
+        ...state,
+        filledCells: { ...state.filledCells, '0,1': letter },
+      })
+    }
+    // ...localStorage saw every change immediately,
+    expect(JSON.parse(localStorage.getItem('crosswise_solve_puzzle-1')!).filledCells['0,1']).toBe(
+      'D',
+    )
+    // ...but the server has not been hit again yet.
+    expect(onServerSave).toHaveBeenCalledTimes(1)
+
+    await vi.advanceTimersByTimeAsync(3000)
+
+    // One coalesced POST carrying the latest state.
+    expect(onServerSave).toHaveBeenCalledTimes(2)
+    expect(onServerSave.mock.calls[1][0].filledCells['0,1']).toBe('D')
+
+    manager.stopAutosave()
+    vi.useRealTimers()
+  })
+
+  it('flushes pending state instead of dropping it when autosave stops (#84)', async () => {
+    vi.useFakeTimers()
+    const manager = new AutosaveManager()
+    const state = createSolveState()
+    const onServerSave = vi.fn().mockResolvedValue(undefined)
+
+    manager.startAutosave('puzzle-stop', () => state, { onSave: onServerSave })
     await Promise.resolve()
+    expect(onServerSave).toHaveBeenCalledTimes(1)
+
+    const finalState = { ...state, filledCells: { ...state.filledCells, '0,1': 'Z' } }
+    manager.forceSave('puzzle-stop', finalState)
+    expect(onServerSave).toHaveBeenCalledTimes(1) // still inside the debounce window
+
+    // Unmount before the debounce fires: the pending state must still sync.
+    manager.stopAutosave()
+    expect(onServerSave).toHaveBeenCalledTimes(2)
+    expect(onServerSave.mock.calls[1][0].filledCells['0,1']).toBe('Z')
+    vi.useRealTimers()
+  })
+
+  it('flushServerSave fires the debounced state immediately (blur/hidden/unload path)', async () => {
+    vi.useFakeTimers()
+    const manager = new AutosaveManager()
+    const state = createSolveState()
+    const onServerSave = vi.fn().mockResolvedValue(undefined)
+
+    manager.startAutosave('puzzle-flush', () => state, { onSave: onServerSave })
+    await Promise.resolve()
+
+    manager.forceSave('puzzle-flush', { ...state, filledCells: { '0,0': 'Q' } })
+    expect(onServerSave).toHaveBeenCalledTimes(1)
+
+    manager.flushServerSave()
+    await Promise.resolve()
+    expect(onServerSave).toHaveBeenCalledTimes(2)
+    expect(onServerSave.mock.calls[1][0].filledCells['0,0']).toBe('Q')
+
+    // The debounce timer was cancelled — nothing double-fires later.
+    await vi.advanceTimersByTimeAsync(5000)
     expect(onServerSave).toHaveBeenCalledTimes(2)
 
     manager.stopAutosave()
+    vi.useRealTimers()
   })
 
   it('emits lifecycle events for local saves and server syncs', async () => {
@@ -141,6 +202,7 @@ describe('AutosaveManager', () => {
     )
 
     manager.forceSave('puzzle-sync', { ...state, filledCells: { '0,0': 'B' } })
+    manager.flushServerSave()
     await Promise.resolve()
     expect(failingSave).toHaveBeenCalledTimes(2)
 
