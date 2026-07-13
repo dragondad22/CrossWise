@@ -78,13 +78,61 @@ describe('TopicsPage auth gate (#82)', () => {
     expect(replaceMock).not.toHaveBeenCalled()
   })
 
+  it('renders a visible error with retry when the fetch fails (#36)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 500, text: async () => '' })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ success: true, data: [] }),
+      })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<TopicsPage />)
+    useAppStore.setState({
+      sessionHydrated: true,
+      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+    })
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toContain('HTTP error')
+
+    // Retry refetches and clears the error state.
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }))
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(screen.queryByRole('alert')).toBeNull()
+    })
+  })
+
+  it('shows the empty state (not the error) for an empty successful result', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ success: true, data: [] }),
+      }),
+    )
+
+    render(<TopicsPage />)
+    useAppStore.setState({
+      sessionHydrated: true,
+      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+    })
+
+    expect(await screen.findByText('No topics yet')).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('topic delete flow: cancel sends no request; confirm deletes and removes the card (#15)', async () => {
     const topic = {
       id: 'ctopic1234567890123456789',
       name: 'Biology',
       description: null,
       color: '#3B82F6',
-      icon: '🧬',
+      icon: '\u{1F9EC}',
       createdAt: new Date().toISOString(),
     }
     const fetchMock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
@@ -128,9 +176,7 @@ describe('TopicsPage auth gate (#82)', () => {
     fireEvent.click(screen.getByRole('button', { name: /delete topic$/i }))
 
     await waitFor(() => {
-      expect(
-        fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE'),
-      ).toHaveLength(1)
+      expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(1)
       expect(screen.queryByText('Biology')).toBeNull()
     })
     expect(fetchMock).toHaveBeenCalledWith(`/api/v1/topics/${topic.id}`, { method: 'DELETE' })
