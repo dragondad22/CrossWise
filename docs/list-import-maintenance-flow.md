@@ -52,6 +52,18 @@ flowchart TD
     RESP --> UI
 ```
 
+## List Delete (#16)
+1. The delete control on a `ListCard` opens `DeleteListModal` (shared
+   `ConfirmDeleteModal`): names the list, warns puzzles and solve progress are
+   permanently removed. Cancel/Escape abort with no request.
+2. Confirm calls `DELETE /api/v1/lists/:id` (auth required; lookup scoped to the
+   owner via the list's topic - a non-owned id is a 404 and deletes nothing).
+3. Items, puzzles, and solves are removed by `onDelete: Cascade` (guarded by
+   `tests/schema-cascade.test.ts`); the route returns `{ listId, puzzleIds }`.
+4. The client clears autosaved solve state for the returned `puzzleIds`, resets
+   the current puzzle if it belonged to the deleted list, and drops the list
+   from the store - no dangling puzzles or solve-history references remain.
+
 ## Data Artifacts
 - `lists` table
 - `list_items` table
