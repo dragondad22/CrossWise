@@ -12,6 +12,7 @@ and this project adheres to SemVer.
 - Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
 
 ### Fixed
+- The Export action on a list now produces a blank printable crossword (empty numbered grid plus across/down clues, no answers) built from the list's most recent puzzle, instead of downloading raw list JSON; lists without a generated puzzle get a friendly prompt to generate one first (#2)
 - Delete-list confirmation is now fully keyboard-accessible: Escape cancels, focus lands on the safe Cancel action, and the dialog is announced to assistive tech (#16)
 - Failed loads on the topics, lists, and solve screens now show a visible, dismissible error with a retry action instead of a blank or silently-empty page; the solve screen's loading state also updates reactively (#36)
 - Importing a list with an answer containing characters outside A–Z (accents, digits, hyphens, spaces) now fails with an error naming the word, instead of silently stripping characters and corrupting the list (#17)

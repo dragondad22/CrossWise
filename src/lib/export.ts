@@ -98,6 +98,155 @@ export function exportPuzzleState(
   return JSON.stringify(exportData, null, 2)
 }
 
+// Escape user-provided text (list names, clues) so markup or scripts inside it
+// render as inert text in the printable document.
+function escapeHTML(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/**
+ * Build a fully self-contained printable HTML document for a blank crossword:
+ * an empty numbered grid plus across/down clue lists. Mirrors the
+ * structure-only discipline of `exportPuzzleState` — no answer letters are
+ * ever written to the output (#2).
+ */
+export function buildPrintableCrosswordHTML(
+  listName: string,
+  grid: CrosswordGrid,
+  numbering: CrosswordNumbering,
+): string {
+  // Start-of-word numbers, mirroring CrosswordGrid's getCellNumber
+  // (across preferred when both directions start on the same cell).
+  const cellNumbers = new Map<string, number>()
+  for (const clue of numbering.down) {
+    cellNumbers.set(`${clue.row},${clue.col}`, clue.number)
+  }
+  for (const clue of numbering.across) {
+    cellNumbers.set(`${clue.row},${clue.col}`, clue.number)
+  }
+
+  // Size cells so grids up to 19x19 fit the printable width of A4/Letter
+  // (~180mm inside the @page margins), capped at 10mm for small grids.
+  const maxDimension = Math.max(grid.size.rows, grid.size.cols, 1)
+  const cellMm = Math.min(10, Math.round((180 / maxDimension) * 10) / 10)
+
+  const rowsHtml = grid.cells
+    .map((row) => {
+      const cells = row
+        .map((cell) => {
+          if (cell.type === 'block') {
+            return '<td class="block"></td>'
+          }
+          const number = cellNumbers.get(`${cell.row},${cell.col}`)
+          return `<td class="cell">${number ? `<span class="num">${number}</span>` : ''}</td>`
+        })
+        .join('')
+      return `<tr>${cells}</tr>`
+    })
+    .join('\n')
+
+  const clueItems = (clues: CrosswordNumbering['across']) =>
+    clues
+      .map((clue) => `<li value="${clue.number}">${escapeHTML(clue.clue)}</li>`)
+      .join('\n')
+
+  const safeName = escapeHTML(listName)
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>${safeName} — crossword</title>
+<style>
+  @page { margin: 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    color: #111;
+    padding: 8mm;
+  }
+  h1 { font-size: 7mm; margin-bottom: 6mm; }
+  h2 { font-size: 5mm; margin-bottom: 2.5mm; }
+  table.grid { border-collapse: collapse; margin-bottom: 8mm; }
+  table.grid td {
+    width: ${cellMm}mm;
+    height: ${cellMm}mm;
+    border: 0.35mm solid #333;
+    position: relative;
+    padding: 0;
+  }
+  td.block {
+    background: #1a1a1a;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  td.cell { background: #fff; }
+  td.cell .num {
+    position: absolute;
+    top: 0.5mm;
+    left: 0.7mm;
+    font-size: ${Math.max(2.2, cellMm * 0.3).toFixed(1)}mm;
+    line-height: 1;
+    color: #444;
+  }
+  .clues { display: flex; gap: 12mm; align-items: flex-start; }
+  .clues > section { flex: 1; }
+  .clues ol { list-style-position: inside; font-size: 3.6mm; line-height: 1.6; }
+  @media print {
+    body { padding: 0; }
+  }
+</style>
+</head>
+<body>
+<h1>${safeName}</h1>
+<table class="grid" aria-hidden="true">
+${rowsHtml}
+</table>
+<div class="clues">
+<section>
+<h2>Across</h2>
+<ol>
+${clueItems(numbering.across)}
+</ol>
+</section>
+<section>
+<h2>Down</h2>
+<ol>
+${clueItems(numbering.down)}
+</ol>
+</section>
+</div>
+</body>
+</html>
+`
+}
+
+/**
+ * Open the printable crossword in a new tab and trigger the print dialog.
+ * If the popup is blocked, fall back to downloading the HTML file so the
+ * user can open and print it manually.
+ */
+export function openPrintableCrossword(html: string, fallbackFilename: string) {
+  if (typeof window === 'undefined') return
+
+  const printWindow = window.open('', '_blank')
+  if (!printWindow) {
+    downloadFile(html, fallbackFilename, 'text/html')
+    return
+  }
+
+  printWindow.document.open()
+  printWindow.document.write(html)
+  printWindow.document.close()
+  printWindow.focus()
+  printWindow.print()
+}
+
 export function downloadFile(
   content: string,
   filename: string,
