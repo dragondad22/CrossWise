@@ -8,6 +8,7 @@ and this project adheres to SemVer.
 ## [Unreleased]
 
 ### Fixed
+- Visiting your topics or lists while signed out now redirects to login (and back after signing in) instead of showing a false "No topics yet" screen; the topics page also gained a proper loading state (#82)
 - Puzzle generation is now independent of database row order: the same list and seed reproduce the same puzzle even after rows are updated or reordered (#77)
 - Puzzle generation no longer places the same word twice or reports success for puzzles that silently dropped most of the list; placement counts and the success threshold now reflect the real grid (#76)
 
