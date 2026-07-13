@@ -88,6 +88,9 @@ export interface SolveState {
   // save so reconciliation no longer depends on cross-device wall clocks.
   // Optional for back-compat with states saved before the field existed.
   revision?: number
+  // Clues the solver flagged for later (#13), keyed "direction-number".
+  // Optional for back-compat; persists through the normal autosave path.
+  flaggedClues?: Record<string, boolean>
 }
 
 // UI types
