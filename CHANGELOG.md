@@ -10,6 +10,9 @@ and this project adheres to SemVer.
 ### Fixed
 - Puzzle generation no longer places the same word twice or reports success for puzzles that silently dropped most of the list; placement counts and the success threshold now reflect the real grid (#76)
 
+### Security
+- Login and register pages reject protocol-relative `next` redirect targets (`//evil.com`), closing an open-redirect phishing vector (#78)
+
 ## [0.1.0] - 2026-07-10
 
 First tracked release. Covers all functionality shipped to date — topics, word
