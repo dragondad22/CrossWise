@@ -13,12 +13,17 @@ Describe how the system generates a new crossword from a list.
 - Prisma + database
 
 ## Step-by-Step
-1. Client posts `{ listId, seed?, gridSize? }` to `/api/v1/puzzles/generate`.
+1. Client posts `{ listId, seed?, gridSize?, wordCount? }` to `/api/v1/puzzles/generate`.
+   `wordCount` (#22) is bounded by `WORD_COUNT_BOUNDS` (3-150, shared constant);
+   omitted -> up to 150 words. The new-game modal offers presets capped to the
+   list size; "New puzzle" on the solve screen reuses the stored count.
 2. API fetches list + items from Prisma (`orderBy: id` — see Determinism below).
 3. API resolves the seed (see Seed Contract below).
-4. `CrosswordGenerator` canonicalizes item order, selects up to 150 items via its
-   seeded RNG, preprocesses answers, and searches for a placement — the same RNG
-   drives selection and placement.
+4. `CrosswordGenerator` canonicalizes item order, selects up to `wordCount`
+   (default 150) items via its seeded RNG, preprocesses answers, and searches
+   for a placement — the same RNG drives selection and placement, so
+   `{list, seed, wordCount}` is fully reproducible. The resolved count is
+   persisted in the puzzle `settings`.
 5. **Grid-size ladder (#99)**: when the client does not pin a `gridSize`, the API
    tries 15×15, 17×17, then 19×19 and keeps the result that places the most words
    (stopping early once every word fits). An explicit `gridSize` is honoured exactly.
