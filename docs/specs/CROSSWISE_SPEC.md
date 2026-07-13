@@ -202,13 +202,13 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 - `POST /api/v1/lists`
   - Auth required.
   - Body: `{ topicId, name, items[] }` where items are `{answer, clue, note?, difficulty?}`.
-  - Normalizes answers to uppercase A–Z.
+  - Uppercases answers; rejects any answer containing a character outside A–Z (400 naming the word; nothing is created, #17).
   - Errors: 404 (topic not found), 500.
 
 - `PUT /api/v1/lists/:id`
   - Auth required.
   - Body: `{ name, version?, items[] }` where items can include `id`.
-  - Deletes items missing in payload. Normalizes answers and ensures uniqueness post-normalization.
+  - Deletes items missing in payload. Uppercases answers (disallowed characters are rejected, #17) and ensures uniqueness.
   - Errors: 400 (validation), 404, 500.
 
 - `POST /api/v1/lists/import`
@@ -258,7 +258,7 @@ Authentication: cookie `crosswise_session` required for most endpoints.
   - `reset` clears solve state + completedAt; `delete` removes solves.
 
 ## Validation & Normalization Rules
-- **List item answers:** normalized to uppercase A–Z; length 2–20.
+- **List item answers:** uppercased; must contain only letters A–Z (accents, digits, hyphens, spaces are rejected with an error naming the word — never silently stripped, #17); length 2–20.
 - **Clue length:** 3–200 chars.
 - **Import list items:** min 5, max 250 (optimal up to 150 for generation).
 - **Difficulty:** accepts numeric 1–5 or string `EASY|MEDIUM|HARD`; mapped to enum.

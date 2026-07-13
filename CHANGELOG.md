@@ -8,6 +8,7 @@ and this project adheres to SemVer.
 ## [Unreleased]
 
 ### Fixed
+- Importing a list with an answer containing characters outside A–Z (accents, digits, hyphens, spaces) now fails with an error naming the word, instead of silently stripping characters and corrupting the list (#17)
 - Puzzle generation is now independent of database row order: the same list and seed reproduce the same puzzle even after rows are updated or reordered (#77)
 - Puzzle generation no longer places the same word twice or reports success for puzzles that silently dropped most of the list; placement counts and the success threshold now reflect the real grid (#76)
 
