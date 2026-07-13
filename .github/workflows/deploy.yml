@@ -44,6 +44,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Depth 2 pulls the PR merge commit's parents, so HEAD^1 is the base
+          # snapshot and diffing against it yields exactly this PR's changes.
+          fetch-depth: 2
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -54,11 +58,25 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      # Lint only migrations added/changed by this PR (#72) — linting the whole
+      # tree re-reports already-applied history on every PR and buries new findings.
+      - name: Detect changed migrations
+        id: changed_migrations
+        run: |
+          files=$(git diff --name-only HEAD^1 HEAD -- 'prisma/migrations/**/*.sql' | xargs)
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+          if [ -n "$files" ]; then
+            echo "Changed migration files: $files"
+          else
+            echo "No migration changes in this PR — squawk lint will be skipped."
+          fi
+
       # Flags unsafe operations (NOT NULL without default, table rewrites, drops, ...)
       - name: Lint migrations (squawk)
+        if: steps.changed_migrations.outputs.files != ''
         uses: sbdchd/squawk-action@v1
         with:
-          pattern: 'prisma/migrations/**/*.sql'
+          files: ${{ steps.changed_migrations.outputs.files }}
 
       # Only run the ephemeral-DB validation if the Neon secrets are configured.
       - name: Check Neon secrets
