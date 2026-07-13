@@ -21,6 +21,7 @@ Status labels: **Proposed** | **Accepted** | **Rejected** | **Superseded**
 | ADR-001 | Per-user ownership of topics, lists, and puzzles | Accepted | `ADR-001-user-data-ownership-model.md` |
 | ADR-002 | Production DB migration & backfill strategy | Accepted | `ADR-002-db-migration-strategy.md` |
 | ADR-006 | Puzzle generation seed contract | Proposed | `ADR-006-puzzle-seed-contract.md` |
+| ADR-007 | Solve sync and reconciliation contract | Proposed | `ADR-007-solve-sync-reconciliation.md` |
 
 ---
 

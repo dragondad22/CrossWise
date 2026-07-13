@@ -28,6 +28,13 @@ const config: Config = {
         warning: '#92400e',
         'warning-muted': '#fef3c7',
         'warning-border': '#fcd34d',
+        // Solve-grid highlight layers (#12). Two visually distinct treatments:
+        // the soft band marks every cell of the selected clue; the accent marks
+        // the active cell inside it (paired with a ring so the distinction
+        // survives grayscale/color-blind rendering). The focus ring (`ring`,
+        // #2563eb) keeps >=3:1 non-text contrast against card, band, and accent.
+        'clue-band': '#dbeafe',
+        'cell-accent': '#bfdbfe',
         gray: {
           50: '#f9fafb',
           100: '#f3f4f6',

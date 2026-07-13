@@ -35,6 +35,9 @@ export default function SolvePage() {
   } = useAppStore()
 
   const [selectedTab, setSelectedTab] = useState<'across' | 'down'>('across')
+  // Regeneration in flight (#14) — distinct from the page-load isLoading so the
+  // grid overlay shows instead of the whole-screen spinner.
+  const [isGeneratingNew, setIsGeneratingNew] = useState(false)
   // Tracks which puzzle's unplaced-words notice was dismissed, so the notice
   // reappears when a different (partial) puzzle loads.
   const [dismissedUnplacedFor, setDismissedUnplacedFor] = useState<string | null>(null)
@@ -138,9 +141,14 @@ export default function SolvePage() {
               numbering: puzzleData.numbering,
               seed: puzzleData.seed,
               listId: puzzleData.list.id,
+              listName: puzzleData.list.name,
               unplacedWords: Array.isArray(puzzleData.settings?.unplacedWords)
                 ? puzzleData.settings.unplacedWords
                 : undefined,
+              wordCount:
+                typeof puzzleData.settings?.wordCount === 'number'
+                  ? puzzleData.settings.wordCount
+                  : undefined,
             })
 
             const remoteState = result.data.state
@@ -210,7 +218,10 @@ export default function SolvePage() {
     if (!currentPuzzle) return
 
     try {
-      setLoading(true)
+      // Explicit regeneration signal (#14): drives the contextual grid overlay
+      // instead of the whole-screen page-load spinner, so the surrounding
+      // controls and context stay visible while a new puzzle is generated.
+      setIsGeneratingNew(true)
 
       // Get the list ID from current puzzle (we'd need to fetch this from the API)
       // For now, we'll generate a new puzzle with the same list
@@ -222,6 +233,8 @@ export default function SolvePage() {
         body: JSON.stringify({
           listId: currentPuzzle.listId,
           seed: `${Date.now()}_new`,
+          // Regenerate with the same size the solver chose originally (#22).
+          ...(currentPuzzle.wordCount ? { wordCount: currentPuzzle.wordCount } : {}),
         }),
       })
 
@@ -246,7 +259,9 @@ export default function SolvePage() {
       setError('Network error')
       console.error('Failed to generate new puzzle:', error)
     } finally {
-      setLoading(false)
+      // Always clear the overlay — a failed generation must never leave the
+      // grid permanently blocked (#14).
+      setIsGeneratingNew(false)
     }
   }
 
@@ -256,11 +271,18 @@ export default function SolvePage() {
 
       try {
         const isCompleted = useAppStore.getState().checkWin()
+        // Monotonic revision (#84, ADR-007): every save carries a counter one
+        // higher than the state it was built from, so the server can reject
+        // stale writers without trusting device clocks.
+        const nextRevision = (state.revision ?? 0) + 1
         const response = await fetch(`/api/v1/puzzles/${puzzleId}/solve`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          // keepalive lets the final flush survive page unload/navigation —
+          // without it browsers cancel the request and the last strokes are lost.
+          keepalive: true,
           body: JSON.stringify({
             puzzleId,
             state: JSON.stringify({
@@ -269,10 +291,28 @@ export default function SolvePage() {
                 state.startTime instanceof Date ? state.startTime.toISOString() : state.startTime,
               endTime: state.endTime instanceof Date ? state.endTime.toISOString() : state.endTime,
               lastSaved: new Date().toISOString(),
+              revision: nextRevision,
             }),
             completed: isCompleted,
           }),
         })
+
+        if (response.ok) {
+          // Bump the in-memory revision so the next save increments from here.
+          const current = useAppStore.getState()
+          if (current.currentPuzzle?.id === puzzleId && current.solveState) {
+            useAppStore.setState({
+              solveState: { ...current.solveState, revision: nextRevision },
+            })
+          }
+        }
+
+        if (response.status === 409) {
+          // A newer save exists (another device/tab won). Don't clobber and
+          // don't retry this state; the next page load reconciles.
+          console.warn('Solve state sync skipped: server already has newer progress.')
+          return
+        }
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -440,7 +480,7 @@ export default function SolvePage() {
       <PuzzleControls
         onNewPuzzle={handleNewPuzzle}
         onExport={handleExport}
-        isGenerating={isLoading}
+        isGenerating={isLoading || isGeneratingNew}
         autosaveStatus={autosaveStatus}
       />
 
@@ -481,6 +521,12 @@ export default function SolvePage() {
           solveState={solveState}
           selectedTab={selectedTab}
           onSelectTab={setSelectedTab}
+          isGenerating={isGeneratingNew}
+          generatingMessage={
+            currentPuzzle.listName
+              ? `Generating a new puzzle for ${currentPuzzle.listName}…`
+              : 'Generating a new puzzle…'
+          }
         />
       </div>
 

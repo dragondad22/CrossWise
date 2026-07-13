@@ -8,11 +8,18 @@ and this project adheres to SemVer.
 ## [Unreleased]
 
 ### Added
+- Starting a new game now opens a puzzle-size chooser: pick 10–50 words or the whole list, and "New puzzle" on the solve screen regenerates at the same size (#22)
 - Topics can now be deleted from the topics page, with a confirmation dialog that warns all lists, puzzles, and solve progress under the topic are permanently removed (#15)
+- The clue panel gained progress-aware Across/Down tabs with solved counts, preset filters (Unsolved, Flagged, Errors) that compose with search, and per-clue flags that persist with your solve progress (#13)
 - Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
+
+### Changed
+- Generating a new puzzle now shows a contextual overlay over the grid (with the list name and an accessible progress announcement) instead of replacing the whole screen with a spinner (#14)
+- The solve grid now shows a two-layer highlight — a soft band across the selected clue and a stronger accent plus ring on the active cell — with an accessible high-contrast focus ring, replacing the single hard-coded yellow highlight (#12)
 
 ### Fixed
 - The Export action on a list now produces a blank printable crossword (empty numbered grid plus across/down clues, no answers) built from the list's most recent puzzle, instead of downloading raw list JSON; lists without a generated puzzle get a friendly prompt to generate one first (#2)
+- Solve progress can no longer be overwritten by a stale device or tab: saves carry a revision counter the server enforces (409 on stale writes), sync is batched instead of firing on every keystroke, and the last changes before closing the page now reliably reach the server (#84)
 - Delete-list confirmation is now fully keyboard-accessible: Escape cancels, focus lands on the safe Cancel action, and the dialog is announced to assistive tech (#16)
 - Failed loads on the topics, lists, and solve screens now show a visible, dismissible error with a retry action instead of a blank or silently-empty page; the solve screen's loading state also updates reactively (#36)
 - Importing a list with an answer containing characters outside A–Z (accents, digits, hyphens, spaces) now fails with an error naming the word, instead of silently stripping characters and corrupting the list (#17)

@@ -5,6 +5,25 @@ import { prisma } from '@/lib/db'
 import { UpdateSolveStateSchema } from '@/lib/validation'
 import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
 
+// Extract the sync metadata from a serialized solve state. Unparseable or
+// absent values disable the corresponding guard rather than rejecting writes.
+function parseStateMeta(serialized: string): {
+  revision: number | undefined
+  lastSavedMs: number | null
+} {
+  try {
+    const parsed = JSON.parse(serialized) as { revision?: unknown; lastSaved?: unknown }
+    const revision = typeof parsed.revision === 'number' ? parsed.revision : undefined
+    const lastSavedMs =
+      typeof parsed.lastSaved === 'string' && Number.isFinite(new Date(parsed.lastSaved).getTime())
+        ? new Date(parsed.lastSaved).getTime()
+        : null
+    return { revision, lastSavedMs }
+  } catch {
+    return { revision: undefined, lastSavedMs: null }
+  }
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
@@ -141,8 +160,40 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       select: {
         id: true,
         completedAt: true,
+        state: true,
       },
     })
+
+    // Recency guard (#84, ADR-007): a stale writer must not clobber newer
+    // server state. Prefer the monotonic revision counter; fall back to the
+    // lastSaved timestamp for states saved before revisions existed.
+    if (existingSolve) {
+      const incoming = parseStateMeta(validated.state)
+      const stored = parseStateMeta(existingSolve.state)
+
+      const staleByRevision =
+        typeof incoming.revision === 'number' &&
+        typeof stored.revision === 'number' &&
+        incoming.revision <= stored.revision
+      const staleByClock =
+        (incoming.revision === undefined || stored.revision === undefined) &&
+        incoming.lastSavedMs !== null &&
+        stored.lastSavedMs !== null &&
+        incoming.lastSavedMs < stored.lastSavedMs
+
+      if (staleByRevision || staleByClock) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              message: 'A newer version of this solve was already saved',
+              code: 'STALE_WRITE',
+            },
+          },
+          { status: 409 },
+        )
+      }
+    }
 
     const completedAt = validated.completed ? existingSolve?.completedAt ?? now : null
 

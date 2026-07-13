@@ -90,6 +90,77 @@ describe('POST /api/v1/puzzles/generate', () => {
     expect(response.status).toBe(404)
   })
 
+  describe('word count (#22)', () => {
+    const vocab = [
+      'GLUCOSE',
+      'MITOCHONDRIA',
+      'RIBOSOME',
+      'NUCLEUS',
+      'CYTOPLASM',
+      'MEMBRANE',
+      'ENZYME',
+      'PROTEIN',
+      'CHLOROPLAST',
+      'OSMOSIS',
+      'DIFFUSION',
+      'BACTERIA',
+    ].map((answer, i) => ({ answer, clue: `Term ${i + 1}` }))
+
+    beforeEach(() => {
+      vi.mocked(prisma.list.findFirst).mockResolvedValue({
+        id: LIST_ID,
+        items: vocab,
+      } as Awaited<ReturnType<typeof prisma.list.findFirst>>)
+    })
+
+    it('uses at most the requested number of words and persists the resolved count', async () => {
+      const response = await POST(
+        makeRequest({ listId: LIST_ID, seed: 'count-seed', wordCount: 6 }),
+      )
+      const result = await response.json()
+
+      expect(result.success).toBe(true)
+      expect(result.data.totalWords).toBe(6)
+      expect(result.data.placedWords).toBeLessThanOrEqual(6)
+
+      const settings = JSON.parse(
+        vi.mocked(prisma.puzzle.create).mock.calls[0][0].data.settings as string,
+      )
+      expect(settings.wordCount).toBe(6)
+    })
+
+    it('is deterministic for the same {listId, seed, wordCount}', async () => {
+      const body = { listId: LIST_ID, seed: 'count-det', wordCount: 6 }
+      const first = await (await POST(makeRequest(body))).json()
+      const second = await (await POST(makeRequest(body))).json()
+
+      expect(second.data.grid).toEqual(first.data.grid)
+      expect(second.data.numbering).toEqual(first.data.numbering)
+    })
+
+    it('uses all items without error when the requested count exceeds the list size', async () => {
+      const response = await POST(
+        makeRequest({ listId: LIST_ID, seed: 's', wordCount: 100 }),
+      )
+      const result = await response.json()
+
+      expect(result.success).toBe(true)
+      expect(result.data.totalWords).toBe(vocab.length)
+      const settings = JSON.parse(
+        vi.mocked(prisma.puzzle.create).mock.calls[0][0].data.settings as string,
+      )
+      expect(settings.wordCount).toBe(vocab.length)
+    })
+
+    it('rejects an out-of-range word count with 400 before touching generation', async () => {
+      const low = await POST(makeRequest({ listId: LIST_ID, wordCount: 2 }))
+      expect(low.status).toBe(400)
+      const high = await POST(makeRequest({ listId: LIST_ID, wordCount: 151 }))
+      expect(high.status).toBe(400)
+      expect(vi.mocked(prisma.puzzle.create)).not.toHaveBeenCalled()
+    })
+  })
+
   describe('partial acceptance (#99)', () => {
     // Realistic vocab: enough words that a 15x15 grid cannot fit them all, so the
     // route must either grow the grid or accept a partial puzzle — never fail.

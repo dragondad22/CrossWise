@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { GeneratePuzzleSchema } from '@/lib/validation'
+import { GeneratePuzzleSchema, WORD_COUNT_BOUNDS } from '@/lib/validation'
 import { CrosswordGenerator, deriveListSeed } from '@/lib/crossword-generator'
 import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
 
@@ -68,6 +68,11 @@ export async function POST(request: NextRequest) {
       ? [{ rows: validated.gridSize.rows ?? 15, cols: validated.gridSize.cols ?? 15 }]
       : [15, 17, 19].map((size) => ({ rows: size, cols: size }))
 
+    // Requested word count (#22): clamps to the list size inside the generator
+    // (pool = all items when the list is smaller). Selection runs through the
+    // seeded RNG, so {list, seed, wordCount} is fully reproducible.
+    const maxWords = validated.wordCount ?? WORD_COUNT_BOUNDS.max
+
     let best: { result: ReturnType<CrosswordGenerator['generate']>; gridSize: (typeof gridSizes)[0] } | null =
       null
     for (const gridSize of gridSizes) {
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest) {
         gridSize,
         seed,
         maxAttempts: 300,
-        maxWords: 150,
+        maxWords,
       })
       const result = generator.generate(items)
       if (!best || result.placedWords > best.result.placedWords) {
@@ -122,6 +127,9 @@ export async function POST(request: NextRequest) {
           symmetry: false,
           allowHyphens: false,
           unplacedWords: result.unplacedWords,
+          // Resolved word count (#22): how the puzzle was produced, for
+          // reproducibility/auditing and same-settings regeneration.
+          wordCount: Math.min(maxWords, list.items.length),
         }),
       },
     })

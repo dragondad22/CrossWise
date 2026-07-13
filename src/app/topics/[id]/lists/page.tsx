@@ -9,6 +9,7 @@ import ListCard from '@/components/ListCard'
 import ImportListModal, { ImportListSubmission } from '@/components/ImportListModal'
 import EditListModal from '@/components/EditListModal'
 import DeleteListModal from '@/components/DeleteListModal'
+import NewGameModal from '@/components/NewGameModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error-banner'
@@ -53,6 +54,8 @@ export default function ListsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deletingList, setDeletingList] = useState<ListWithItemsAndTopic | null>(null)
   const [isDeletingList, setIsDeletingList] = useState(false)
+  const [newGameList, setNewGameList] = useState<ListWithItemsAndTopic | null>(null)
+  const [isGeneratingGame, setIsGeneratingGame] = useState(false)
   const { clearSolveState, stopAutosave } = useAutosave()
   const { isAuthenticated } = useRequireSession()
 
@@ -297,12 +300,19 @@ export default function ListsPage() {
     }
   }
 
-  const handleNewGame = async (list: ListWithItemsAndTopic) => {
+  const handleNewGame = (list: ListWithItemsAndTopic) => {
+    // Opens the puzzle-size chooser (#22); generation starts from the modal.
+    setNewGameList(list)
+  }
+
+  const handleStartGame = async (wordCount: number | undefined) => {
+    const list = newGameList
+    if (!list) return
+
     selectList(list)
+    setIsGeneratingGame(true)
 
     try {
-      setLoading(true)
-
       const response = await fetch('/api/v1/puzzles/generate', {
         method: 'POST',
         headers: {
@@ -311,22 +321,26 @@ export default function ListsPage() {
         body: JSON.stringify({
           listId: list.id,
           seed: `${Date.now()}_${list.id}`,
+          ...(wordCount ? { wordCount } : {}),
         }),
       })
 
       const result = await response.json()
 
       if (result.success) {
+        setNewGameList(null)
         // Navigate to solve page
         router.push(`/solve/${result.data.puzzleId}`)
       } else {
         setError(result.error?.message || 'Failed to generate puzzle')
+        setNewGameList(null)
       }
     } catch (error) {
       setError('Network error')
       console.error('Failed to generate puzzle:', error)
+      setNewGameList(null)
     } finally {
-      setLoading(false)
+      setIsGeneratingGame(false)
     }
   }
 
@@ -447,6 +461,16 @@ export default function ListsPage() {
             ))}
           </div>
         )}
+
+        <NewGameModal
+          isOpen={newGameList !== null}
+          list={newGameList}
+          isGenerating={isGeneratingGame}
+          onClose={() => {
+            if (!isGeneratingGame) setNewGameList(null)
+          }}
+          onStart={handleStartGame}
+        />
 
         <ImportListModal
           isOpen={isImportModalOpen}

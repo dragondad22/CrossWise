@@ -8,19 +8,35 @@ type AutosaveEvent =
   | { type: 'server-save-success'; puzzleId: string; savedAt: string }
   | { type: 'server-save-failed'; puzzleId: string; error: Error }
 
+// Server sync debounce (#84): local saves stay per-keystroke, but the server
+// POST coalesces — steady typing produces at most one request per window.
+const SERVER_SYNC_DEBOUNCE_MS = 2500
+
 export class AutosaveManager {
   private currentPuzzleId: string | null = null
   private getState: (() => SolveState | null) | null = null
   private onServerSave: ServerSaveCallback | null = null
   private isServerSaving = false
   private pendingServerState: SolveState | null = null
-  private handleBeforeUnload = () => this.forceSave()
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null
+  private debouncedState: SolveState | null = null
+  private handleBeforeUnload = () => this.flushServerSave()
+  // Blur / tab-hidden are the last reliable moments to sync before the browser
+  // may throttle or kill the page — flush rather than wait out the debounce.
+  private handleVisibilityChange = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+      this.flushServerSave()
+    }
+  }
+  private handleWindowBlur = () => this.flushServerSave()
   private listeners = new Set<(event: AutosaveEvent) => void>()
 
   constructor() {
-    // Auto-save on page unload
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', this.handleBeforeUnload)
+      window.addEventListener('pagehide', this.handleBeforeUnload)
+      window.addEventListener('blur', this.handleWindowBlur)
+      document.addEventListener('visibilitychange', this.handleVisibilityChange)
     }
   }
 
@@ -43,23 +59,69 @@ export class AutosaveManager {
   }
 
   public stopAutosave() {
+    // Flush, don't drop (#84): any state still waiting in the debounce window
+    // or queued behind an in-flight save must reach the server before teardown.
+    const flushState = this.takePendingState()
+    const flushCallback = this.onServerSave
+    if (flushState && flushCallback) {
+      void Promise.resolve(flushCallback(flushState)).catch((error) => {
+        console.error('Failed to flush pending solve state on stop:', error)
+      })
+    }
+
     this.getState = null
     this.onServerSave = null
     this.isServerSaving = false
     this.pendingServerState = null
   }
 
+  // Local save is immediate; server sync is debounced/coalesced (#84).
   public forceSave(puzzleId?: string, state?: SolveState) {
     if (puzzleId && state) {
       this.saveToBrowser(puzzleId, state)
-      void this.saveToServerIfNeeded(state)
+      this.scheduleServerSave(state)
     } else if (this.currentPuzzleId) {
       const latestState = this.getState?.()
       if (latestState) {
         this.saveToBrowser(this.currentPuzzleId, latestState)
-        void this.saveToServerIfNeeded(latestState)
+        this.scheduleServerSave(latestState)
       }
     }
+  }
+
+  // Fire any debounced state immediately (unload, blur, tab hidden).
+  public flushServerSave() {
+    const state = this.takePendingState() ?? this.getState?.()
+    if (state) {
+      void this.saveToServerIfNeeded(state)
+    }
+  }
+
+  private scheduleServerSave(state: SolveState) {
+    this.debouncedState = state
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer)
+    }
+    this.debounceTimer = setTimeout(() => {
+      this.debounceTimer = null
+      const nextState = this.debouncedState
+      this.debouncedState = null
+      if (nextState) {
+        void this.saveToServerIfNeeded(nextState)
+      }
+    }, SERVER_SYNC_DEBOUNCE_MS)
+  }
+
+  // Cancel the debounce and return whatever state was waiting (debounced or
+  // queued behind an in-flight request), or null when nothing is pending.
+  private takePendingState(): SolveState | null {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer)
+      this.debounceTimer = null
+    }
+    const state = this.debouncedState ?? this.pendingServerState
+    this.debouncedState = null
+    return state
   }
 
   public loadSolveState(puzzleId: string): SolveState | null {

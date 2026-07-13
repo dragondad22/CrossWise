@@ -19,9 +19,13 @@ interface AppState {
     numbering: CrosswordNumbering
     seed: string
     listId: string
+    // Display name of the source list, used for contextual messaging (#14).
+    listName?: string
     // Words from the source list that did not fit on the grid (#99); surfaced to
     // the solver so a partial puzzle is never silently presented as complete.
     unplacedWords?: string[]
+    // Word count the puzzle was generated with (#22); reused on regenerate.
+    wordCount?: number
   } | null
 
   // Solve state
@@ -51,6 +55,7 @@ interface AppState {
   updateCell: (row: number, col: number, letter: string) => void
   selectCell: (row: number, col: number) => void
   selectClue: (direction: 'across' | 'down', number: number) => void
+  toggleClueFlag: (direction: 'across' | 'down', number: number) => void
   clearCell: (row: number, col: number) => void
   clearWord: (direction: 'across' | 'down', number: number) => void
   checkSolution: (mode: 'letter' | 'word' | 'puzzle') => void
@@ -331,6 +336,29 @@ export const useAppStore = create<AppState>()(
         }
 
         set({ solveState: updatedState })
+      },
+
+      // Flag/unflag a clue for later (#13). Persisted through the normal
+      // autosave path so flags survive reload (autosave non-negotiable).
+      toggleClueFlag: (direction, number) => {
+        const state = get()
+        if (!state.solveState || !state.currentPuzzle) return
+
+        const key = `${direction}-${number}`
+        const flaggedClues = { ...(state.solveState.flaggedClues ?? {}) }
+        if (flaggedClues[key]) {
+          delete flaggedClues[key]
+        } else {
+          flaggedClues[key] = true
+        }
+
+        const updatedState = {
+          ...state.solveState,
+          flaggedClues,
+        }
+
+        set({ solveState: updatedState })
+        autosaveManager.forceSave(state.currentPuzzle.id, updatedState)
       },
 
       clearCell: (row, col) => {
