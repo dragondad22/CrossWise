@@ -31,7 +31,10 @@ export async function POST(request: NextRequest) {
     const list = await prisma.list.findFirst({
       where: { id: validated.listId, topic: { userId } },
       include: {
-        items: true,
+        // Stable fetch order: Postgres row order is unspecified and the generator's
+        // determinism contract must not depend on it (#77). The generator also
+        // canonicalizes internally — this is defense in depth.
+        items: { orderBy: { id: 'asc' } },
       },
     })
 

@@ -117,6 +117,41 @@ describe('CrosswordGenerator', () => {
     expect(second).toEqual(first)
   })
 
+  it('is order-independent: permuted input with the same seed yields an identical puzzle (#77)', () => {
+    // Equal-length words are the sensitive case: a length-only sort leaves their
+    // relative order up to the caller, which used to leak DB row order into the grid.
+    const equalLengthWords = [
+      { answer: 'STONE', clue: 'Rock' },
+      { answer: 'NOTES', clue: 'Reminders' },
+      { answer: 'TONES', clue: 'Sounds' },
+      { answer: 'ONSET', clue: 'Beginning' },
+      { answer: 'SETON', clue: 'Surgical thread' },
+      { answer: 'STENO', clue: 'Shorthand writer' },
+      { answer: 'CRATE', clue: 'Wooden box' },
+      { answer: 'TRACE', clue: 'Small amount' },
+    ]
+    for (const seed of ['perm-1', 'perm-2', 'perm-3', 'perm-4', 'perm-5']) {
+      const options = { gridSize: { rows: 12, cols: 12 }, seed, maxAttempts: 50 }
+      const original = new CrosswordGenerator(options).generate(equalLengthWords)
+      const permuted = new CrosswordGenerator(options).generate(
+        [...equalLengthWords].reverse(),
+      )
+      expect(permuted).toEqual(original)
+    }
+  })
+
+  it('selects the same maxWords subset regardless of input order (#77)', () => {
+    const options = {
+      gridSize: { rows: 10, cols: 10 },
+      seed: 'subset-order',
+      maxAttempts: 50,
+      maxWords: 4,
+    }
+    const original = new CrosswordGenerator(options).generate(intersectingWords)
+    const permuted = new CrosswordGenerator(options).generate([...intersectingWords].reverse())
+    expect(permuted).toEqual(original)
+  })
+
   it('is deterministic when no seed is provided', () => {
     const options = { gridSize: { rows: 10, cols: 10 }, maxAttempts: 50 }
     const first = new CrosswordGenerator(options).generate(intersectingWords)
