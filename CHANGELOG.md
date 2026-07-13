@@ -15,6 +15,7 @@ and this project adheres to SemVer.
 - The solve grid now shows a two-layer highlight — a soft band across the selected clue and a stronger accent plus ring on the active cell — with an accessible high-contrast focus ring, replacing the single hard-coded yellow highlight (#12)
 
 ### Fixed
+- Solve progress can no longer be overwritten by a stale device or tab: saves carry a revision counter the server enforces (409 on stale writes), sync is batched instead of firing on every keystroke, and the last changes before closing the page now reliably reach the server (#84)
 - Delete-list confirmation is now fully keyboard-accessible: Escape cancels, focus lands on the safe Cancel action, and the dialog is announced to assistive tech (#16)
 - Failed loads on the topics, lists, and solve screens now show a visible, dismissible error with a retry action instead of a blank or silently-empty page; the solve screen's loading state also updates reactively (#36)
 - Importing a list with an answer containing characters outside A–Z (accents, digits, hyphens, spaces) now fails with an error naming the word, instead of silently stripping characters and corrupting the list (#17)

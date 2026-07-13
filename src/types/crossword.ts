@@ -84,6 +84,10 @@ export interface SolveState {
   checkResults?: Record<string, boolean> // "row,col" -> isCorrect
   lastSaved?: string
   lockedCells?: Record<string, boolean> // "row,col" -> isLocked
+  // Monotonic save counter (#84, ADR-007): incremented on every accepted server
+  // save so reconciliation no longer depends on cross-device wall clocks.
+  // Optional for back-compat with states saved before the field existed.
+  revision?: number
 }
 
 // UI types

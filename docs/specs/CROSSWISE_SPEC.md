@@ -47,10 +47,14 @@ This document is the authoritative product + engineering specification for the c
    - User can check letter/word/puzzle; correct words lock cells.
    - Win detection when all required cells are filled correctly.
 
-5. **Autosave and sync**
+5. **Autosave and sync** (ADR-007)
    - Local autosave on each change via `localStorage`.
-   - Server sync on autosave with session auth.
-   - When loading a puzzle, resolve conflicts using newest `lastSaved` timestamp between local and remote state.
+   - Server sync is debounced (2.5s, coalesced) with session auth; flushed
+     immediately on blur, tab hidden, unload, and unmount (`keepalive` fetch).
+   - Each save carries a monotonic `revision`; the server rejects stale writers
+     with 409 `STALE_WRITE` instead of overwriting newer progress.
+   - When loading a puzzle, conflicts resolve by highest `revision`; the
+     `lastSaved` timestamp is only a tiebreaker / legacy fallback.
 
 6. **Auth**
    - Email/password registration.

@@ -256,11 +256,18 @@ export default function SolvePage() {
 
       try {
         const isCompleted = useAppStore.getState().checkWin()
+        // Monotonic revision (#84, ADR-007): every save carries a counter one
+        // higher than the state it was built from, so the server can reject
+        // stale writers without trusting device clocks.
+        const nextRevision = (state.revision ?? 0) + 1
         const response = await fetch(`/api/v1/puzzles/${puzzleId}/solve`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          // keepalive lets the final flush survive page unload/navigation —
+          // without it browsers cancel the request and the last strokes are lost.
+          keepalive: true,
           body: JSON.stringify({
             puzzleId,
             state: JSON.stringify({
@@ -269,10 +276,28 @@ export default function SolvePage() {
                 state.startTime instanceof Date ? state.startTime.toISOString() : state.startTime,
               endTime: state.endTime instanceof Date ? state.endTime.toISOString() : state.endTime,
               lastSaved: new Date().toISOString(),
+              revision: nextRevision,
             }),
             completed: isCompleted,
           }),
         })
+
+        if (response.ok) {
+          // Bump the in-memory revision so the next save increments from here.
+          const current = useAppStore.getState()
+          if (current.currentPuzzle?.id === puzzleId && current.solveState) {
+            useAppStore.setState({
+              solveState: { ...current.solveState, revision: nextRevision },
+            })
+          }
+        }
+
+        if (response.status === 409) {
+          // A newer save exists (another device/tab won). Don't clobber and
+          // don't retry this state; the next page load reconciles.
+          console.warn('Solve state sync skipped: server already has newer progress.')
+          return
+        }
 
         if (!response.ok) {
           if (response.status === 401) {
