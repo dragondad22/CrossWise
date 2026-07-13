@@ -8,6 +8,7 @@ import SolveSurface from '@/components/SolveSurface'
 import PuzzleControls from '@/components/PuzzleControls'
 import WinModal from '@/components/WinModal'
 import { buttonClasses } from '@/components/ui/button'
+import { ErrorBanner } from '@/components/ui/error-banner'
 import type { SolveState } from '@/types/crossword'
 import { normalizeSolveState, resolveSolveState } from '../solveState'
 import type { RemoteSolveState } from '../solveState'
@@ -29,6 +30,8 @@ export default function SolvePage() {
     setWon,
     user,
     sessionHydrated,
+    isLoading,
+    error,
   } = useAppStore()
 
   const [selectedTab, setSelectedTab] = useState<'across' | 'down'>('across')
@@ -400,7 +403,9 @@ export default function SolvePage() {
     }
   }
 
-  if (useAppStore.getState().isLoading) {
+  // Subscribed value, not getState(): the loading branch must re-render
+  // reactively when the store changes (#36).
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-center">
@@ -435,9 +440,15 @@ export default function SolvePage() {
       <PuzzleControls
         onNewPuzzle={handleNewPuzzle}
         onExport={handleExport}
-        isGenerating={useAppStore.getState().isLoading}
+        isGenerating={isLoading}
         autosaveStatus={autosaveStatus}
       />
+
+      {error && (
+        <div className="container mx-auto px-4 pt-4">
+          <ErrorBanner message={error} onDismiss={() => setError(null)} />
+        </div>
+      )}
 
       {currentPuzzle.unplacedWords &&
         currentPuzzle.unplacedWords.length > 0 &&

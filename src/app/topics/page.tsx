@@ -9,10 +9,11 @@ import TopicCard from '@/components/TopicCard'
 import CreateTopicModal from '@/components/CreateTopicModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
+import { ErrorBanner } from '@/components/ui/error-banner'
 
 export default function TopicsPage() {
   const router = useRouter()
-  const { topics, setTopics, selectTopic, setLoading, setError, isLoading } = useAppStore()
+  const { topics, setTopics, selectTopic, setLoading, setError, isLoading, error } = useAppStore()
   const { isAuthenticated, isSessionPending } = useRequireSession()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
@@ -132,6 +133,15 @@ export default function TopicsPage() {
             <span aria-hidden="true">＋</span> New topic
           </Button>
         </div>
+
+        {error && !isLoading && (
+          <ErrorBanner
+            className="mt-8"
+            message={error}
+            onRetry={() => void fetchTopics()}
+            onDismiss={() => setError(null)}
+          />
+        )}
 
         {isSessionPending || (isLoading && topics.length === 0) ? (
           <div className="mt-12 flex flex-col items-center gap-4 py-12" role="status">
