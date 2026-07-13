@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 import { useAppStore } from '@/lib/store'
-import type { Route } from 'next'
+import { sanitizeNextPath } from '@/lib/utils'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -20,10 +20,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const nextUrl = (() => {
-    const param = searchParams.get('next')
-    return param && param.startsWith('/') ? (param as Route) : ('/topics' as Route)
-  })()
+  const nextUrl = sanitizeNextPath(searchParams.get('next'))
 
   useEffect(() => {
     if (sessionHydrated && user) {

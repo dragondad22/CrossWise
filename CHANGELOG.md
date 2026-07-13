@@ -7,6 +7,9 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+### Security
+- Login and register pages reject protocol-relative `next` redirect targets (`//evil.com`), closing an open-redirect phishing vector (#78)
+
 ## [0.1.0] - 2026-07-10
 
 First tracked release. Covers all functionality shipped to date — topics, word
