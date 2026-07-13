@@ -61,6 +61,18 @@ export function deriveListSeed(listId: string, items: { answer: string; clue: st
 // When exhausted, the search degrades to greedy placement (no unwinding).
 const DEFAULT_SEARCH_BUDGET = 4000
 
+// Codepoint comparison, deliberately not localeCompare: localeCompare's result
+// depends on the runtime's locale, which would make canonical ordering differ
+// between environments and break cross-machine reproducibility.
+function compareByAnswerThenClue(
+  a: { answer: string; clue: string },
+  b: { answer: string; clue: string },
+): number {
+  if (a.answer !== b.answer) return a.answer < b.answer ? -1 : 1
+  if (a.clue !== b.clue) return a.clue < b.clue ? -1 : 1
+  return 0
+}
+
 export class CrosswordGenerator {
   private rng: () => number
   private grid: (string | null)[][]
@@ -87,12 +99,17 @@ export class CrosswordGenerator {
     totalWords: number
     conflictingWords?: string[]
   } {
-    // Step 0: Select the candidate pool through the seeded RNG so word selection
-    // is as reproducible as placement (#35).
+    // Step 0: Canonicalize input order before anything touches the seeded RNG.
+    // Callers pass DB rows whose order is unspecified (and changes after updates/
+    // vacuum); "same list + same seed => same puzzle" must not depend on it (#77).
+    const canonicalWords = [...words].sort(compareByAnswerThenClue)
+
+    // Select the candidate pool through the seeded RNG so word selection is as
+    // reproducible as placement (#35).
     const pool =
-      this.maxWords && words.length > this.maxWords
-        ? this.shuffleArray(words).slice(0, this.maxWords)
-        : words
+      this.maxWords && canonicalWords.length > this.maxWords
+        ? this.shuffleArray(canonicalWords).slice(0, this.maxWords)
+        : canonicalWords
 
     // Step 1: Preprocess words
     const processedWords = this.preprocessWords(pool)
@@ -159,14 +176,19 @@ export class CrosswordGenerator {
 
   private preprocessWords(words: { answer: string; clue: string }[]): WordEntry[] {
     return words
-      .map((word) => ({
-        answer: word.answer.toUpperCase().replace(/[^A-Z]/g, ''),
-        clue: word.clue,
-        length: word.answer.length,
-        letterFreq: this.calculateLetterFrequency(word.answer),
-      }))
+      .map((word) => {
+        const answer = word.answer.toUpperCase().replace(/[^A-Z]/g, '')
+        return {
+          answer,
+          clue: word.clue,
+          length: answer.length,
+          letterFreq: this.calculateLetterFrequency(answer),
+        }
+      })
       .filter((word) => word.answer.length >= 2 && word.answer.length <= 20)
-      .sort((a, b) => b.length - a.length) // Longest words first
+      // Longest words first; ties broken by a total order so equal-length words
+      // sort identically regardless of input order (#77).
+      .sort((a, b) => b.length - a.length || compareByAnswerThenClue(a, b))
   }
 
   private calculateLetterFrequency(word: string): Map<string, number[]> {
