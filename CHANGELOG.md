@@ -7,6 +7,8 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-13
+
 ### Added
 - Forgot-password account recovery: request a reset link from the login page and set a new password via a single-use, 30-minute emailed token; all sessions are revoked on reset (email delivery is a dev stub until a provider is chosen, ADR-008) (#7)
 - Starting a new game now opens a puzzle-size chooser: pick 10–50 words or the whole list, and "New puzzle" on the solve screen regenerates at the same size (#22)
