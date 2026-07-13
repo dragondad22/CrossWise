@@ -24,6 +24,10 @@ const config: Config = {
         border: '#e5e7eb',
         input: '#e5e7eb',
         ring: '#2563eb',
+        // Non-blocking caution notices (e.g. partial-puzzle disclosure, #99).
+        warning: '#92400e',
+        'warning-muted': '#fef3c7',
+        'warning-border': '#fcd34d',
         gray: {
           50: '#f9fafb',
           100: '#f3f4f6',

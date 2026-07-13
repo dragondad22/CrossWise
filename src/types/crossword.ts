@@ -44,6 +44,8 @@ export interface PuzzleSettings {
   checkMode: 'off' | 'letter' | 'word' | 'full'
   symmetry: boolean
   allowHyphens: boolean
+  // Words that did not fit when this (partial) puzzle was accepted (#99).
+  unplacedWords?: string[]
 }
 
 // Generation types
@@ -68,7 +70,7 @@ export interface GenerationResult {
   puzzle?: CrosswordPuzzle
   placedWords: number
   totalWords: number
-  conflictingWords?: string[]
+  unplacedWords?: string[]
   error?: string
 }
 
