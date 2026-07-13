@@ -11,6 +11,7 @@ a persistent memory system.
 ## Project Context Files
 
 - `CLAUDE.md` — root project context: non-negotiables, commands, standards index, anti-drift rules. Loaded every session.
+- `docs/kit/` — the kit explained: `WORKFLOW.md` (the journey, flowchart, "where am I?") and `README.md` (commands + directory map).
 - Add per-area `CLAUDE.md` files (e.g. `apps/api/CLAUDE.md`) when an area needs its own patterns.
 
 ## Checklists (completion gates)

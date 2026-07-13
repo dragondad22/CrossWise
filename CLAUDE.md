@@ -42,7 +42,7 @@ bash ai/scripts/release.sh                       # Show recommended version bump
 
 ## Session Start
 
-Run the session-start protocol in `ai/agent-setup.md` — the single ordered check list (board drift, release trigger, evergreen cadence, scaffold triggers). Each check is non-interruptive: one status line or a filed issue, never a derailment.
+Run the session-start protocol in `ai/agent-setup.md` — the single ordered check list (board drift, release trigger, evergreen cadence, scaffold triggers). Each check is non-interruptive: one status line or a filed issue, never a derailment. New to the kit, or unsure what comes next? `docs/kit/WORKFLOW.md`.
 
 ## Task Tracking (mandatory)
 

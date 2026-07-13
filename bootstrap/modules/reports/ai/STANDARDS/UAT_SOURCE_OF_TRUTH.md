@@ -7,6 +7,41 @@ Ensure UAT (user-acceptance testing) decisions are based on authoritative docume
 and observable behavior, not assumptions. When two sources disagree, there must be a
 single, predictable rule for which one wins.
 
+## Two Artifacts, Two Audiences
+
+UAT produces two distinct artifacts — never blended into one document:
+
+1. **Acceptance verification** (agent-facing) — the acceptance doc for a work
+   item: `docs/uat/UAT_{{WORK_ITEM_PREFIX}}-NNN.md`, template
+   `ai/TEMPLATES/ACCEPTANCE_DOC_TEMPLATE.md`. Explicit criteria, edge-case
+   matrix, evidence — everything scripted and repeatable belongs here, executed
+   via `{{E2E_COMMAND}}`. The rest of this standard governs this artifact.
+2. **Beta guides** (human-facing) — task-based hand-offs for beta testers:
+   `docs/uat/beta/BETA-<DOMAIN>-NNN-<slug>.md` (ID mirrors the feature spec),
+   template `ai/TEMPLATES/BETA_GUIDE_TEMPLATE.md`. **Goals, not steps** — each
+   task is a scenario, a starting point, and a done-condition, never a
+   click-path. Human testers are reserved for what automation can't observe
+   (naïve use, comprehension, discoverability); a step-by-step script destroys
+   exactly that.
+
+Beta-guide lifecycle:
+
+- **Derived, not invented:** one guide per feature, generated from the feature
+  spec's journey layer (the journey with the steps deleted), addressed to a
+  persona by name. It is user-facing text — the audience-first rules apply
+  (`ai/STANDARDS/DOCUMENTATION_STANDARD.md`).
+- **Drafted at feature-complete, human-reviewed** before any tester sees it;
+  refreshed at release time — the CHANGELOG's Unreleased section is the delta
+  of guides to create or update for a beta round.
+- **Sequencing:** testers receive guides only after acceptance verification and
+  the E2E smoke are green on a build they can reach. A tester's naïve first
+  pass through a flow is nonrenewable — never spend it on failures automation
+  would have caught.
+- **Feedback routing:** a tester asking *how* to do something is a design
+  finding, not a documentation request — route per the "how do I…?" rule in
+  `ai/STANDARDS/UI_STANDARD.md` (ui module). Bugs go through
+  `ai/STANDARDS/GITHUB_ISSUES.md`.
+
 ## Document Precedence
 When documents conflict, resolve in this order (top wins). Adapt the paths to where
 these artifacts live in this project:

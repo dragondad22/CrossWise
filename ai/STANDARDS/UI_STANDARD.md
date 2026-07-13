@@ -58,6 +58,22 @@ Single Next.js app deployed on Vercel — no monorepo tooling.`.
 - **Low-friction actions:** primary actions are obvious and close to related content.
 - **Safe operations:** make risky actions deliberate and reversible when possible.
 
+### 3.1 "How do I…?" is a design finding
+
+User interfaces are like jokes: if you have to explain it, it's not very good.
+When a user or beta tester asks *how* to do something — in beta feedback,
+support, or UAT — treat the question as a defect report against the flow's
+design, not as a documentation request. (This subsection is the rule's single
+home; other docs point here.)
+
+- **Default routing:** file a UX/design issue against the flow (per
+  `ai/STANDARDS/GITHUB_ISSUES.md`), quoting the question verbatim as evidence.
+- **Help text is the fallback, not the fix:** write an explanation only after a
+  redesign has been considered and explicitly rejected.
+- **The test applies pre-ship too:** if a beta guide task or a spec journey
+  can't be stated without explaining the steps, the design has already failed
+  it — fix the flow before shipping the explanation.
+
 ## 4. Foundations
 
 ### 4.1 Typography

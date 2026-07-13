@@ -4,13 +4,17 @@ The canonical question set for the inception interview. Machinery (file layout,
 question block format, lifecycle, Q-IDs, provenance):
 `ai/STANDARDS/INTERVIEW_STANDARD.md` — read it first.
 
-**How this bank is used.** At inception the AI generates the `000-inception/`
+**How this bank is used.** Inception opens with the approved project brief —
+`000-inception/00-BRIEF.md`, the shared-understanding gate ("The Brief" in
+`ai/STANDARDS/INTERVIEW_STANDARD.md`); no questions are generated before it.
+Then the AI generates the `000-inception/`
 interview directory under `docs/plans/` from this bank: one section file per section below,
 each spine question expanded into the full question block (why-this-matters,
-options with trade-offs, recommendation, default). The spine is the floor, not
+options with trade-offs, recommendation, default), with the brief's statements
+baked into recommendations. The spine is the floor, not
 the interview: spine questions are conversation starters, and the AI **must**
-generate follow-up questions driven by the answers, appending IDs within the
-section (`Q-ARCH-07`, `-08`…).
+generate follow-up questions driven by the answers — and by what the brief
+left vague — appending IDs within the section (`Q-ARCH-07`, `-08`…).
 
 **Depth rule (when is a section done):** a section is complete when its
 downstream founding artifact can be written **without invention** — if writing
@@ -67,7 +71,12 @@ registry (`docs/PERSONAS.md`).*
 *Downstream: initial ADRs, `CLAUDE.md` architecture section, module triggers.*
 
 - **Q-ARCH-01 — What shape is it?** CLI / library / service or API / web app /
-  mobile / desktop / a mix. A console app is a real answer, not a fallback.
+  mobile / desktop / **game** / a mix. A console app is a real answer, not a
+  fallback. A game answer redirects the follow-ups: engine or framework
+  choice, target platform(s) and stores, the core loop, real-time
+  constraints, and the art/asset pipeline — and shifts later sections (UI
+  becomes art direction, TEST leans on the failure that matters for play,
+  INFRA includes distribution).
 - **Q-ARCH-02 — What are the major pieces and how do they talk?** Components,
   boundaries, sync vs async — at whiteboard altitude.
 - **Q-ARCH-03 — Language and stack: preference or constraint?** Existing
@@ -75,10 +84,17 @@ registry (`docs/PERSONAS.md`).*
 - **Q-ARCH-04 — What will you build vs. use off the shelf?** Auth, payments,
   search, email — buying is often the right call; deviations from obvious
   services deserve a reason.
+- **Q-ARCH-05 — Runtime version policy: evergreen or pinned?** House default:
+  **evergreen** — latest stable of each toolchain unless a dependency forces a
+  pin (paved-road registry: `bootstrap/PAVED_ROAD.md`). Confirm the default
+  rather than asking blind; capture any pins **with their reasons** — they
+  feed `CLAUDE.md`, pin files (`.nvmrc` etc.), and an ADR when the pin is
+  load-bearing. Never infer the policy from what happens to be installed.
 
 ## 4. Infrastructure — `INFRA`
 
-*Downstream: hosting ADR, deploy-ci module shape, cost expectations.*
+*Downstream: hosting ADR, deploy-ci module shape, cost expectations,
+locality non-negotiables, compliance register rows.*
 
 - **Q-INFRA-01 — Where does it run?** The right-sizing ladder: local-only →
   single small host (Pi / VPS) → managed platform → full cloud. Recommend the
@@ -87,6 +103,14 @@ registry (`docs/PERSONAS.md`).*
   in a year. Design for the honest number, not the dream.
 - **Q-INFRA-03 — What should it cost to run?** Monthly tolerance; free-tier
   constraints if any.
+- **Q-INFRA-04 — Are there boundaries on where data or compute may go?**
+  Local-only / self-hosted only / cloud OK / cloud with conditions (named
+  providers, regions, no third-party processing). Ask **explicitly about
+  third-party AI services**: is sending code, prompts, or user data to a
+  hosted model acceptable, or must AI stay local/private? A boundary here is
+  a prime non-negotiable candidate — it constrains hosting, stack, and
+  feature design, and seeds compliance rows. (Port-back: in the first trial
+  this was the project's defining requirement, and no spine question asked.)
 
 ## 5. UI & Aesthetics — `UI`
 
@@ -97,7 +121,10 @@ registry (`docs/PERSONAS.md`).*
 - **Q-UI-02 — How much does its look matter?** Ladder: "I don't care —
   functional defaults" / clean-but-generic / branded / design-led. Every rung
   is legitimate; the answer changes what gets scaffolded, not the project's
-  worth.
+  worth. Orthogonal to the rung: should it feel **playful/gamified** — fun
+  graphics, delightful interactions, progression mechanics — even when the
+  project isn't a game? Name that deliberately; it shapes the UI standard's
+  adaptation, not just the visuals.
 - **Q-UI-03 — Is there a design source of truth?** Figma or equivalent, or
   none. Accessibility floor for the audience.
 
