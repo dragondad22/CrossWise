@@ -8,15 +8,15 @@ import {
 } from '../validation'
 
 describe('validation helpers', () => {
-  it('validates and normalizes a well-formed list payload', () => {
+  it('validates and uppercases a well-formed list payload', () => {
     const payload = {
       topic: 'Animals',
       name: 'Mammals',
       version: 1,
       items: [
         { answer: 'otter', clue: 'Playful river mammal', note: 'Loves water' },
-        { answer: 'Sea-lion', clue: 'Barks loudly on the shore' },
-        { answer: 'Fennec Fox', clue: 'Desert fox with big ears' },
+        { answer: 'Sealion', clue: 'Barks loudly on the shore' },
+        { answer: 'Fennec', clue: 'Desert fox with big ears' },
         { answer: 'Badger', clue: 'Builds complex burrows underground' },
         { answer: 'Panda', clue: 'Eats mostly bamboo', difficulty: 'MEDIUM' },
       ],
@@ -27,10 +27,50 @@ describe('validation helpers', () => {
     expect(result.data?.items.map((item) => item.answer)).toEqual([
       'OTTER',
       'SEALION',
-      'FENNECFOX',
+      'FENNEC',
       'BADGER',
       'PANDA',
     ])
+  })
+
+  it('rejects answers with disallowed characters and names the offending word (#17)', () => {
+    const base = [
+      { answer: 'otter', clue: 'Playful river mammal' },
+      { answer: 'Badger', clue: 'Builds complex burrows underground' },
+      { answer: 'Panda', clue: 'Eats mostly bamboo' },
+      { answer: 'Fennec', clue: 'Desert fox with big ears' },
+    ]
+
+    for (const bad of ['Sea-lion', 'Fennec Fox', 'CAFÉ', 'Word3']) {
+      const result = validateListJSON({
+        topic: 'Animals',
+        name: 'Mammals',
+        items: [...base, { answer: bad, clue: 'Contains a disallowed character' }],
+      })
+
+      expect(result.success).toBe(false)
+      const answerError = result.errors?.find((err) => err.field.endsWith('answer'))
+      expect(answerError?.message).toContain(bad.toUpperCase())
+      expect(answerError?.message).toContain("aren't letters A–Z")
+    }
+  })
+
+  it('never silently strips disallowed characters (regression for #17)', () => {
+    // "CAF-É3" used to import as "CAF"; it must now be rejected, not mutated.
+    const result = validateListJSON({
+      topic: 'Food',
+      name: 'Drinks',
+      items: [
+        { answer: 'CAF-É3', clue: 'Corrupted coffee word' },
+        { answer: 'Latte', clue: 'Milky espresso drink' },
+        { answer: 'Mocha', clue: 'Chocolate espresso drink' },
+        { answer: 'Espresso', clue: 'Strong small coffee' },
+        { answer: 'Ristretto', clue: 'Even shorter espresso' },
+      ],
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.data).toBeUndefined()
   })
 
   it('rejects lists that contain duplicate answers', () => {
@@ -76,10 +116,12 @@ describe('validation helpers', () => {
       topic: 'History',
       name: 'Renaissance',
       version: 2,
-      items: Array.from({ length: 5 }, (_, index) => ({
-        answer: `artist${index + 1}`,
-        clue: `Notable renaissance artist ${index + 1}`,
-      })),
+      items: ['Raphael', 'Titian', 'Botticelli', 'Donatello', 'Caravaggio'].map(
+        (answer, index) => ({
+          answer,
+          clue: `Notable renaissance artist ${index + 1}`,
+        }),
+      ),
     })
 
     expect(parsed.success).toBe(true)
@@ -89,15 +131,19 @@ describe('validation helpers', () => {
     expect(parsed.data.version).toBe(2)
   })
 
-  it('normalizes answers by upper-casing and stripping non letters', () => {
-    expect(normalizeAnswer('Sea-horse!')).toBe('SEAHORSE')
+  it('normalizes answers by upper-casing only — disallowed characters survive to validation (#17)', () => {
+    expect(normalizeAnswer('otter')).toBe('OTTER')
+    expect(normalizeAnswer('Sea-horse!')).toBe('SEA-HORSE!')
   })
 
   it('describes formatting issues for invalid answers', () => {
     const result = validateAnswerFormat('1')
     expect(result.valid).toBe(false)
     expect(result.issues).toEqual(
-      expect.arrayContaining(['Non-letter characters removed', 'Answer too short (minimum 2 letters)']),
+      expect.arrayContaining([
+        expect.stringContaining("aren't letters A–Z"),
+        'Answer too short (minimum 2 letters)',
+      ]),
     )
   })
 

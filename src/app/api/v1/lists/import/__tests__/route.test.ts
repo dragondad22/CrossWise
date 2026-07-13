@@ -140,4 +140,51 @@ describe('/api/v1/lists/import POST handler', () => {
     expect(response.status).toBe(401)
     expect(topicFindFirst).not.toHaveBeenCalled()
   })
+
+  describe('answer character validation (#17)', () => {
+    const requestWith = (items: Array<{ answer: string; clue: string }>) =>
+      new NextRequest('http://localhost/api/v1/lists/import', {
+        method: 'POST',
+        body: JSON.stringify({ ...importPayload, items }),
+        headers: {
+          'content-type': 'application/json',
+          cookie: `${SESSION_COOKIE_NAME}=token-123`,
+        },
+      })
+
+    it('denies the whole import when any answer has a disallowed character, naming the word', async () => {
+      const items = [
+        ...importPayload.items.slice(0, 4),
+        { answer: 'CAFÉ-3', clue: 'Contains an accent, a hyphen, and a digit' },
+      ]
+
+      const response = await POST(requestWith(items))
+      const result = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(result.success).toBe(false)
+      const answerError = (result.error.details as Array<{ field: string; message: string }>).find(
+        (detail) => detail.field.endsWith('answer'),
+      )
+      expect(answerError?.message).toContain('CAFÉ-3')
+      expect(answerError?.message).toContain("aren't letters A–Z")
+
+      // Nothing was created: the invalid word denies the entire import.
+      expect(prismaTransaction).not.toHaveBeenCalled()
+      expect(topicCreate).not.toHaveBeenCalled()
+    })
+
+    it('no longer writes silently-stripped answers', async () => {
+      // "CAF-É3" used to be written as "CAF"; assert no write happens at all.
+      const response = await POST(
+        requestWith([
+          ...importPayload.items.slice(0, 4),
+          { answer: 'CAF-É3', clue: 'Would previously import as CAF' },
+        ]),
+      )
+
+      expect(response.status).toBe(400)
+      expect(prismaTransaction).not.toHaveBeenCalled()
+    })
+  })
 })
