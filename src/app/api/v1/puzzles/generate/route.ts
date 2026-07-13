@@ -23,9 +23,6 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id
     const body = await request.json()
     const validated = GeneratePuzzleSchema.parse(body)
-    const gridSize = validated.gridSize
-      ? { rows: validated.gridSize.rows ?? 15, cols: validated.gridSize.cols ?? 15 }
-      : { rows: 15, cols: 15 }
 
     // Fetch list with items
     const list = await prisma.list.findFirst({
@@ -63,25 +60,47 @@ export async function POST(request: NextRequest) {
     // drives both word selection (up to 150 items) and placement.
     const seed = validated.seed || deriveListSeed(list.id, items)
 
-    const generator = new CrosswordGenerator({
-      gridSize,
-      seed,
-      maxAttempts: 300,
-      maxWords: 150,
-    })
+    // When the caller pins a grid size we honour it exactly. Otherwise walk a
+    // fixed ladder of sizes: many realistic lists cannot fully fit on 15x15, and
+    // a bigger grid beats silently dropping words (#99). The ladder is a pure
+    // function of (items, seed), so the determinism contract (ADR-006) holds.
+    const gridSizes = validated.gridSize
+      ? [{ rows: validated.gridSize.rows ?? 15, cols: validated.gridSize.cols ?? 15 }]
+      : [15, 17, 19].map((size) => ({ rows: size, cols: size }))
 
-    const result = generator.generate(items)
+    let best: { result: ReturnType<CrosswordGenerator['generate']>; gridSize: (typeof gridSizes)[0] } | null =
+      null
+    for (const gridSize of gridSizes) {
+      const generator = new CrosswordGenerator({
+        gridSize,
+        seed,
+        maxAttempts: 300,
+        maxWords: 150,
+      })
+      const result = generator.generate(items)
+      if (!best || result.placedWords > best.result.placedWords) {
+        best = { result, gridSize }
+      }
+      if (result.placedWords === result.totalWords) {
+        break // everything fits — no reason to grow the grid further
+      }
+    }
 
-    if (!result.success) {
+    const { result, gridSize } = best!
+
+    // A puzzle needs at least two crossing words to be worth solving. Below that,
+    // fail with the full unplaced list so the author can fix the source list.
+    if (!result.grid || !result.numbering || result.placedWords < 2) {
       return NextResponse.json(
         {
           success: false,
           error: {
-            message: 'Failed to generate puzzle',
+            message:
+              'These words could not be placed together — they share too few letters. Try splitting the list or adding words with more overlap.',
             details: {
               placedWords: result.placedWords,
               totalWords: result.totalWords,
-              conflictingWords: result.conflictingWords,
+              unplacedWords: result.unplacedWords,
             },
           },
         },
@@ -89,7 +108,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Save puzzle to database
+    // Save puzzle to database. A partial puzzle (some words unplaced) is accepted;
+    // the unplaced list is persisted so the solve UI can disclose it (#99).
     const puzzle = await prisma.puzzle.create({
       data: {
         listId: validated.listId,
@@ -101,6 +121,7 @@ export async function POST(request: NextRequest) {
           checkMode: 'word',
           symmetry: false,
           allowHyphens: false,
+          unplacedWords: result.unplacedWords,
         }),
       },
     })
@@ -114,6 +135,7 @@ export async function POST(request: NextRequest) {
         seed: puzzle.seed,
         placedWords: result.placedWords,
         totalWords: result.totalWords,
+        unplacedWords: result.unplacedWords,
       },
     })
   } catch (error) {

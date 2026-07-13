@@ -92,12 +92,16 @@ export class CrosswordGenerator {
   }
 
   public generate(words: { answer: string; clue: string }[]): {
+    // True when the placement threshold (>=90% of the pool) was met. A partial
+    // grid/numbering is still returned below the threshold whenever at least one
+    // word placed — the caller decides whether to accept it (#99).
     success: boolean
     grid?: CrosswordGrid
     numbering?: CrosswordNumbering
     placedWords: number
     totalWords: number
-    conflictingWords?: string[]
+    // Every pool word that did not make it onto the grid, in canonical order.
+    unplacedWords: string[]
   } {
     // Step 0: Canonicalize input order before anything touches the seeded RNG.
     // Callers pass DB rows whose order is unspecified (and changes after updates/
@@ -114,7 +118,12 @@ export class CrosswordGenerator {
     // Step 1: Preprocess words
     const processedWords = this.preprocessWords(pool)
     if (processedWords.length === 0) {
-      return { success: false, placedWords: 0, totalWords: pool.length }
+      return {
+        success: false,
+        placedWords: 0,
+        totalWords: pool.length,
+        unplacedWords: pool.map((word) => word.answer.toUpperCase()),
+      }
     }
 
     // Step 2: Try generation with multiple attempts
@@ -149,28 +158,30 @@ export class CrosswordGenerator {
 
     this.placedWords = bestResult
     const successRate = bestResult.length / pool.length
+    const unplacedWords = this.findUnplacedWords(processedWords, bestResult)
 
-    if (successRate < 0.9) {
-      const conflictingWords = this.findConflictingWords(processedWords, bestResult)
+    if (bestResult.length === 0) {
       return {
         success: false,
-        placedWords: bestResult.length,
+        placedWords: 0,
         totalWords: pool.length,
-        conflictingWords,
+        unplacedWords,
       }
     }
 
-    // Step 3: Create final grid and numbering
+    // Step 3: Create final grid and numbering — also for partial results, so the
+    // caller can accept an incomplete puzzle with an explicit unplaced list (#99).
     this.rebuildGrid(bestResult)
     const finalGrid = this.createFinalGrid()
     const numbering = this.generateNumbering(bestResult)
 
     return {
-      success: true,
+      success: successRate >= 0.9,
       grid: finalGrid,
       numbering,
       placedWords: bestResult.length,
       totalWords: pool.length,
+      unplacedWords,
     }
   }
 
@@ -596,11 +607,8 @@ export class CrosswordGenerator {
     return shuffled
   }
 
-  private findConflictingWords(allWords: WordEntry[], placedWords: WordPlacement[]): string[] {
+  private findUnplacedWords(allWords: WordEntry[], placedWords: WordPlacement[]): string[] {
     const placed = new Set(placedWords.map((p) => p.word))
-    return allWords
-      .filter((w) => !placed.has(w.answer))
-      .map((w) => w.answer)
-      .slice(0, 5) // Return up to 5 conflicting words
+    return allWords.filter((w) => !placed.has(w.answer)).map((w) => w.answer)
   }
 }

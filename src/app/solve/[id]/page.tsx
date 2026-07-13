@@ -32,6 +32,9 @@ export default function SolvePage() {
   } = useAppStore()
 
   const [selectedTab, setSelectedTab] = useState<'across' | 'down'>('across')
+  // Tracks which puzzle's unplaced-words notice was dismissed, so the notice
+  // reappears when a different (partial) puzzle loads.
+  const [dismissedUnplacedFor, setDismissedUnplacedFor] = useState<string | null>(null)
   const [autosaveMeta, setAutosaveMeta] = useState<{
     lastLocalSave: Date | null
     lastServerSave: Date | null
@@ -132,6 +135,9 @@ export default function SolvePage() {
               numbering: puzzleData.numbering,
               seed: puzzleData.seed,
               listId: puzzleData.list.id,
+              unplacedWords: Array.isArray(puzzleData.settings?.unplacedWords)
+                ? puzzleData.settings.unplacedWords
+                : undefined,
             })
 
             const remoteState = result.data.state
@@ -432,6 +438,30 @@ export default function SolvePage() {
         isGenerating={useAppStore.getState().isLoading}
         autosaveStatus={autosaveStatus}
       />
+
+      {currentPuzzle.unplacedWords &&
+        currentPuzzle.unplacedWords.length > 0 &&
+        dismissedUnplacedFor !== currentPuzzle.id && (
+          <div className="container mx-auto px-4 pt-4" role="status">
+            <div className="flex items-start justify-between gap-4 rounded-md border border-warning-border bg-warning-muted px-4 py-3 text-sm text-warning">
+              <p>
+                {currentPuzzle.unplacedWords.length === 1
+                  ? '1 word from this list didn’t fit the grid: '
+                  : `${currentPuzzle.unplacedWords.length} words from this list didn’t fit the grid: `}
+                <span className="font-semibold">{currentPuzzle.unplacedWords.join(', ')}</span>.
+                Generate a new puzzle for another mix, or split the list so every word fits.
+              </p>
+              <button
+                type="button"
+                onClick={() => setDismissedUnplacedFor(currentPuzzle.id)}
+                aria-label="Dismiss unplaced words notice"
+                className="rounded p-1 leading-none text-warning transition-colors hover:bg-warning-border/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
 
       <div className="container mx-auto flex w-full flex-1 flex-col gap-6 px-4 pb-10 pt-6">
         <SolveSurface

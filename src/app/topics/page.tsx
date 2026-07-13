@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
+import { useRequireSession } from '@/lib/useRequireSession'
 import { Topic } from '@/types/database'
 import TopicCard from '@/components/TopicCard'
 import CreateTopicModal from '@/components/CreateTopicModal'
@@ -12,6 +13,7 @@ import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/c
 export default function TopicsPage() {
   const router = useRouter()
   const { topics, setTopics, selectTopic, setLoading, setError, isLoading } = useAppStore()
+  const { isAuthenticated, isSessionPending } = useRequireSession()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   const fetchTopics = useCallback(async () => {
@@ -20,6 +22,14 @@ export default function TopicsPage() {
 
     try {
       const response = await fetch('/api/v1/topics')
+
+      if (response.status === 401) {
+        // Session expired mid-visit — send the visitor through login, never a
+        // false "no topics yet" empty state (#82). Deliberately leave isLoading
+        // set so the spinner stays up while navigation happens.
+        router.replace(`/login?next=${encodeURIComponent('/topics')}`)
+        return
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -41,17 +51,19 @@ export default function TopicsPage() {
       } else {
         setError(result.error?.message || 'Failed to fetch topics')
       }
+      setLoading(false)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Network error')
       console.error('Failed to fetch topics:', error)
-    } finally {
       setLoading(false)
     }
-  }, [setError, setLoading, setTopics])
+  }, [router, setError, setLoading, setTopics])
 
   useEffect(() => {
-    void fetchTopics()
-  }, [fetchTopics])
+    if (isAuthenticated) {
+      void fetchTopics()
+    }
+  }, [fetchTopics, isAuthenticated])
 
   const handleCreateTopic = async (data: {
     name: string
@@ -121,7 +133,15 @@ export default function TopicsPage() {
           </Button>
         </div>
 
-        {topics.length === 0 && !isLoading ? (
+        {isSessionPending || (isLoading && topics.length === 0) ? (
+          <div className="mt-12 flex flex-col items-center gap-4 py-12" role="status">
+            <div
+              className="h-12 w-12 animate-spin rounded-full border-2 border-primary/20 border-t-primary"
+              aria-hidden="true"
+            />
+            <p className="text-muted-foreground">Loading your topics…</p>
+          </div>
+        ) : topics.length === 0 && !isLoading ? (
           <Card className="mt-12">
             <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
               <span className="text-5xl">📚</span>

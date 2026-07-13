@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAppStore } from '@/lib/store'
+import { useRequireSession } from '@/lib/useRequireSession'
 import { ListWithItemsAndTopic } from '@/types/database'
 import ListCard from '@/components/ListCard'
 import ImportListModal, { ImportListSubmission } from '@/components/ImportListModal'
@@ -42,6 +43,7 @@ export default function ListsPage() {
   const [deletingList, setDeletingList] = useState<ListWithItemsAndTopic | null>(null)
   const [isDeletingList, setIsDeletingList] = useState(false)
   const { clearSolveState, stopAutosave } = useAutosave()
+  const { isAuthenticated, isSessionPending } = useRequireSession()
 
   const fetchTopicAndLists = useCallback(
     async (id: string) => {
@@ -51,6 +53,14 @@ export default function ListsPage() {
       try {
         // Fetch topic details
         const topicResponse = await fetch(`/api/v1/topics/${id}`)
+
+        if (topicResponse.status === 401) {
+          // Session expired mid-visit — go through login rather than rendering a
+          // false empty state (#82). isLoading stays set while navigating away.
+          router.replace(`/login?next=${encodeURIComponent(`/topics/${id}/lists`)}`)
+          return
+        }
+
         const topicResult = await topicResponse.json()
 
         if (topicResult.success) {
@@ -66,21 +76,21 @@ export default function ListsPage() {
         } else {
           setError(listsResult.error?.message || 'Failed to fetch lists')
         }
+        setLoading(false)
       } catch (error) {
         setError('Network error')
         console.error('Failed to fetch data:', error)
-      } finally {
         setLoading(false)
       }
     },
-    [selectTopic, setError, setLists, setLoading],
+    [router, selectTopic, setError, setLists, setLoading],
   )
 
   useEffect(() => {
-    if (topicId) {
+    if (topicId && isAuthenticated) {
       void fetchTopicAndLists(topicId)
     }
-  }, [fetchTopicAndLists, topicId])
+  }, [fetchTopicAndLists, topicId, isAuthenticated])
 
   useEffect(() => {
     // Filter lists for current topic

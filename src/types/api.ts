@@ -24,7 +24,7 @@ import {
   RegisterSchema,
   LoginSchema,
 } from '@/lib/validation'
-import type { CrosswordGrid, CrosswordNumbering, PuzzleSettings } from '@/types/crossword'
+import type { CrosswordGrid, CrosswordNumbering } from '@/types/crossword'
 
 // --- Request types (derived from Zod schemas) ---
 
@@ -43,7 +43,11 @@ export interface GeneratePuzzleResponse {
   puzzleId: string
   grid: CrosswordGrid
   numbering: CrosswordNumbering
-  settings: PuzzleSettings
+  seed: string
+  placedWords: number
+  totalWords: number
+  // Words that did not fit the grid when a partial puzzle was accepted (#99).
+  unplacedWords: string[]
 }
 
 export interface ExportListResponse {

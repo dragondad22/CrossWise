@@ -45,7 +45,7 @@ describe('CrosswordGenerator', () => {
         expect(gridLetters.has(letter)).toBe(true)
       }
     } else {
-      expect(result.conflictingWords).toBeDefined()
+      expect(result.unplacedWords.length).toBeGreaterThan(0)
     }
   })
 
@@ -79,11 +79,35 @@ describe('CrosswordGenerator', () => {
 
     expect(result.success).toBe(false)
     expect(result.placedWords).toBeLessThan(nonIntersectingWords.length)
-    expect(result.conflictingWords).toBeDefined()
+    expect(result.unplacedWords.length).toBe(nonIntersectingWords.length - result.placedWords)
     const upperAnswers = nonIntersectingWords.map((w) => w.answer.toUpperCase())
-    for (const word of result.conflictingWords ?? []) {
+    for (const word of result.unplacedWords) {
       expect(upperAnswers).toContain(word)
     }
+  })
+
+  it('returns a usable partial grid with the full unplaced list when below the threshold (#99)', () => {
+    const generator = new CrosswordGenerator({
+      gridSize: { rows: 6, cols: 6 },
+      seed: 'partial-accept',
+      maxAttempts: 10,
+    })
+
+    const result = generator.generate(nonIntersectingWords)
+
+    expect(result.success).toBe(false)
+    expect(result.placedWords).toBeGreaterThan(0)
+    expect(result.grid).toBeDefined()
+    expect(result.numbering).toBeDefined()
+
+    const placedAnswers = [
+      ...(result.numbering?.across ?? []),
+      ...(result.numbering?.down ?? []),
+    ].map((clue) => clue.answer)
+    expect(placedAnswers.length).toBe(result.placedWords)
+    // Placed and unplaced partition the input exactly.
+    const all = [...placedAnswers, ...result.unplacedWords].sort()
+    expect(all).toEqual(nonIntersectingWords.map((w) => w.answer.toUpperCase()).sort())
   })
 
   it('returns failure metadata gracefully when no words are supplied', () => {
@@ -235,7 +259,7 @@ describe('CrosswordGenerator placement invariants (#76)', () => {
     if (result.success) {
       expect(distinctPlaced).toBeGreaterThanOrEqual(Math.floor(biologyWords.length * 0.9))
     } else {
-      expect(result.conflictingWords).toBeDefined()
+      expect(result.unplacedWords.length).toBeGreaterThan(0)
     }
   })
 
