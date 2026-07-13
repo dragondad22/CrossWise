@@ -35,6 +35,9 @@ export default function SolvePage() {
   } = useAppStore()
 
   const [selectedTab, setSelectedTab] = useState<'across' | 'down'>('across')
+  // Regeneration in flight (#14) — distinct from the page-load isLoading so the
+  // grid overlay shows instead of the whole-screen spinner.
+  const [isGeneratingNew, setIsGeneratingNew] = useState(false)
   // Tracks which puzzle's unplaced-words notice was dismissed, so the notice
   // reappears when a different (partial) puzzle loads.
   const [dismissedUnplacedFor, setDismissedUnplacedFor] = useState<string | null>(null)
@@ -138,6 +141,7 @@ export default function SolvePage() {
               numbering: puzzleData.numbering,
               seed: puzzleData.seed,
               listId: puzzleData.list.id,
+              listName: puzzleData.list.name,
               unplacedWords: Array.isArray(puzzleData.settings?.unplacedWords)
                 ? puzzleData.settings.unplacedWords
                 : undefined,
@@ -210,7 +214,10 @@ export default function SolvePage() {
     if (!currentPuzzle) return
 
     try {
-      setLoading(true)
+      // Explicit regeneration signal (#14): drives the contextual grid overlay
+      // instead of the whole-screen page-load spinner, so the surrounding
+      // controls and context stay visible while a new puzzle is generated.
+      setIsGeneratingNew(true)
 
       // Get the list ID from current puzzle (we'd need to fetch this from the API)
       // For now, we'll generate a new puzzle with the same list
@@ -246,7 +253,9 @@ export default function SolvePage() {
       setError('Network error')
       console.error('Failed to generate new puzzle:', error)
     } finally {
-      setLoading(false)
+      // Always clear the overlay — a failed generation must never leave the
+      // grid permanently blocked (#14).
+      setIsGeneratingNew(false)
     }
   }
 
@@ -465,7 +474,7 @@ export default function SolvePage() {
       <PuzzleControls
         onNewPuzzle={handleNewPuzzle}
         onExport={handleExport}
-        isGenerating={isLoading}
+        isGenerating={isLoading || isGeneratingNew}
         autosaveStatus={autosaveStatus}
       />
 
@@ -506,6 +515,12 @@ export default function SolvePage() {
           solveState={solveState}
           selectedTab={selectedTab}
           onSelectTab={setSelectedTab}
+          isGenerating={isGeneratingNew}
+          generatingMessage={
+            currentPuzzle.listName
+              ? `Generating a new puzzle for ${currentPuzzle.listName}…`
+              : 'Generating a new puzzle…'
+          }
         />
       </div>
 

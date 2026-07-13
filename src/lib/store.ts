@@ -19,6 +19,8 @@ interface AppState {
     numbering: CrosswordNumbering
     seed: string
     listId: string
+    // Display name of the source list, used for contextual messaging (#14).
+    listName?: string
     // Words from the source list that did not fit on the grid (#99); surfaced to
     // the solver so a partial puzzle is never silently presented as complete.
     unplacedWords?: string[]

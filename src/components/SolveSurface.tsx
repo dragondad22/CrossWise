@@ -9,6 +9,10 @@ interface SolveSurfaceProps {
   solveState: SolveState
   selectedTab: 'across' | 'down'
   onSelectTab: (tab: 'across' | 'down') => void
+  // Regeneration overlay (#14): scoped to the grid area so surrounding context
+  // (controls, clues) stays visible while a new puzzle is generated.
+  isGenerating?: boolean
+  generatingMessage?: string
 }
 
 export default function SolveSurface({
@@ -17,6 +21,8 @@ export default function SolveSurface({
   solveState,
   selectedTab,
   onSelectTab,
+  isGenerating = false,
+  generatingMessage = 'Generating a new puzzle…',
 }: SolveSurfaceProps) {
   const selected = solveState.selectedClue
   const selectedEntry = selected
@@ -48,9 +54,47 @@ export default function SolveSurface({
             </div>
             <div
               data-testid="solve-grid-wrap"
-              className="w-full max-w-[420px] aspect-square sm:aspect-auto sm:max-w-[520px] lg:max-w-[720px]"
+              aria-busy={isGenerating || undefined}
+              className="relative w-full max-w-[420px] aspect-square sm:aspect-auto sm:max-w-[520px] lg:max-w-[720px]"
+              // Capture-phase blockers: while generating, no click or key event
+              // may reach the grid underneath the overlay (#14).
+              onClickCapture={
+                isGenerating
+                  ? (event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }
+                  : undefined
+              }
+              onKeyDownCapture={
+                isGenerating
+                  ? (event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }
+                  : undefined
+              }
             >
               <CrosswordGrid grid={grid} numbering={numbering} solveState={solveState} />
+              {isGenerating && (
+                <div
+                  data-testid="generation-overlay"
+                  className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-2xl bg-background/80 backdrop-blur-[2px]"
+                >
+                  <div
+                    className="h-10 w-10 animate-spin rounded-full border-2 border-primary/20 border-t-primary motion-reduce:animate-none"
+                    aria-hidden="true"
+                  />
+                  <p className="px-4 text-center text-sm font-medium text-foreground">
+                    {generatingMessage}
+                  </p>
+                </div>
+              )}
+            </div>
+            {/* Always-mounted polite live region so generation start/finish is
+                announced to assistive tech without interrupting (#14). */}
+            <div aria-live="polite" className="sr-only">
+              {isGenerating ? generatingMessage : ''}
             </div>
           </div>
         </div>

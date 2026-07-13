@@ -1,6 +1,6 @@
 import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 
 import SolveSurface from '../SolveSurface'
 import type { CrosswordGrid, CrosswordNumbering, SolveState } from '@/types/crossword'
@@ -103,5 +103,58 @@ describe('SolveSurface', () => {
     )
 
     expect(getByTestId('solve-caption')).toHaveTextContent('3. Down one (2 letters)')
+  })
+})
+
+describe('SolveSurface generation overlay (#14)', () => {
+  const renderSurface = (isGenerating: boolean) =>
+    render(
+      <SolveSurface
+        grid={grid}
+        numbering={numbering}
+        solveState={solveState}
+        selectedTab="across"
+        onSelectTab={() => {}}
+        isGenerating={isGenerating}
+        generatingMessage="Generating a new puzzle for Biology…"
+      />,
+    )
+
+  it('renders the overlay with spinner + message and sets aria-busy while generating', () => {
+    const { getByTestId } = renderSurface(true)
+
+    const overlay = getByTestId('generation-overlay')
+    expect(overlay.textContent).toContain('Generating a new puzzle for Biology…')
+    expect(getByTestId('solve-grid-wrap').getAttribute('aria-busy')).toBe('true')
+  })
+
+  it('announces the message via a polite live region', () => {
+    const { container } = renderSurface(true)
+    const live = container.querySelector('[aria-live="polite"]')
+    expect(live?.textContent).toContain('Generating a new puzzle for Biology…')
+  })
+
+  it('renders no overlay and no aria-busy when not generating', () => {
+    const { queryByTestId, getByTestId, container } = renderSurface(false)
+
+    expect(queryByTestId('generation-overlay')).toBeNull()
+    expect(getByTestId('solve-grid-wrap').getAttribute('aria-busy')).toBeNull()
+    expect(container.querySelector('[aria-live="polite"]')?.textContent).toBe('')
+  })
+
+  it('blocks cell clicks underneath while the overlay is active', () => {
+    const { container } = renderSurface(true)
+
+    const cell = container.querySelector('[data-cell="0-0"]') as HTMLElement
+    fireEvent.click(cell)
+    expect(selectCellMock).not.toHaveBeenCalled()
+  })
+
+  it('lets cell clicks through when not generating', () => {
+    const { container } = renderSurface(false)
+
+    const cell = container.querySelector('[data-cell="0-0"]') as HTMLElement
+    fireEvent.click(cell)
+    expect(selectCellMock).toHaveBeenCalledWith(0, 0)
   })
 })
