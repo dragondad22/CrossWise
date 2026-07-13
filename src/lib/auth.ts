@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto'
+import { createHash, randomBytes } from 'crypto'
 import bcrypt from 'bcryptjs'
 
 import { prisma } from './db'
@@ -8,6 +8,7 @@ export const SESSION_COOKIE_NAME = 'crosswise_session'
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7 // 7 days
 const SESSION_REFRESH_THRESHOLD_MS = 1000 * 60 * 60 * 24 // 24 hours
 const SESSION_CLEANUP_INTERVAL_MS = 1000 * 60 * 60 // 1 hour
+const PASSWORD_RESET_TOKEN_DURATION_MS = 1000 * 60 * 30 // 30 minutes
 
 let lastCleanupRun = 0
 
@@ -114,4 +115,67 @@ async function maybeCleanupExpiredSessions() {
 
 export function __resetSessionCleanupState() {
   lastCleanupRun = 0
+}
+
+// --- Password reset tokens (#7) ---
+//
+// Reset tokens are higher-risk than session tokens (they arrive over email and grant
+// a password change), so only a SHA-256 hash is ever stored — the raw token exists
+// solely in the reset link delivered to the user. Never store or log the raw token.
+
+function hashPasswordResetToken(rawToken: string) {
+  return createHash('sha256').update(rawToken).digest('hex')
+}
+
+export async function createPasswordResetToken(userId: string) {
+  const rawToken = randomBytes(32).toString('hex')
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_DURATION_MS)
+
+  // Opportunistic cleanup of expired rows, mirroring the session cleanup approach.
+  await prisma.passwordResetToken
+    .deleteMany({ where: { expiresAt: { lt: new Date() } } })
+    .catch((error) => {
+      console.error('Failed to cleanup expired password reset tokens:', error)
+    })
+
+  await prisma.passwordResetToken.create({
+    data: {
+      userId,
+      tokenHash: hashPasswordResetToken(rawToken),
+      expiresAt,
+    },
+  })
+
+  return { token: rawToken, expiresAt }
+}
+
+/**
+ * Validates a raw reset token (exists, not expired, not consumed) and marks it
+ * consumed. Returns the owning userId, or null for any invalid token — callers
+ * must not distinguish why (no account/token enumeration).
+ */
+export async function consumePasswordResetToken(rawToken: string): Promise<string | null> {
+  const tokenHash = hashPasswordResetToken(rawToken)
+
+  const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } })
+
+  if (!record) return null
+  if (record.consumedAt) return null
+  if (record.expiresAt < new Date()) return null
+
+  // Conditional update makes consumption atomic: two concurrent requests with the
+  // same token cannot both succeed (single-use enforced at the database).
+  const consumed = await prisma.passwordResetToken.updateMany({
+    where: { id: record.id, consumedAt: null },
+    data: { consumedAt: new Date() },
+  })
+
+  if (consumed.count === 0) return null
+
+  return record.userId
+}
+
+/** Revokes every session for a user (e.g. after a password reset). */
+export async function deleteSessionsForUser(userId: string) {
+  return prisma.session.deleteMany({ where: { userId } })
 }

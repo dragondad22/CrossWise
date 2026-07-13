@@ -23,6 +23,8 @@ import {
   UpdateSolveStateSchema,
   RegisterSchema,
   LoginSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
 } from '@/lib/validation'
 import type { CrosswordGrid, CrosswordNumbering } from '@/types/crossword'
 
@@ -36,6 +38,8 @@ export type ImportListRequest = z.input<typeof ImportListSchema>
 export type UpdateSolveStateRequest = z.input<typeof UpdateSolveStateSchema>
 export type RegisterRequest = z.input<typeof RegisterSchema>
 export type LoginRequest = z.input<typeof LoginSchema>
+export type ForgotPasswordRequest = z.input<typeof ForgotPasswordSchema>
+export type ResetPasswordRequest = z.input<typeof ResetPasswordSchema>
 
 // --- Response types (no schema yet; declared directly) ---
 

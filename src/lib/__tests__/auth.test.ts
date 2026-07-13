@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 
 import {
@@ -8,6 +9,9 @@ import {
   getSessionForToken,
   deleteSessionByToken,
   cleanupExpiredSessions,
+  createPasswordResetToken,
+  consumePasswordResetToken,
+  deleteSessionsForUser,
   __resetSessionCleanupState,
   SESSION_COOKIE_NAME,
 } from '../auth'
@@ -19,6 +23,12 @@ const prismaMocks = vi.hoisted(() => ({
     delete: vi.fn(),
     deleteMany: vi.fn(),
     update: vi.fn(),
+  },
+  passwordResetToken: {
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    updateMany: vi.fn(),
+    deleteMany: vi.fn(),
   },
 }))
 
@@ -55,6 +65,8 @@ describe('auth helpers', () => {
     randomBytesMock.mockImplementation(() => Buffer.from('default-token', 'utf-8'))
     prismaMocks.session.deleteMany.mockResolvedValue({ count: 0 })
     prismaMocks.session.update.mockResolvedValue(undefined)
+    prismaMocks.passwordResetToken.deleteMany.mockResolvedValue({ count: 0 })
+    prismaMocks.passwordResetToken.updateMany.mockResolvedValue({ count: 1 })
     __resetSessionCleanupState()
   })
 
@@ -200,6 +212,125 @@ describe('auth helpers', () => {
 
   it('exposes the session cookie constant for reuse', () => {
     expect(SESSION_COOKIE_NAME).toBe('crosswise_session')
+  })
+
+  describe('password reset tokens (#7)', () => {
+    it('creates a reset token, storing only a SHA-256 hash with a 30-minute expiry', async () => {
+      randomBytesMock.mockReturnValueOnce(Buffer.from('reset-secret', 'utf-8'))
+      prismaMocks.passwordResetToken.create.mockResolvedValueOnce(undefined)
+
+      const { token, expiresAt } = await createPasswordResetToken('user-1')
+
+      expect(randomBytesMock).toHaveBeenCalledWith(32)
+      expect(token).toBe(Buffer.from('reset-secret', 'utf-8').toString('hex'))
+      expect(expiresAt.toISOString()).toBe('2024-01-01T00:30:00.000Z')
+
+      const expectedHash = createHash('sha256').update(token).digest('hex')
+      expect(prismaMocks.passwordResetToken.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'user-1',
+          tokenHash: expectedHash,
+          expiresAt,
+        },
+      })
+
+      // The raw token must never reach storage — only its hash.
+      const storedData = prismaMocks.passwordResetToken.create.mock.calls[0][0].data
+      expect(storedData.tokenHash).not.toBe(token)
+      expect(JSON.stringify(storedData)).not.toContain(token)
+    })
+
+    it('opportunistically cleans up expired reset tokens on create', async () => {
+      prismaMocks.passwordResetToken.create.mockResolvedValueOnce(undefined)
+
+      await createPasswordResetToken('user-1')
+
+      expect(prismaMocks.passwordResetToken.deleteMany).toHaveBeenCalledWith({
+        where: { expiresAt: { lt: new Date('2024-01-01T00:00:00.000Z') } },
+      })
+    })
+
+    it('consumes a valid token by hash and returns its owning userId', async () => {
+      prismaMocks.passwordResetToken.findUnique.mockResolvedValueOnce({
+        id: 'prt-1',
+        userId: 'user-1',
+        consumedAt: null,
+        expiresAt: new Date('2024-01-01T00:15:00Z'),
+      })
+
+      const result = await consumePasswordResetToken('raw-token')
+
+      expect(prismaMocks.passwordResetToken.findUnique).toHaveBeenCalledWith({
+        where: { tokenHash: createHash('sha256').update('raw-token').digest('hex') },
+      })
+      expect(prismaMocks.passwordResetToken.updateMany).toHaveBeenCalledWith({
+        where: { id: 'prt-1', consumedAt: null },
+        data: { consumedAt: new Date('2024-01-01T00:00:00.000Z') },
+      })
+      expect(result).toBe('user-1')
+    })
+
+    it('rejects an expired token without consuming it', async () => {
+      prismaMocks.passwordResetToken.findUnique.mockResolvedValueOnce({
+        id: 'prt-1',
+        userId: 'user-1',
+        consumedAt: null,
+        expiresAt: new Date('2023-12-31T23:59:59Z'),
+      })
+
+      const result = await consumePasswordResetToken('raw-token')
+
+      expect(result).toBeNull()
+      expect(prismaMocks.passwordResetToken.updateMany).not.toHaveBeenCalled()
+    })
+
+    it('rejects an already-consumed token (single-use)', async () => {
+      prismaMocks.passwordResetToken.findUnique.mockResolvedValueOnce({
+        id: 'prt-1',
+        userId: 'user-1',
+        consumedAt: new Date('2024-01-01T00:05:00Z'),
+        expiresAt: new Date('2024-01-01T00:15:00Z'),
+      })
+
+      const result = await consumePasswordResetToken('raw-token')
+
+      expect(result).toBeNull()
+      expect(prismaMocks.passwordResetToken.updateMany).not.toHaveBeenCalled()
+    })
+
+    it('rejects an unknown/forged token', async () => {
+      prismaMocks.passwordResetToken.findUnique.mockResolvedValueOnce(null)
+
+      const result = await consumePasswordResetToken('forged-token')
+
+      expect(result).toBeNull()
+      expect(prismaMocks.passwordResetToken.updateMany).not.toHaveBeenCalled()
+    })
+
+    it('rejects a token that lost the atomic consumption race', async () => {
+      prismaMocks.passwordResetToken.findUnique.mockResolvedValueOnce({
+        id: 'prt-1',
+        userId: 'user-1',
+        consumedAt: null,
+        expiresAt: new Date('2024-01-01T00:15:00Z'),
+      })
+      prismaMocks.passwordResetToken.updateMany.mockResolvedValueOnce({ count: 0 })
+
+      const result = await consumePasswordResetToken('raw-token')
+
+      expect(result).toBeNull()
+    })
+
+    it('revokes every session for a user', async () => {
+      prismaMocks.session.deleteMany.mockResolvedValueOnce({ count: 3 })
+
+      const result = await deleteSessionsForUser('user-1')
+
+      expect(prismaMocks.session.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+      })
+      expect(result).toEqual({ count: 3 })
+    })
   })
 
   it('exports a cleanup helper that deletes expired sessions', async () => {
