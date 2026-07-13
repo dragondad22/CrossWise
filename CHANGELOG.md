@@ -7,6 +7,9 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+### Fixed
+- Puzzle generation no longer places the same word twice or reports success for puzzles that silently dropped most of the list; placement counts and the success threshold now reflect the real grid (#76)
+
 ## [0.1.0] - 2026-07-10
 
 First tracked release. Covers all functionality shipped to date — topics, word

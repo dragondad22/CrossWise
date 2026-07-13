@@ -126,6 +126,91 @@ describe('CrosswordGenerator', () => {
   })
 })
 
+// Realistic vocab list large enough to force backtracking (#76 repro class).
+const biologyWords = [
+  'GLUCOSE',
+  'MITOCHONDRIA',
+  'RIBOSOME',
+  'NUCLEUS',
+  'CYTOPLASM',
+  'MEMBRANE',
+  'ENZYME',
+  'PROTEIN',
+  'CHLOROPLAST',
+  'OSMOSIS',
+  'DIFFUSION',
+  'PHOTOSYNTHESIS',
+  'RESPIRATION',
+  'BACTERIA',
+  'VIRUS',
+  'GENOME',
+  'CHROMOSOME',
+  'MEIOSIS',
+  'MITOSIS',
+  'ORGANELLE',
+  'VACUOLE',
+  'LYSOSOME',
+  'PEPTIDE',
+  'HORMONE',
+].map((answer, i) => ({ answer, clue: `Biology term ${i + 1}` }))
+
+describe('CrosswordGenerator placement invariants (#76)', () => {
+  const generate = (seed: string) =>
+    new CrosswordGenerator({ seed, maxAttempts: 300 }).generate(biologyWords)
+
+  const allClues = (result: ReturnType<CrosswordGenerator['generate']>) => [
+    ...(result.numbering?.across ?? []),
+    ...(result.numbering?.down ?? []),
+  ]
+
+  for (const seed of ['dup-check', 'invariant-a', 'invariant-b']) {
+    it(`never places a word twice (seed ${seed})`, () => {
+      const result = generate(seed)
+      const answers = allClues(result).map((clue) => clue.answer)
+      expect(new Set(answers).size).toBe(answers.length)
+    })
+
+    it(`reports placedWords equal to the clue count and within the input size (seed ${seed})`, () => {
+      const result = generate(seed)
+      if (result.success) {
+        expect(result.placedWords).toBe(allClues(result).length)
+      }
+      expect(result.placedWords).toBeLessThanOrEqual(biologyWords.length)
+      expect(result.totalWords).toBe(biologyWords.length)
+    })
+
+    it(`keeps crossing letters consistent in the final grid (seed ${seed})`, () => {
+      const result = generate(seed)
+      if (!result.success) return
+      for (const clue of allClues(result)) {
+        for (let i = 0; i < clue.answer.length; i++) {
+          const row = clue.direction === 'down' ? clue.row + i : clue.row
+          const col = clue.direction === 'across' ? clue.col + i : clue.col
+          const cell = result.grid!.cells[row][col]
+          expect(cell.type).toBe('cell')
+          expect(cell.letter).toBe(clue.answer[i])
+        }
+      }
+    })
+  }
+
+  it('only reports success when the placement threshold is genuinely met', () => {
+    const result = generate('dup-check')
+    const distinctPlaced = new Set(allClues(result).map((clue) => clue.answer)).size
+    if (result.success) {
+      expect(distinctPlaced).toBeGreaterThanOrEqual(Math.floor(biologyWords.length * 0.9))
+    } else {
+      expect(result.conflictingWords).toBeDefined()
+    }
+  })
+
+  it('stays within the generation time budget', () => {
+    const start = performance.now()
+    generate('perf-budget')
+    expect(performance.now() - start).toBeLessThan(2000)
+  })
+})
+
 describe('deriveListSeed', () => {
   const items = [
     { answer: 'Crossword', clue: 'Type of word puzzle' },
