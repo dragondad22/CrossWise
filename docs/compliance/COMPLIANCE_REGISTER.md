@@ -23,7 +23,7 @@ owns it, and whether it's met.
 
 | ID | Trigger | Obligation | Applies because | Owner | Status | Verified | Evidence / Gap |
 |----|---------|-----------|-----------------|-------|--------|----------|----------------|
-| CW-C-001 | web UI | WCAG 2.2 AA (semantic HTML, keyboard, focus, contrast) | ships a web UI | dragondad22 | ◐ In progress | 2026-06-24 | Spec calls out keyboard nav + focus mgmt for grid/clues; **full AA pass not verified** (contrast, forms, ARIA, non-grid pages) — tracked in #27 |
+| CW-C-001 | web UI | WCAG 2.2 AA (semantic HTML, keyboard, focus, contrast) | ships a web UI | dragondad22 | ◐ In progress | 2026-06-24 | Spec calls out keyboard nav + focus mgmt for grid/clues; grid focus-ring non-text contrast verified >=3:1 against card/band/accent/check fills (#12, 2026-07-13); **full AA pass not verified** (forms, ARIA, non-grid pages) — tracked in #27 |
 | CW-C-002 | personal data | Privacy notice + lawful basis | collects email + content + IP | dragondad22 | ☐ Not started | 2026-06-24 | **No privacy policy found anywhere in repo** — tracked in #25 |
 | CW-C-003 | personal data | Data-subject rights: access / export / delete | has user accounts | dragondad22 | ◐ Partial | 2026-06-24 | Per-list JSON/CSV export exists; **no full-account export, no account-deletion path** (auth routes are register/login/session/logout only) — tracked in #26 |
 | CW-C-004 | personal data | Retention limits + breach plan | stores PII + sessions in DB | dragondad22 | ☐ Not started | 2026-06-24 | No stated retention or session-expiry/cleanup policy found |

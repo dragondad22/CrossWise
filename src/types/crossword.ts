@@ -46,6 +46,8 @@ export interface PuzzleSettings {
   allowHyphens: boolean
   // Words that did not fit when this (partial) puzzle was accepted (#99).
   unplacedWords?: string[]
+  // Resolved word count the puzzle was generated with (#22).
+  wordCount?: number
 }
 
 // Generation types
@@ -84,6 +86,13 @@ export interface SolveState {
   checkResults?: Record<string, boolean> // "row,col" -> isCorrect
   lastSaved?: string
   lockedCells?: Record<string, boolean> // "row,col" -> isLocked
+  // Monotonic save counter (#84, ADR-007): incremented on every accepted server
+  // save so reconciliation no longer depends on cross-device wall clocks.
+  // Optional for back-compat with states saved before the field existed.
+  revision?: number
+  // Clues the solver flagged for later (#13), keyed "direction-number".
+  // Optional for back-compat; persists through the normal autosave path.
+  flaggedClues?: Record<string, boolean>
 }
 
 // UI types

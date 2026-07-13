@@ -123,6 +123,20 @@ describe('useAppStore crossword interactions', () => {
     expect(updatedState.isWon).toBe(true)
   })
 
+  it('toggleClueFlag adds/removes a flag and it survives a save/reload round-trip (#13)', () => {
+    const store = primeStoreForPuzzle()
+
+    store.toggleClueFlag('across', 1)
+    expect(useAppStore.getState().solveState?.flaggedClues?.['across-1']).toBe(true)
+
+    // Persisted via the normal autosave path: reload from localStorage keeps it.
+    const saved = JSON.parse(localStorage.getItem('crosswise_solve_puzzle-1') ?? '{}')
+    expect(saved.flaggedClues?.['across-1']).toBe(true)
+
+    store.toggleClueFlag('across', 1)
+    expect(useAppStore.getState().solveState?.flaggedClues?.['across-1']).toBeUndefined()
+  })
+
   it('persists solve state snapshots when cells change', () => {
     const store = primeStoreForPuzzle()
 

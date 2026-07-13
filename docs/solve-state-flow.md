@@ -85,3 +85,34 @@ flowchart TD
 - `src/lib/autosave.ts`
 - `src/app/solve/solveState.ts`
 - `src/app/api/v1/puzzles/[id]/solve/route.ts`
+
+## Highlight Visual Contract (#12)
+- `selectedClue` renders as a soft band (`bg-clue-band` token) across every cell
+  of the clue; `selectedCell` renders the stronger `bg-cell-accent` fill plus a
+  primary ring, so band vs active cell is distinguishable by more than colour.
+- Check-state fills (correct/incorrect) layer above band/accent; the
+  focus-visible ring (`ring` token) renders above everything at >=3:1 non-text
+  contrast. Tokens live in `tailwind.config.ts` — no hard-coded highlight
+  colours in `CrosswordGrid`.
+
+## Regeneration Overlay (#14)
+- "New puzzle" drives an explicit `isGeneratingNew` signal (not the page-load
+  `isLoading`), so regeneration shows a contextual overlay scoped to the grid
+  while the surrounding controls stay visible.
+- The grid wrapper carries `aria-busy="true"` and a polite `aria-live` region
+  announces the message ("Generating a new puzzle for {list}..."); pointer and
+  key events are blocked at the capture phase while the overlay is active.
+- The overlay clears in `finally` — success navigates to the new puzzle, and a
+  failed generation restores the previous grid with the error banner; the grid
+  is never left blocked.
+
+## Clue Tabs, Filters, and Flags (#13)
+- Across/Down is a semantic tab control (role=tablist/tab/tabpanel, roving
+  tabindex, arrow-key switching) showing live solved/total counts per direction
+  (tabular numerals). Counts and filters derive from the shared
+  `src/lib/clue-status.ts` helpers — the same source as the per-clue badges.
+- Preset filters (All / Unsolved / Flagged / Errors) compose with the search
+  input; the active chip is marked by a check mark and weight, not colour alone.
+- `SolveState.flaggedClues` (optional, keyed `direction-number`) stores flags;
+  `toggleClueFlag` persists through the normal autosave path so flags survive
+  reload and sync like any other solve state.

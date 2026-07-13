@@ -19,6 +19,8 @@ export const normalizeSolveState = (raw: RemoteSolveState | null | undefined): S
   checkResults: raw?.checkResults,
   lastSaved: raw?.lastSaved,
   lockedCells: raw?.lockedCells ?? {},
+  revision: typeof raw?.revision === 'number' ? raw.revision : undefined,
+  flaggedClues: raw?.flaggedClues ?? {},
 })
 
 const getLastSavedTimestamp = (state: SolveState | null | undefined) => {
@@ -32,6 +34,20 @@ export const resolveSolveState = (
   remoteState: SolveState | null,
 ): { state: SolveState; source: 'local' | 'remote' } | null => {
   if (localState && remoteState) {
+    // Revision beats wall clock (#84, ADR-007): when both sides carry the
+    // monotonic counter, the higher revision wins regardless of device clocks.
+    const localRevision = localState.revision
+    const remoteRevision = remoteState.revision
+    if (
+      typeof localRevision === 'number' &&
+      typeof remoteRevision === 'number' &&
+      localRevision !== remoteRevision
+    ) {
+      return remoteRevision > localRevision
+        ? { state: remoteState, source: 'remote' }
+        : { state: localState, source: 'local' }
+    }
+
     if (getLastSavedTimestamp(remoteState) > getLastSavedTimestamp(localState)) {
       return { state: remoteState, source: 'remote' }
     }

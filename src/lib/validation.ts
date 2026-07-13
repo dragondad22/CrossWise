@@ -108,6 +108,10 @@ export const UpdateListSchema = z.object({
     .min(1, 'At least one item is required'),
 })
 
+// Puzzle word-count bounds (#22) — single source shared by the schema, the
+// generate route, and the UI clamp so the literals cannot drift.
+export const WORD_COUNT_BOUNDS = { min: 3, max: 150 } as const
+
 export const GeneratePuzzleSchema = z.object({
   listId: z.string().cuid('Invalid list ID'),
   gridSize: z
@@ -117,6 +121,14 @@ export const GeneratePuzzleSchema = z.object({
     })
     .optional(),
   seed: z.string().optional(),
+  // How many of the list's words to use; omitted -> up to the max. Selection is
+  // driven by the seeded RNG, so {list, seed, wordCount} is fully reproducible.
+  wordCount: z
+    .number()
+    .int('Word count must be a whole number')
+    .min(WORD_COUNT_BOUNDS.min, `Word count must be at least ${WORD_COUNT_BOUNDS.min}`)
+    .max(WORD_COUNT_BOUNDS.max, `Word count must be at most ${WORD_COUNT_BOUNDS.max}`)
+    .optional(),
 })
 
 export const UpdateSolveStateSchema = z.object({

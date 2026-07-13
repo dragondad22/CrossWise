@@ -380,10 +380,16 @@ export default function CrosswordGrid({ grid, numbering, solveState }: Crossword
 
     const checkState = solveState?.checkResults?.[cellKey]
 
+    // Layer order is deterministic (#12): band < active-cell accent < check
+    // states for the fill, while the active-cell ring and the focus-visible
+    // ring render on top of every fill so neither is ever fully obscured.
     return cn(
-      'relative flex items-center justify-center border border-border/60 bg-card text-card-foreground font-semibold uppercase tracking-wide transition-all duration-150 box-border focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-      isHighlighted && 'bg-yellow-100',
-      isSelected && 'ring-2 ring-primary',
+      'relative flex items-center justify-center border border-border/60 bg-card text-card-foreground font-semibold uppercase tracking-wide transition-all duration-150 box-border focus:outline-none focus-visible:z-20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      // Soft band across the whole selected clue.
+      isHighlighted && 'bg-clue-band',
+      // Active cell: stronger fill *plus* a ring — distinguishable from the
+      // band by more than colour alone.
+      isSelected && 'z-10 bg-cell-accent ring-2 ring-primary',
       checkState === true && 'bg-emerald-100 text-emerald-700',
       checkState === false && 'bg-rose-100 text-rose-600',
     )

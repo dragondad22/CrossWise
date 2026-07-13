@@ -9,10 +9,20 @@ import ListCard from '@/components/ListCard'
 import ImportListModal, { ImportListSubmission } from '@/components/ImportListModal'
 import EditListModal from '@/components/EditListModal'
 import DeleteListModal from '@/components/DeleteListModal'
+import NewGameModal from '@/components/NewGameModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error-banner'
 import { useAutosave } from '@/lib/autosave'
+import {
+  buildPrintableCrosswordHTML,
+  generateFilename,
+  openPrintableCrossword,
+} from '@/lib/export'
+import type {
+  CrosswordGrid as CrosswordGridType,
+  CrosswordNumbering,
+} from '@/types/crossword'
 
 export default function ListsPage() {
   const router = useRouter()
@@ -44,6 +54,8 @@ export default function ListsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [deletingList, setDeletingList] = useState<ListWithItemsAndTopic | null>(null)
   const [isDeletingList, setIsDeletingList] = useState(false)
+  const [newGameList, setNewGameList] = useState<ListWithItemsAndTopic | null>(null)
+  const [isGeneratingGame, setIsGeneratingGame] = useState(false)
   const { clearSolveState, stopAutosave } = useAutosave()
   const { isAuthenticated } = useRequireSession()
 
@@ -288,12 +300,19 @@ export default function ListsPage() {
     }
   }
 
-  const handleNewGame = async (list: ListWithItemsAndTopic) => {
+  const handleNewGame = (list: ListWithItemsAndTopic) => {
+    // Opens the puzzle-size chooser (#22); generation starts from the modal.
+    setNewGameList(list)
+  }
+
+  const handleStartGame = async (wordCount: number | undefined) => {
+    const list = newGameList
+    if (!list) return
+
     selectList(list)
+    setIsGeneratingGame(true)
 
     try {
-      setLoading(true)
-
       const response = await fetch('/api/v1/puzzles/generate', {
         method: 'POST',
         headers: {
@@ -302,45 +321,60 @@ export default function ListsPage() {
         body: JSON.stringify({
           listId: list.id,
           seed: `${Date.now()}_${list.id}`,
+          ...(wordCount ? { wordCount } : {}),
         }),
       })
 
       const result = await response.json()
 
       if (result.success) {
+        setNewGameList(null)
         // Navigate to solve page
         router.push(`/solve/${result.data.puzzleId}`)
       } else {
         setError(result.error?.message || 'Failed to generate puzzle')
+        setNewGameList(null)
       }
     } catch (error) {
       setError('Network error')
       console.error('Failed to generate puzzle:', error)
+      setNewGameList(null)
     } finally {
-      setLoading(false)
+      setIsGeneratingGame(false)
     }
   }
 
+  // Export = blank printable crossword (empty numbered grid + clues, no
+  // answers) built from the list's most recent puzzle (#2). Raw JSON/CSV
+  // helpers in src/lib/export.ts remain available for data interchange.
   const handleExportList = async (list: ListWithItemsAndTopic) => {
-    try {
-      const response = await fetch(`/api/v1/lists/${list.id}/export`)
+    setError(null)
 
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `${list.name.replace(/[^a-zA-Z0-9]/g, '_')}_v${list.version}.json`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-      } else {
-        setError('Failed to export list')
+    try {
+      const response = await fetch(`/api/v1/lists/${list.id}/puzzles`)
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        setError(result.error?.message || 'Failed to export puzzle')
+        return
       }
+
+      // The endpoint returns puzzles newest-first; export targets the most recent.
+      const latestPuzzle = (result.data as Array<{ grid: string; numbering: string }>)[0]
+
+      if (!latestPuzzle) {
+        setError("Generate a puzzle first — this list doesn't have one yet.")
+        return
+      }
+
+      const grid = JSON.parse(latestPuzzle.grid) as CrosswordGridType
+      const numbering = JSON.parse(latestPuzzle.numbering) as CrosswordNumbering
+
+      const html = buildPrintableCrosswordHTML(list.name, grid, numbering)
+      openPrintableCrossword(html, generateFilename(list.name, 'html'))
     } catch (error) {
       setError('Network error')
-      console.error('Failed to export list:', error)
+      console.error('Failed to export printable puzzle:', error)
     }
   }
 
@@ -427,6 +461,16 @@ export default function ListsPage() {
             ))}
           </div>
         )}
+
+        <NewGameModal
+          isOpen={newGameList !== null}
+          list={newGameList}
+          isGenerating={isGeneratingGame}
+          onClose={() => {
+            if (!isGeneratingGame) setNewGameList(null)
+          }}
+          onStart={handleStartGame}
+        />
 
         <ImportListModal
           isOpen={isImportModalOpen}

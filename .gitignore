@@ -52,3 +52,4 @@ coverage/
 # Quality report artifacts (kit)
 testing-reports/artifacts/
 test-results/
+.claude/worktrees/
