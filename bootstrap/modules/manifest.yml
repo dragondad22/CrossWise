@@ -86,6 +86,8 @@ core:
     - docs/decision-log.md
     - docs/evergreen-log.md
     - docs/GLOSSARY.md
+    - docs/kit/README.md
+    - docs/kit/WORKFLOW.md
     - docs/PERSONAS.md
     - docs/plans/README.md
     - docs/runbooks/README.md
@@ -107,7 +109,10 @@ modules:
     trigger: first formal QA/UAT need (e.g. external stakeholder acceptance)
     files:
       - ai/STANDARDS/UAT_SOURCE_OF_TRUTH.md
+      - ai/TEMPLATES/ACCEPTANCE_DOC_TEMPLATE.md
+      - ai/TEMPLATES/BETA_GUIDE_TEMPLATE.md
       - docs/uat/README.md
+      - docs/uat/beta/README.md
 
   deploy-ci:
     trigger: first deploy target

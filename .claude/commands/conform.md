@@ -17,7 +17,7 @@ Tidy an existing repo to the kit's current standards: file renames, doc reorgani
 4. **`github` scope — conform the tracker surface** (each item offered, applied only on approval):
    - **Labels** → apply the manifest via `bash ai/scripts/bootstrap-labels.sh` (idempotent); map existing labels onto the taxonomy (rename, don't duplicate) and retire strays.
    - **Typed-issue migration** → add `type:*` labels to existing open issues; restructure epic-shaped issues as parent issues with native sub-issues (`ai/STANDARDS/TASK_ISSUE_STANDARD.md`).
-   - **Project board** → one board per repo with the Status field and saved views per the task-issue standard, plus the Horizon field and Roadmap view per `ai/STANDARDS/ROADMAP_STANDARD.md`; walk the human through the UI-only parts.
+   - **Project board** → one board per repo with the Status field and saved views per the task-issue standard, plus the Horizon field and Roadmap view per `ai/STANDARDS/ROADMAP_STANDARD.md`; walk the human through the UI-only parts. **Existing board:** snapshot every item's Status first and prefer renaming options in the UI — replacing Status options via the API silently wipes item statuses (rule + recovery: Board setup in `ai/STANDARDS/TASK_ISSUE_STANDARD.md`).
    - **Templates** → wire the issue body shapes from `ai/TEMPLATES/` into the repo's issue templates.
    - **Repo settings** → squash-merge with PR-title-as-commit, branch cleanup on merge, per `ai/STANDARDS/GIT_WORKFLOW_STANDARD.md`.
 

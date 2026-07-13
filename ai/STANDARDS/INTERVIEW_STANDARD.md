@@ -25,6 +25,7 @@ Each interview is a directory under `docs/plans/`:
 
 ```
 docs/plans/<NNN>-<slug>/
+  00-BRIEF.md          # shared-understanding gate — approved before questions exist
   00-INDEX.md          # status summary + derived artifacts (the provenance hub)
   01-<section>.md      # one file per section, each holding its questions
   02-<section>.md
@@ -38,6 +39,44 @@ docs/plans/<NNN>-<slug>/
   to its epic issue once created.
 - Section files are numbered in interview order. Sections vary by interview;
   the inception spine defines the canonical set (see `bootstrap/QUESTION_BANK.md`).
+
+---
+
+## The Brief — Shared Understanding First (T29)
+
+An interview that starts at the question bank starts too late: in an empty
+repo the AI's concept of the project comes from the repo name and chat, and a
+mistaken framing pigeonholes every question after it. The brief fixes the
+framing **before** any question is generated.
+
+`00-BRIEF.md` is a freetext statement of what is being built and why — what
+the project is, the problem and who has it, goals for the first usable
+version, what's out of scope, and any constraints the human already knows are
+non-negotiable. It is deliberately prose, not a form: its job is a shared
+understanding the human has actually read and agreed to.
+
+**Authoring — two paths:**
+
+- **Context exists** (a concept doc, spec sheet, PRD, README, existing code,
+  a roadmap issue): the AI ingests it and drafts the brief as *its
+  understanding* of the project, citing the sources it read on a `Sources:`
+  line. The human edits until it says what they mean.
+- **No context:** the AI generates the brief as a skeleton whose headings
+  carry one-line thinking prompts; the human writes it, deleting the prompts
+  as they go.
+
+**The gate:** the brief carries `**Status:** draft` until the human flips it
+to `approved` (in the file or by saying so — the AI then stamps it). **No
+section files are generated while the brief is draft.** Once approved, the
+brief seeds the interview: detections and spine recommendations cite it, and
+follow-up questions probe what it left vague — it narrows the questions, it
+never replaces them.
+
+After approval the brief is history, like finalized question files: if the
+concept shifts, that surfaces as questions, decisions, and supersede stamps —
+not as brief edits. `000-inception` always gets a brief; later epic/feature
+interviews include one when the capability isn't already pinned by a spec or
+a promoted roadmap issue.
 
 ---
 

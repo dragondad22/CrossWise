@@ -25,6 +25,7 @@ How this file works:
 
 | Category | House default | When it applies | Last reviewed |
 |---|---|---|---|
+| Runtime version policy | **Evergreen** — track the latest stable of each toolchain (Node, Python, …) unless a dependency pins a specific version; pins are the exception and carry a recorded reason (ADR or the pin file's comment). Where a pin file exists (`.nvmrc`, `.python-version`, `engines`), it states the *policy's current answer*, not a frozen decision | Every project; confirmed at inception, re-checked in the evergreen date sweep | 2026-07-11 |
 | E2E / UI testing | **Playwright** | Any web UI. Its on-failure screenshot/trace/video defaults satisfy the kit's failure-evidence rules out of the box. Mobile-only UI → deviation ADR (e.g. Maestro) | 2026-07-09 |
 | Unit tests | Per language: TypeScript/JS → **Vitest** · Python → **pytest** · Dart/Flutter → **flutter_test** · Go → **go test** | Every project with code | 2026-07-09 |
 | Lint / format | TypeScript/JS → **ESLint + Prettier** · Python → **Ruff** (lint + format) · Dart → **dart analyze + dart format** · Shell → **shellcheck** | Every project; wire into the PR-validation CI | 2026-07-09 |

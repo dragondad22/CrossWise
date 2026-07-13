@@ -7,7 +7,7 @@ Run a Standards & Process Evergreening review — periodically stop and look at 
 2. **Run the six lenses** against the repo and the history since the last review (`git log`, closed issues/PRs):
    - **Repetition** — are we writing the same code/fix/workaround repeatedly? Candidate for a shared helper, a standard, or a paved-road entry (`bootstrap/PAVED_ROAD.md`).
    - **Platform delta** — new Claude Code features, skills, or tool capabilities since the last review worth adopting?
-   - **Standards drift** — do the written standards still match actual practice? Fix the standard or fix the practice — deliberately, either way.
+   - **Standards drift** — do the written standards still match actual practice? Fix the standard or fix the practice — deliberately, either way. Includes orphaned setup blocks: every "Setup (once per repo)" section must be reachable from `/bootstrap` or `/conform` (rule: `ai/STANDARDS/DOCUMENTATION_STANDARD.md` § Setup blocks).
    - **Date sweep** — currency-sensitive rows: paved-road "Last reviewed" dates, compliance register "Verified" dates, any standard whose "Last Updated" no longer reflects its content.
    - **Kit delta** — read `bootstrap/KIT_VERSION`; if the starter kit has a newer release, diff the changelog/modules this project uses against it and propose the relevant updates.
    - **Context economy** — is `CLAUDE.md` within its **~150-line budget**? On breach, demote detail into a standard behind a breadcrumb — never delete it (principles + trim test: `ai/STANDARDS/DOCUMENTATION_STANDARD.md` § Design principles).

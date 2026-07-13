@@ -171,7 +171,54 @@ Standard closing checklist. Do not modify between issues — it ensures consiste
 | In Review | PR open, linked to issue |
 | Done | PR merged, issue closed |
 
-Close the issue via PR description: `Closes #<issue-number>`.
+Saved views: **Current work** (Status is Next or In progress), **Backlog**,
+and **Roadmap** (feature ordering via the Horizon field — see
+`ai/STANDARDS/ROADMAP_STANDARD.md`; Horizon is roadmap intent, Status is
+execution lifecycle).
+
+**The board is kept up to date — lifecycle moves are mandatory:**
+- Starting work on an item → set Status to "In progress".
+- PR merged / issue closed → set Status to "Done". Closing an issue (even via
+  `Closes #N`) does **not** move its Status by itself — move it, or enable the
+  board's built-in "Item closed → Done" workflow (a UI setting; it cannot be
+  enabled via API).
+- Epics move to Done when their last sub-issue closes. If the epic had an
+  interview (a `docs/plans/` directory), run the interview retrospective at
+  that moment (`ai/STANDARDS/INTERVIEW_STANDARD.md`).
+- The board-drift glance (closed-but-not-Done items) runs as part of the
+  session-start protocol in `ai/agent-setup.md` — fix what it finds.
+
+Close issues via the PR description: `Closes #<issue-number>`.
+
+### Board setup (once per repo)
+
+With `gh` and the `project` token scope (`gh auth refresh -s project`):
+
+```bash
+gh project create --owner <owner> --title "<project name>"
+gh project link <number> --owner <owner> --repo <owner>/<repo>
+```
+
+The rest is UI-only — in the project's settings: rename/extend the built-in
+Status options to `Backlog / Next / In progress / Done`, create the three saved
+views above (the Roadmap view needs the Horizon field first — "Setup (once per
+repo)" in `ai/STANDARDS/ROADMAP_STANDARD.md`), and under Workflows enable **"Item closed → Status: Done"** and
+**"Auto-add to project"** for the repo. Without the token scope, create the
+project itself in the UI too — same steps.
+
+**Conforming an existing board — snapshot before touching Status options.**
+Replacing a single-select field's option set via the API (GraphQL
+`updateProjectV2Field`) regenerates the option IDs with no match-by-name and
+**silently clears every item's Status**. Before changing the options on a
+board that already has items:
+
+1. Snapshot current assignments: `gh project item-list <number> --owner <owner> --format json`.
+2. Prefer **renaming the existing options in the project's settings UI** —
+   renames keep item assignments; the API replacement path does not.
+3. If the API path is unavoidable, restore each item's Status from the
+   snapshot afterwards.
+
+(This is the rule's single home; `/conform github` points here.)
 
 ---
 

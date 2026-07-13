@@ -132,5 +132,16 @@ Every PR that ships user-visible UI/behavior MUST, in the same PR:
 - regenerate any derived artifacts (partials, screenshots) for changed surfaces.
 
 Purely internal changes (refactors, tests, infra with no UI impact) are exempt.
+
+## Setup blocks need a workflow owner (repo-wide)
+
+A "Setup (once per repo)" block that no setup workflow references is dead
+code: it documents an obligation nobody is routed to at the moment it applies
+(found in practice: a board's Horizon/Roadmap setup lived only in its standard,
+so it never happened during bootstrap). The rule: every once-per-repo setup
+section in a standard must be reachable from the workflow that owns that
+moment — `/bootstrap` (inception & retrofit) or `/conform` (adoption) — and a
+PR adding a setup section wires the reference in the same PR. The `/evergreen`
+standards-drift lens checks for orphaned setup blocks.
 A preflight/CI check should **warn** when a user-visible change carries no docs
 change; the doc-gate test (if present) is the **blocking** gate.

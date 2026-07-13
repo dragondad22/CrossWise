@@ -44,7 +44,8 @@ time (`bootstrap/modules/README.md` explains the staging).
   Other trackers: mirror the manifest table by hand.
 - [ ] Create the project board (one per repo) per "Project Board & Issue Lifecycle" in
   `ai/STANDARDS/TASK_ISSUE_STANDARD.md`: Status = Backlog / Next / In progress / Done,
-  the two saved views, and the "Item closed → Done" + auto-add workflows.
+  the three saved views (Roadmap needs the Horizon field — "Setup (once per repo)" in
+  `ai/STANDARDS/ROADMAP_STANDARD.md`), and the "Item closed → Done" + auto-add workflows.
 
 ## 4. Verify
 - [ ] A project-wide search for `{{` finds nothing outside `bootstrap/` (ignore the meta
@@ -57,5 +58,11 @@ time (`bootstrap/modules/README.md` explains the staging).
 - [ ] The `ai/scripts/*.sh` automation runs (POSIX shell — native on macOS/Linux; Git Bash or WSL
   on Windows). On macOS/Linux, make them executable first: `chmod +x ai/scripts/*.sh ai/scripts/lib/*.sh`
 
-## 5. First commit
+## 5. Human-only setup
+- [ ] Collect the steps no automation can do — CI secrets, access tokens/API keys for
+      chosen integrations, `gh` scopes, board UI-only steps — into `SETUP_CHECKLIST.md`
+      at the repo root (what/why, steps, alternatives). Delete it once everything is
+      confirmed done; anything recurring graduates to `docs/runbooks/` first.
+
+## 6. First commit
 - [ ] Commit the bootstrapped state.

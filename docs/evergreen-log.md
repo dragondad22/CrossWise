@@ -24,4 +24,11 @@ Entry shape:
   - <finding> — **Adopt|Sandbox|Aware|Rejected** (<one-line reason / risk note>) → #NN
 ```
 
-<!-- No reviews recorded yet. The first /evergreen run adds its entry below. -->
+## 2026-07-13
+- Lenses: kit delta only (scoped on-demand run for #70; next cadence run covers all six)
+- Review issue: #74
+- Findings:
+  - Kit 0.6.0 → 0.8.0 delta (22 files: 12 wholesale, 10 three-way merged, 3 conflicts resolved; tokens `WORK_ITEM_PREFIX`→CW, `E2E_COMMAND`→`npm run test:e2e` pending #42; KIT_VERSION → 0.8.0) — **Adopt** (low risk: additive process docs, no behavior) → #70
+  - Reports module staged-not-installed; 0.7.0 acceptance/beta split raises its value — **Aware** (install on first formal QA/UAT need, per manifest trigger)
+  - Banner-strip gap in /conform//rebaseline//evergreen paths — **Aware** (upstream kit #112; CrossWise banners already stripped in #71)
+  - UAT scripted-verification path depends on Playwright (#42) — **Aware** (E2E command filled as forward reference)

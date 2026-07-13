@@ -73,6 +73,10 @@ Example entry:
 - **UAT (User Acceptance Testing)** — verifying a feature against what the
   user/stakeholder actually needs, not just what the code does; acceptance
   criteria live in `docs/uat/` when the reports module is installed.
+- **Beta guide** — the human-facing UAT artifact: a task-based hand-off for
+  beta testers — goals, not steps (scenario, starting point, done-condition;
+  never a click-path). One per feature, `BETA-<DOMAIN>-NNN-<slug>.md` in
+  `docs/uat/beta/` when the reports module is installed.
 - **SCA (Software Composition Analysis)** — scanning dependencies for known
   vulnerabilities (e.g. `npm audit`, `pip-audit`). One of the standing quality
   gates.

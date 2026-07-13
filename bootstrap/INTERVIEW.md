@@ -55,4 +55,5 @@ These drive `ai/STANDARDS/EXTERNAL_STANDARDS_AND_COMPLIANCE.md` and seed `docs/c
 ## 8. Non-negotiables (most important)
 - What architectural constraints must never be re-litigated? Push for at least one real one.
   Prompts to draw them out: security/isolation invariants, data-integrity rules, privacy boundaries,
+  data/compute locality (incl. third-party AI services — see the interview's Q-INFRA-04),
   idempotency/consistency guarantees, "we will never do X". → `{{NON_NEGOTIABLES}}`
