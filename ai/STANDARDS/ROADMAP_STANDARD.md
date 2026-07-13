@@ -1,5 +1,3 @@
-*Generic standard from the Claude starter kit — adapt to this project. Replace `{{TOKENS}}`; see `bootstrap/PLACEHOLDERS.md`.*
-
 # Roadmap Standard
 
 > Written assuming GitHub Issues + Projects, but the model — intake as typed
