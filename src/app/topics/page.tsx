@@ -7,15 +7,35 @@ import { useRequireSession } from '@/lib/useRequireSession'
 import { Topic } from '@/types/database'
 import TopicCard from '@/components/TopicCard'
 import CreateTopicModal from '@/components/CreateTopicModal'
+import DeleteTopicModal from '@/components/DeleteTopicModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error-banner'
+import { useAutosave } from '@/lib/autosave'
 
 export default function TopicsPage() {
   const router = useRouter()
-  const { topics, setTopics, selectTopic, setLoading, setError, isLoading, error } = useAppStore()
+  const {
+    topics,
+    setTopics,
+    selectTopic,
+    selectedTopic,
+    selectList,
+    setLoading,
+    setError,
+    isLoading,
+    error,
+    currentPuzzle,
+    setPuzzle,
+    setSolveState,
+    setWon,
+    setLists,
+  } = useAppStore()
   const { isAuthenticated, isSessionPending } = useRequireSession()
+  const { clearSolveState, stopAutosave } = useAutosave()
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [deletingTopic, setDeletingTopic] = useState<Topic | null>(null)
+  const [isDeletingTopic, setIsDeletingTopic] = useState(false)
 
   const fetchTopics = useCallback(async () => {
     setLoading(true)
@@ -116,6 +136,58 @@ export default function TopicsPage() {
     router.push(`/topics/${topic.id}/lists`)
   }
 
+  const handleCloseDeleteModal = () => {
+    if (isDeletingTopic) return
+    setDeletingTopic(null)
+  }
+
+  const handleDeleteTopic = async () => {
+    if (!deletingTopic) return
+
+    setIsDeletingTopic(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/v1/topics/${deletingTopic.id}`, { method: 'DELETE' })
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        setError(result.error?.message || 'Failed to delete topic')
+        return
+      }
+
+      const deletedTopicId: string = result.data?.topicId ?? deletingTopic.id
+      const deletedListIds: string[] = result.data?.listIds ?? []
+      const deletedPuzzleIds: string[] = result.data?.puzzleIds ?? []
+
+      // Wipe in-memory/autosaved state for every puzzle that just disappeared,
+      // so the UI never holds references to deleted puzzles.
+      deletedPuzzleIds.forEach((puzzleId) => clearSolveState(puzzleId))
+
+      if (currentPuzzle && deletedListIds.includes(currentPuzzle.listId)) {
+        stopAutosave()
+        setSolveState(null)
+        setPuzzle(null)
+        setWon(false)
+      }
+
+      setTopics(useAppStore.getState().topics.filter((topic) => topic.id !== deletedTopicId))
+      setLists(useAppStore.getState().lists.filter((list) => list.topicId !== deletedTopicId))
+
+      if (selectedTopic?.id === deletedTopicId) {
+        selectTopic(null)
+        selectList(null)
+      }
+
+      setDeletingTopic(null)
+    } catch (error) {
+      console.error('Failed to delete topic:', error)
+      setError('Network error while deleting the topic')
+    } finally {
+      setIsDeletingTopic(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container px-4 py-12">
@@ -171,7 +243,12 @@ export default function TopicsPage() {
         ) : (
           <div className="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {topics.map((topic) => (
-              <TopicCard key={topic.id} topic={topic} onClick={() => handleTopicClick(topic)} />
+              <TopicCard
+                key={topic.id}
+                topic={topic}
+                onClick={() => handleTopicClick(topic)}
+                onDelete={() => setDeletingTopic(topic)}
+              />
             ))}
           </div>
         )}
@@ -180,6 +257,14 @@ export default function TopicsPage() {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateTopic}
+        />
+
+        <DeleteTopicModal
+          isOpen={deletingTopic !== null}
+          topic={deletingTopic}
+          isDeleting={isDeletingTopic}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleDeleteTopic}
         />
       </div>
     </div>

@@ -43,6 +43,19 @@ flowchart TD
     UI --> STORE["useAppStore.setTopics/lists(...)"]
 ```
 
+## Topic Delete (#15)
+1. The delete control on a `TopicCard` opens `DeleteTopicModal` (shared
+   `ConfirmDeleteModal`), which names the topic and warns that all lists,
+   puzzles, and solve progress under it are permanently removed. Cancel/Escape
+   abort with no request.
+2. Confirm calls `DELETE /api/v1/topics/:id` (auth required; lookup scoped to
+   the owner - a non-owned id is a 404 and deletes nothing).
+3. Children are removed by `onDelete: Cascade` (lists -> items/puzzles -> solves);
+   the route deletes only the topic row and returns `{ topicId, listIds, puzzleIds }`.
+4. The client clears autosaved solve state for the returned `puzzleIds`, resets
+   the current puzzle if it belonged to a removed list, and drops the topic and
+   its lists from the store - no refresh needed, no dangling references.
+
 ## Data Artifacts
 - `topics` table
 - `lists` table
@@ -51,7 +64,8 @@ flowchart TD
 
 ## Failure Modes
 - Missing session -> 401.
-- Topic not found -> 404 / error payload.
+- Topic not found (or owned by someone else) -> 404 / error payload.
+- Delete failure -> error banner on the topics page; nothing removed locally.
 
 ## Key Files
 - `src/app/api/v1/topics/route.ts`

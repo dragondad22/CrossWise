@@ -8,6 +8,7 @@ and this project adheres to SemVer.
 ## [Unreleased]
 
 ### Added
+- Topics can now be deleted from the topics page, with a confirmation dialog that warns all lists, puzzles, and solve progress under the topic are permanently removed (#15)
 - Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
 
 ### Fixed
