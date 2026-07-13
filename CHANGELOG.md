@@ -7,6 +7,9 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+### Added
+- Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
+
 ### Fixed
 - Visiting your topics or lists while signed out now redirects to login (and back after signing in) instead of showing a false "No topics yet" screen; the topics page also gained a proper loading state (#82)
 - Puzzle generation is now independent of database row order: the same list and seed reproduce the same puzzle even after rows are updated or reordered (#77)
