@@ -113,7 +113,12 @@ export async function DELETE(
     const userId = session.user.id
     const { id } = await params
 
-    const owned = await prisma.topic.findFirst({ where: { id, userId } })
+    const owned = await prisma.topic.findFirst({
+      where: { id, userId },
+      include: {
+        lists: { select: { id: true, puzzles: { select: { id: true } } } },
+      },
+    })
     if (!owned) {
       return NextResponse.json(
         { success: false, error: { message: 'Topic not found' } },
@@ -121,11 +126,17 @@ export async function DELETE(
       )
     }
 
+    // Children are removed by onDelete: Cascade (lists -> items/puzzles -> solves).
+    // Return the affected ids so the client can clear in-memory solve/autosave
+    // state for the removed puzzles (mirrors the list-delete payload).
+    const listIds = owned.lists.map((list) => list.id)
+    const puzzleIds = owned.lists.flatMap((list) => list.puzzles.map((puzzle) => puzzle.id))
+
     await prisma.topic.delete({
       where: { id },
     })
 
-    return NextResponse.json({ success: true, data: null })
+    return NextResponse.json({ success: true, data: { topicId: id, listIds, puzzleIds } })
   } catch (error) {
     console.error('Failed to delete topic:', error)
 

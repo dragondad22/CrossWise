@@ -8,9 +8,10 @@ import { Topic } from '@/types/database'
 interface TopicCardProps {
   topic: Topic & { _count?: { lists: number } }
   onClick?: () => void
+  onDelete?: () => void
 }
 
-export default function TopicCard({ topic, onClick }: TopicCardProps) {
+export default function TopicCard({ topic, onClick, onDelete }: TopicCardProps) {
   const listCount = topic._count?.lists ?? 0
   const createdAt = topic.createdAt ? format(new Date(topic.createdAt), 'MMM d, yyyy') : ''
 
@@ -48,7 +49,39 @@ export default function TopicCard({ topic, onClick }: TopicCardProps) {
             </CardDescription>
           </div>
         </div>
-        <Badge variant="outline">Topic</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">Topic</Badge>
+          {onDelete && (
+            <button
+              type="button"
+              aria-label={`Delete topic ${topic.name}`}
+              onClick={(event) => {
+                // The whole card is a navigation button — the delete control must
+                // not also trigger it.
+                event.preventDefault()
+                event.stopPropagation()
+                onDelete()
+              }}
+              onKeyDown={(event) => event.stopPropagation()}
+              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 7h12M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m-7 0v12a1 1 0 001 1h6a1 1 0 001-1V7"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 px-6 pb-6 text-sm leading-relaxed text-muted-foreground">
         <p className="min-h-[3rem]">

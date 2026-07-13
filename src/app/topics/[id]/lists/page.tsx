@@ -43,7 +43,7 @@ export default function ListsPage() {
   const [deletingList, setDeletingList] = useState<ListWithItemsAndTopic | null>(null)
   const [isDeletingList, setIsDeletingList] = useState(false)
   const { clearSolveState, stopAutosave } = useAutosave()
-  const { isAuthenticated, isSessionPending } = useRequireSession()
+  const { isAuthenticated } = useRequireSession()
 
   const fetchTopicAndLists = useCallback(
     async (id: string) => {

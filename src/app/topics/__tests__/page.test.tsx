@@ -1,6 +1,6 @@
 import React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import TopicsPage from '../page'
 import { useAppStore } from '@/lib/store'
@@ -76,6 +76,64 @@ describe('TopicsPage auth gate (#82)', () => {
       expect(fetchMock).toHaveBeenCalledWith('/api/v1/topics')
     })
     expect(replaceMock).not.toHaveBeenCalled()
+  })
+
+  it('topic delete flow: cancel sends no request; confirm deletes and removes the card (#15)', async () => {
+    const topic = {
+      id: 'ctopic1234567890123456789',
+      name: 'Biology',
+      description: null,
+      color: '#3B82F6',
+      icon: '🧬',
+      createdAt: new Date().toISOString(),
+    }
+    const fetchMock = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'DELETE') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: { topicId: topic.id, listIds: [], puzzleIds: [] },
+          }),
+        }
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ success: true, data: [topic] }),
+      }
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<TopicsPage />)
+    useAppStore.setState({
+      sessionHydrated: true,
+      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+    })
+
+    // Open the confirmation from the card's delete control.
+    const deleteButton = await screen.findByRole('button', { name: 'Delete topic Biology' })
+    fireEvent.click(deleteButton)
+    expect(screen.getByRole('dialog')).toBeTruthy()
+
+    // Cancel aborts with no request and no state change.
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+    expect(screen.getByText('Biology')).toBeTruthy()
+
+    // Reopen and confirm: DELETE fires and the card disappears.
+    fireEvent.click(screen.getByRole('button', { name: 'Delete topic Biology' }))
+    fireEvent.click(screen.getByRole('button', { name: /delete topic$/i }))
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE'),
+      ).toHaveLength(1)
+      expect(screen.queryByText('Biology')).toBeNull()
+    })
+    expect(fetchMock).toHaveBeenCalledWith(`/api/v1/topics/${topic.id}`, { method: 'DELETE' })
   })
 
   it('redirects through login when the session expires mid-visit (401)', async () => {
