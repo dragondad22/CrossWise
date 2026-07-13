@@ -5,6 +5,8 @@ import {
   normalizeAnswer,
   validateAnswerFormat,
   ImportListSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
 } from '../validation'
 
 describe('validation helpers', () => {
@@ -174,5 +176,42 @@ describe('validation helpers', () => {
       items: [{ ...base.items[0], difficulty: 6 }, ...base.items.slice(1)],
     }
     expect(validateListJSON(bad).success).toBe(false)
+  })
+
+  describe('password recovery schemas (#7)', () => {
+    it('normalizes forgot-password emails to lowercase', () => {
+      const parsed = ForgotPasswordSchema.parse({ email: 'User@Example.COM' })
+      expect(parsed.email).toBe('user@example.com')
+    })
+
+    it('rejects malformed forgot-password emails', () => {
+      expect(ForgotPasswordSchema.safeParse({ email: 'not-an-email' }).success).toBe(false)
+      expect(ForgotPasswordSchema.safeParse({}).success).toBe(false)
+    })
+
+    it('accepts a reset request with a token and a policy-compliant password', () => {
+      const parsed = ResetPasswordSchema.parse({
+        token: 'a'.repeat(64),
+        newPassword: 'longenough',
+      })
+      expect(parsed.token).toBe('a'.repeat(64))
+      expect(parsed.newPassword).toBe('longenough')
+    })
+
+    it('enforces the register password policy on reset (min 8, max 100)', () => {
+      expect(
+        ResetPasswordSchema.safeParse({ token: 'tok', newPassword: 'short7c' }).success,
+      ).toBe(false)
+      expect(
+        ResetPasswordSchema.safeParse({ token: 'tok', newPassword: 'x'.repeat(101) }).success,
+      ).toBe(false)
+    })
+
+    it('requires a non-empty token', () => {
+      expect(
+        ResetPasswordSchema.safeParse({ token: '', newPassword: 'longenough' }).success,
+      ).toBe(false)
+      expect(ResetPasswordSchema.safeParse({ newPassword: 'longenough' }).success).toBe(false)
+    })
   })
 })

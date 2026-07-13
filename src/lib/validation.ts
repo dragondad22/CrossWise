@@ -145,6 +145,22 @@ export const LoginSchema = z.object({
   password: z.string().min(1, 'Password required'),
 })
 
+export const ForgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .email('Valid email required')
+    .transform((val) => val.toLowerCase()),
+})
+
+export const ResetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token required'),
+  // Same password policy as RegisterSchema.
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password must be at most 100 characters'),
+})
+
 // Validation helper functions
 export function validateListJSON(data: unknown) {
   try {

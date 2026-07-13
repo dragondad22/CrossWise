@@ -2,7 +2,7 @@
 
 CrossWise
 
-**Updated:** 2026-07-10
+**Updated:** 2026-07-13
 
 This index tracks all architectural decisions for CrossWise:
 - Completed ADRs
@@ -21,6 +21,7 @@ Status labels: **Proposed** | **Accepted** | **Rejected** | **Superseded**
 | ADR-001 | Per-user ownership of topics, lists, and puzzles | Accepted | `ADR-001-user-data-ownership-model.md` |
 | ADR-002 | Production DB migration & backfill strategy | Accepted | `ADR-002-db-migration-strategy.md` |
 | ADR-006 | Puzzle generation seed contract | Proposed | `ADR-006-puzzle-seed-contract.md` |
+| ADR-008 | Password recovery + email delivery seam | Proposed | `ADR-008-password-recovery-email-seam.md` |
 
 ---
 

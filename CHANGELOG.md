@@ -8,6 +8,7 @@ and this project adheres to SemVer.
 ## [Unreleased]
 
 ### Added
+- Forgot-password account recovery: request a reset link from the login page and set a new password via a single-use, 30-minute emailed token; all sessions are revoked on reset (email delivery is a dev stub until a provider is chosen, ADR-008) (#7)
 - Topics can now be deleted from the topics page, with a confirmation dialog that warns all lists, puzzles, and solve progress under the topic are permanently removed (#15)
 - Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
 
