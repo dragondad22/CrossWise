@@ -1,0 +1,84 @@
+# pr-validation.yml.example — PR-validation CI seed (kit decision T10.1).
+#
+# ACTIVATION: fill the {{TOKENS}} (the /bootstrap interview does this), uncomment
+# the blocks the project actually has, and rename to pr-validation.yml. It ships
+# as .example so a fresh project doesn't run a red workflow before it's configured.
+#
+# SCOPE: environment-independent PR validation only — these gates run on every PR
+# regardless of where the project deploys. Deploy/CD is deliberately NOT here: it
+# arrives as the deploy-ci module when environments/deploy targets are decided.
+#
+# FORGE-AGNOSTIC NOTE: GitHub Actions is the paved-road default
+# (bootstrap/PAVED_ROAD.md). On another CI system, the durable content of this
+# file is the GATE LIST — what runs on PR (below) vs on merge vs on a schedule.
+# Keep the gates, translate the syntax.
+#
+# Once live, document the actual gates in ai/agent-setup.md -> CI Quality Gates.
+
+name: PR validation
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    # --- Service containers -------------------------------------------------
+    # Uncomment when tests need a real backing service (paved road: PostgreSQL).
+    # services:
+    #   postgres:
+    #     image: postgres:16
+    #     env:
+    #       POSTGRES_PASSWORD: postgres
+    #     ports: ['5432:5432']
+    #     options: >-
+    #       --health-cmd "pg_isready -U postgres"
+    #       --health-interval 5s --health-timeout 5s --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # TODO: set up the project's runtime + dependency cache, e.g.:
+      # - uses: actions/setup-node@v4
+      #   with: { node-version: 22, cache: npm }
+      # - run: npm ci
+
+      - name: Build / typecheck
+        run: "{{BUILD_COMMAND}}"
+
+      - name: Lint
+        run: "{{LINT_COMMAND}}"
+
+      - name: Tests
+        run: "{{TEST_COMMAND}}"
+
+      - name: Version sync
+        run: bash ai/scripts/check-version-sync.sh
+
+      - name: Dependency scan (SCA)
+        # Fail on high/critical runtime vulnerabilities — gate definition in
+        # ai/STANDARDS/SECURITY_REVIEW_STANDARD.md (CI Security Gates).
+        run: "{{SECURITY_SCAN_COMMAND}}"
+
+      # --- E2E ----------------------------------------------------------------
+      # Uncomment when the project has UI flows. Paved road: Playwright — its
+      # on-failure screenshot/trace/video defaults produce the failure evidence
+      # the kit's diagnostics rules expect.
+      # - name: E2E tests
+      #   run: "{{E2E_COMMAND}}"
+
+      # --- Failure diagnostics -------------------------------------------------
+      # Success is silent. On failure, upload whatever diagnostics the gates
+      # wrote so the failure can be fixed without re-running it. Diagnostic
+      # bundles live in CI artifacts (or gitignored locally) — never committed.
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-diagnostics
+          path: |
+            testing-reports/
+            test-results/
+          if-no-files-found: ignore
