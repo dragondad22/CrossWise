@@ -12,6 +12,7 @@ and this project adheres to SemVer.
 - Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
 
 ### Changed
+- Generating a new puzzle now shows a contextual overlay over the grid (with the list name and an accessible progress announcement) instead of replacing the whole screen with a spinner (#14)
 - The solve grid now shows a two-layer highlight — a soft band across the selected clue and a stronger accent plus ring on the active cell — with an accessible high-contrast focus ring, replacing the single hard-coded yellow highlight (#12)
 
 ### Fixed
