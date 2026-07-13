@@ -24,6 +24,8 @@ interface AppState {
     // Words from the source list that did not fit on the grid (#99); surfaced to
     // the solver so a partial puzzle is never silently presented as complete.
     unplacedWords?: string[]
+    // Word count the puzzle was generated with (#22); reused on regenerate.
+    wordCount?: number
   } | null
 
   // Solve state

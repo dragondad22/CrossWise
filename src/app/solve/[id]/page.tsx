@@ -145,6 +145,10 @@ export default function SolvePage() {
               unplacedWords: Array.isArray(puzzleData.settings?.unplacedWords)
                 ? puzzleData.settings.unplacedWords
                 : undefined,
+              wordCount:
+                typeof puzzleData.settings?.wordCount === 'number'
+                  ? puzzleData.settings.wordCount
+                  : undefined,
             })
 
             const remoteState = result.data.state
@@ -229,6 +233,8 @@ export default function SolvePage() {
         body: JSON.stringify({
           listId: currentPuzzle.listId,
           seed: `${Date.now()}_new`,
+          // Regenerate with the same size the solver chose originally (#22).
+          ...(currentPuzzle.wordCount ? { wordCount: currentPuzzle.wordCount } : {}),
         }),
       })
 

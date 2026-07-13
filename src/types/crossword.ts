@@ -46,6 +46,8 @@ export interface PuzzleSettings {
   allowHyphens: boolean
   // Words that did not fit when this (partial) puzzle was accepted (#99).
   unplacedWords?: string[]
+  // Resolved word count the puzzle was generated with (#22).
+  wordCount?: number
 }
 
 // Generation types

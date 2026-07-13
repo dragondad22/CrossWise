@@ -8,11 +8,10 @@ and this project adheres to SemVer.
 ## [Unreleased]
 
 ### Added
+- Starting a new game now opens a puzzle-size chooser: pick 10–50 words or the whole list, and "New puzzle" on the solve screen regenerates at the same size (#22)
 - Topics can now be deleted from the topics page, with a confirmation dialog that warns all lists, puzzles, and solve progress under the topic are permanently removed (#15)
-- Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
-
-### Added
 - The clue panel gained progress-aware Across/Down tabs with solved counts, preset filters (Unsolved, Flagged, Errors) that compose with search, and per-clue flags that persist with your solve progress (#13)
+- Puzzle generation now grows the grid (15→17→19) when a list doesn't fit, accepts partial puzzles instead of failing outright, and the solve screen discloses any words that didn't fit with a dismissible notice (#99)
 
 ### Changed
 - Generating a new puzzle now shows a contextual overlay over the grid (with the list name and an accessible progress announcement) instead of replacing the whole screen with a spinner (#14)

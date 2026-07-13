@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  GeneratePuzzleSchema,
+  WORD_COUNT_BOUNDS,
   validateListJSON,
   normalizeAnswer,
   validateAnswerFormat,
@@ -174,5 +176,26 @@ describe('validation helpers', () => {
       items: [{ ...base.items[0], difficulty: 6 }, ...base.items.slice(1)],
     }
     expect(validateListJSON(bad).success).toBe(false)
+  })
+})
+
+describe('GeneratePuzzleSchema wordCount (#22)', () => {
+  const LIST_ID = 'clist0000000000000000001'
+
+  it('accepts a valid word count and allows omission', () => {
+    expect(GeneratePuzzleSchema.safeParse({ listId: LIST_ID, wordCount: 12 }).success).toBe(true)
+    expect(GeneratePuzzleSchema.safeParse({ listId: LIST_ID }).success).toBe(true)
+  })
+
+  it('rejects below-min, above-max, and non-integer values', () => {
+    expect(
+      GeneratePuzzleSchema.safeParse({ listId: LIST_ID, wordCount: WORD_COUNT_BOUNDS.min - 1 })
+        .success,
+    ).toBe(false)
+    expect(
+      GeneratePuzzleSchema.safeParse({ listId: LIST_ID, wordCount: WORD_COUNT_BOUNDS.max + 1 })
+        .success,
+    ).toBe(false)
+    expect(GeneratePuzzleSchema.safeParse({ listId: LIST_ID, wordCount: 10.5 }).success).toBe(false)
   })
 })
