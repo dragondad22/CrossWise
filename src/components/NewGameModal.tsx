@@ -31,7 +31,7 @@ export default function NewGameModal({
   const [selected, setSelected] = useState<number | 'all'>('all')
   const startRef = useRef<HTMLButtonElement>(null)
 
-  const itemCount = list?.items?.length ?? list?._count?.items ?? 0
+  const itemCount = list?.items?.length ?? 0
 
   const options = useMemo(() => {
     const presets = PRESETS.filter(
