@@ -105,3 +105,14 @@ flowchart TD
 - The overlay clears in `finally` — success navigates to the new puzzle, and a
   failed generation restores the previous grid with the error banner; the grid
   is never left blocked.
+
+## Clue Tabs, Filters, and Flags (#13)
+- Across/Down is a semantic tab control (role=tablist/tab/tabpanel, roving
+  tabindex, arrow-key switching) showing live solved/total counts per direction
+  (tabular numerals). Counts and filters derive from the shared
+  `src/lib/clue-status.ts` helpers — the same source as the per-clue badges.
+- Preset filters (All / Unsolved / Flagged / Errors) compose with the search
+  input; the active chip is marked by a check mark and weight, not colour alone.
+- `SolveState.flaggedClues` (optional, keyed `direction-number`) stores flags;
+  `toggleClueFlag` persists through the normal autosave path so flags survive
+  reload and sync like any other solve state.

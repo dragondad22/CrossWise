@@ -20,6 +20,7 @@ export const normalizeSolveState = (raw: RemoteSolveState | null | undefined): S
   lastSaved: raw?.lastSaved,
   lockedCells: raw?.lockedCells ?? {},
   revision: typeof raw?.revision === 'number' ? raw.revision : undefined,
+  flaggedClues: raw?.flaggedClues ?? {},
 })
 
 const getLastSavedTimestamp = (state: SolveState | null | undefined) => {
