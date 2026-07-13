@@ -56,6 +56,11 @@ export function deriveListSeed(listId: string, items: { answer: string; clue: st
   return `list:${listId}:${fnv1a(canonical).toString(36)}`
 }
 
+// Total backtracking expansions allowed per generate() call. A counter (not a time
+// budget) so the cutoff is deterministic for a given seed regardless of machine speed.
+// When exhausted, the search degrades to greedy placement (no unwinding).
+const DEFAULT_SEARCH_BUDGET = 4000
+
 export class CrosswordGenerator {
   private rng: () => number
   private grid: (string | null)[][]
@@ -63,6 +68,7 @@ export class CrosswordGenerator {
   private gridSize: { rows: number; cols: number }
   private maxAttempts: number
   private maxWords?: number
+  private searchBudget = DEFAULT_SEARCH_BUDGET
 
   constructor(options: GeneratorOptions = {}) {
     const seed = options.seed || DEFAULT_GENERATOR_SEED
@@ -97,6 +103,7 @@ export class CrosswordGenerator {
     // Step 2: Try generation with multiple attempts
     let bestResult: WordPlacement[] = []
     let attempts = 0
+    this.searchBudget = DEFAULT_SEARCH_BUDGET
 
     while (attempts < this.maxAttempts) {
       this.grid = this.createEmptyGrid()
@@ -111,6 +118,12 @@ export class CrosswordGenerator {
 
       // Success criteria: placed at least 90% of words
       if (result.length >= Math.floor(pool.length * 0.9)) {
+        break
+      }
+
+      // Budget exhausted: further attempts would run greedy-only and rarely beat
+      // what we already have — stop instead of burning CPU.
+      if (this.searchBudget <= 0) {
         break
       }
 
@@ -168,8 +181,12 @@ export class CrosswordGenerator {
     return freq
   }
 
+  // Depth-first placement with symmetric backtracking. Every branch that is not
+  // accepted unwinds exactly the placements it added (checkpoint-based), so a word
+  // can never remain on the grid twice (#76). Returns a snapshot of the best
+  // placement set found in this subtree; the caller rebuilds the grid from it.
   private generateWithBacktracking(words: WordEntry[]): WordPlacement[] {
-    if (words.length === 0) return this.placedWords
+    if (words.length === 0) return [...this.placedWords]
 
     const word = words[0]
     const remainingWords = words.slice(1)
@@ -180,14 +197,11 @@ export class CrosswordGenerator {
       const centerCol = Math.floor((this.gridSize.cols - word.length) / 2)
 
       if (this.tryPlaceWord(word, centerRow, centerCol, 'across')) {
-        const result = this.generateWithBacktracking(remainingWords)
-        if (result.length > 0) return result
-
-        // Backtrack
-        this.removeWord(this.placedWords[this.placedWords.length - 1])
+        return this.generateWithBacktracking(remainingWords)
       }
 
-      return []
+      // Word doesn't fit (e.g. longer than the grid) — continue without it.
+      return this.generateWithBacktracking(remainingWords)
     }
 
     // Find all possible placements for this word
@@ -196,21 +210,51 @@ export class CrosswordGenerator {
     // Sort by score (best first)
     candidates.sort((a, b) => b.score - a.score)
 
+    // A subtree is perfect when every word (already placed + this one + all
+    // remaining) ends up on the grid.
+    const target = this.placedWords.length + 1 + remainingWords.length
+    let best: WordPlacement[] = []
+
     // Try each candidate
     for (const candidate of candidates) {
       if (this.tryPlaceWord(word, candidate.row, candidate.col, candidate.direction)) {
+        if (this.searchBudget <= 0) {
+          // Budget exhausted: greedy mode — commit to the first valid placement.
+          return this.generateWithBacktracking(remainingWords)
+        }
+        this.searchBudget--
+
+        const checkpoint = this.placedWords.length - 1
         const result = this.generateWithBacktracking(remainingWords)
-        if (result.length >= remainingWords.length) {
+        if (result.length >= target) {
           return result
         }
+        if (result.length > best.length) {
+          best = result
+        }
 
-        // Backtrack
-        this.removeWord(this.placedWords[this.placedWords.length - 1])
+        // Backtrack: unwind everything this branch placed, not just the last word.
+        this.unwindTo(checkpoint)
       }
     }
 
-    // If we can't place this word, try without it
-    return this.generateWithBacktracking(remainingWords)
+    // Also consider skipping this word entirely.
+    const checkpoint = this.placedWords.length
+    const skipped = this.generateWithBacktracking(remainingWords)
+    if (skipped.length > best.length) {
+      best = skipped
+    }
+    this.unwindTo(checkpoint)
+
+    return best
+  }
+
+  // Remove placements from the end until only `count` remain. Placements are only
+  // ever appended, so truncating from the tail restores the exact prior grid state.
+  private unwindTo(count: number): void {
+    while (this.placedWords.length > count) {
+      this.removeWord(this.placedWords[this.placedWords.length - 1])
+    }
   }
 
   private findPlacementCandidates(word: WordEntry): PlacementCandidate[] {
