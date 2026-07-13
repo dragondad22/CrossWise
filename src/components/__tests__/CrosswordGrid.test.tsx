@@ -287,3 +287,117 @@ describe('CrosswordGrid', () => {
     expect(selectClueMock).toHaveBeenCalledWith('across', 9)
   })
 })
+
+describe('CrosswordGrid dual-layer highlighting (#12)', () => {
+  const cellAt = (container: HTMLElement, row: number, col: number) =>
+    container.querySelector(`[data-cell="${row}-${col}"]`) as HTMLElement
+
+  it('applies the band to every cell of the selected clue and no others', () => {
+    const { container } = render(
+      <CrosswordGrid
+        grid={baseGrid}
+        numbering={numbering}
+        solveState={createSolveState({
+          selectedClue: { direction: 'across', number: 1 },
+          selectedCell: undefined,
+        })}
+      />,
+    )
+
+    expect(cellAt(container, 0, 0).className).toContain('bg-clue-band')
+    expect(cellAt(container, 0, 1).className).toContain('bg-clue-band')
+    expect(cellAt(container, 1, 0).className).not.toContain('bg-clue-band')
+    expect(cellAt(container, 1, 1).className).not.toContain('bg-clue-band')
+  })
+
+  it('marks the active cell with the accent fill plus ring, distinct from the band', () => {
+    const { container } = render(
+      <CrosswordGrid
+        grid={baseGrid}
+        numbering={numbering}
+        solveState={createSolveState({
+          selectedClue: { direction: 'across', number: 1 },
+          selectedCell: { row: 0, col: 0 },
+        })}
+      />,
+    )
+
+    const active = cellAt(container, 0, 0)
+    expect(active.className).toContain('bg-cell-accent')
+    expect(active.className).toContain('ring-2 ring-primary')
+
+    // Its band sibling keeps the soft treatment without the accent/ring.
+    const sibling = cellAt(container, 0, 1)
+    expect(sibling.className).toContain('bg-clue-band')
+    expect(sibling.className).not.toContain('bg-cell-accent')
+    expect(sibling.className).not.toContain('ring-primary')
+  })
+
+  it('no hard-coded highlight colours remain for band/accent states', () => {
+    const { container } = render(
+      <CrosswordGrid
+        grid={baseGrid}
+        numbering={numbering}
+        solveState={createSolveState({ selectedClue: { direction: 'across', number: 1 } })}
+      />,
+    )
+    expect(container.innerHTML).not.toContain('bg-yellow-100')
+  })
+
+  it('keeps check-state rendering alongside band and accent', () => {
+    const { container } = render(
+      <CrosswordGrid
+        grid={baseGrid}
+        numbering={numbering}
+        solveState={createSolveState({
+          selectedClue: { direction: 'across', number: 1 },
+          selectedCell: { row: 0, col: 0 },
+          checkResults: { '0,0': false, '0,1': true },
+        })}
+      />,
+    )
+
+    const active = cellAt(container, 0, 0)
+    expect(active.className).toContain('bg-rose-100')
+    expect(active.className).toContain('ring-2 ring-primary') // accent ring survives
+    expect(cellAt(container, 0, 1).className).toContain('bg-emerald-100')
+  })
+
+  it('boundary: selected + checked + highlighted cell retains a visible focus-ring class', () => {
+    const { container } = render(
+      <CrosswordGrid
+        grid={baseGrid}
+        numbering={numbering}
+        solveState={createSolveState({
+          selectedClue: { direction: 'across', number: 1 },
+          selectedCell: { row: 0, col: 0 },
+          checkResults: { '0,0': true },
+        })}
+      />,
+    )
+
+    const active = cellAt(container, 0, 0)
+    expect(active.className).toContain('focus-visible:ring-2')
+    expect(active.className).toContain('focus-visible:ring-ring')
+    expect(active.className).toContain('focus-visible:z-20')
+  })
+
+  it('locked cells still render their state under the new layers', () => {
+    const { container } = render(
+      <CrosswordGrid
+        grid={baseGrid}
+        numbering={numbering}
+        solveState={createSolveState({
+          selectedClue: { direction: 'across', number: 1 },
+          filledCells: { '0,0': 'H' },
+          lockedCells: { '0,0': true },
+          checkResults: { '0,0': true },
+        })}
+      />,
+    )
+
+    const locked = cellAt(container, 0, 0)
+    expect(locked.className).toContain('bg-emerald-100')
+    expect(locked.textContent).toContain('H')
+  })
+})

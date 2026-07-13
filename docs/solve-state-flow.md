@@ -85,3 +85,12 @@ flowchart TD
 - `src/lib/autosave.ts`
 - `src/app/solve/solveState.ts`
 - `src/app/api/v1/puzzles/[id]/solve/route.ts`
+
+## Highlight Visual Contract (#12)
+- `selectedClue` renders as a soft band (`bg-clue-band` token) across every cell
+  of the clue; `selectedCell` renders the stronger `bg-cell-accent` fill plus a
+  primary ring, so band vs active cell is distinguishable by more than colour.
+- Check-state fills (correct/incorrect) layer above band/accent; the
+  focus-visible ring (`ring` token) renders above everything at >=3:1 non-text
+  contrast. Tokens live in `tailwind.config.ts` — no hard-coded highlight
+  colours in `CrosswordGrid`.
