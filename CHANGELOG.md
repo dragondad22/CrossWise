@@ -18,6 +18,7 @@ and this project adheres to SemVer.
 - The solve grid now shows a two-layer highlight — a soft band across the selected clue and a stronger accent plus ring on the active cell — with an accessible high-contrast focus ring, replacing the single hard-coded yellow highlight (#12)
 
 ### Fixed
+- The Export action on a list now produces a blank printable crossword (empty numbered grid plus across/down clues, no answers) built from the list's most recent puzzle, instead of downloading raw list JSON; lists without a generated puzzle get a friendly prompt to generate one first (#2)
 - Solve progress can no longer be overwritten by a stale device or tab: saves carry a revision counter the server enforces (409 on stale writes), sync is batched instead of firing on every keystroke, and the last changes before closing the page now reliably reach the server (#84)
 - Delete-list confirmation is now fully keyboard-accessible: Escape cancels, focus lands on the safe Cancel action, and the dialog is announced to assistive tech (#16)
 - Failed loads on the topics, lists, and solve screens now show a visible, dismissible error with a retry action instead of a blank or silently-empty page; the solve screen's loading state also updates reactively (#36)

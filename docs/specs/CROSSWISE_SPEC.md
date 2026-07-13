@@ -32,7 +32,8 @@ This document is the authoritative product + engineering specification for the c
    - Import via JSON (and CSV parsing exists client-side in `export.ts`).
    - Update list items, add/remove items, update name/version.
    - Delete lists, which also removes associated puzzles/solves.
-   - Export list as JSON per import schema.
+   - The lists page "Export" action produces a **blank printable crossword** built client-side from the list's most recent puzzle: an empty numbered grid plus across/down clue lists, with no answer letters anywhere (#2). A list with no generated puzzle gets a friendly error prompting to generate one first.
+   - Raw list export as JSON per import schema remains available via `GET /api/v1/lists/:id/export` (data interchange only).
 
 3. **Puzzle generation**
    - Generate from a list using up to 150 items; selection and placement are seeded and reproducible (ADR-006).
@@ -223,7 +224,9 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 
 - `GET /api/v1/lists/:id/export`
   - Auth required.
-  - Returns JSON file download in import schema format.
+  - Returns JSON file download in import schema format (data interchange only — the
+    lists page "Export" button instead builds a printable blank crossword client-side
+    from `GET /api/v1/lists/:id/puzzles`, #2).
   - Errors: 404, 500.
 
 - `DELETE /api/v1/lists/:id`
@@ -234,7 +237,8 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 
 - `GET /api/v1/lists/:id/puzzles`
   - Auth required.
-  - Returns 10 most recent puzzles for list.
+  - Returns 10 most recent puzzles for list (newest first). The printable blank
+    export uses the first entry as the "most recent puzzle" (#2).
 
 ### Puzzles
 - `POST /api/v1/puzzles/generate`

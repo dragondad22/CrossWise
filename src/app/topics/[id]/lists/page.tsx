@@ -14,6 +14,15 @@ import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
 import { ErrorBanner } from '@/components/ui/error-banner'
 import { useAutosave } from '@/lib/autosave'
+import {
+  buildPrintableCrosswordHTML,
+  generateFilename,
+  openPrintableCrossword,
+} from '@/lib/export'
+import type {
+  CrosswordGrid as CrosswordGridType,
+  CrosswordNumbering,
+} from '@/types/crossword'
 
 export default function ListsPage() {
   const router = useRouter()
@@ -335,26 +344,37 @@ export default function ListsPage() {
     }
   }
 
+  // Export = blank printable crossword (empty numbered grid + clues, no
+  // answers) built from the list's most recent puzzle (#2). Raw JSON/CSV
+  // helpers in src/lib/export.ts remain available for data interchange.
   const handleExportList = async (list: ListWithItemsAndTopic) => {
-    try {
-      const response = await fetch(`/api/v1/lists/${list.id}/export`)
+    setError(null)
 
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `${list.name.replace(/[^a-zA-Z0-9]/g, '_')}_v${list.version}.json`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-      } else {
-        setError('Failed to export list')
+    try {
+      const response = await fetch(`/api/v1/lists/${list.id}/puzzles`)
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        setError(result.error?.message || 'Failed to export puzzle')
+        return
       }
+
+      // The endpoint returns puzzles newest-first; export targets the most recent.
+      const latestPuzzle = (result.data as Array<{ grid: string; numbering: string }>)[0]
+
+      if (!latestPuzzle) {
+        setError("Generate a puzzle first — this list doesn't have one yet.")
+        return
+      }
+
+      const grid = JSON.parse(latestPuzzle.grid) as CrosswordGridType
+      const numbering = JSON.parse(latestPuzzle.numbering) as CrosswordNumbering
+
+      const html = buildPrintableCrosswordHTML(list.name, grid, numbering)
+      openPrintableCrossword(html, generateFilename(list.name, 'html'))
     } catch (error) {
       setError('Network error')
-      console.error('Failed to export list:', error)
+      console.error('Failed to export printable puzzle:', error)
     }
   }
 
