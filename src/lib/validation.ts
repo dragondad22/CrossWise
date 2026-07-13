@@ -1,12 +1,34 @@
 import { z } from 'zod'
 
+// Allowed-character policy for crossword answers (#17): letters A-Z only, after
+// uppercasing. Case is the only transformation ever applied — anything else
+// (accents, digits, hyphens, spaces) is a hard validation failure, never a
+// silent strip, so an invalid word denies the import with an error naming it.
+// Shared so the CSV import (#31) applies the identical rule.
+export const ANSWER_ALLOWED_PATTERN = /^[A-Z]+$/
+
+export function findDisallowedAnswerCharacters(answer: string): string[] {
+  return Array.from(new Set(answer.toUpperCase().replace(/[A-Z]/g, '').split('')))
+}
+
+const AnswerSchema = z
+  .string()
+  .min(2, 'Answer must be at least 2 characters')
+  .max(20, 'Answer must be at most 20 characters')
+  .transform((val) => val.toUpperCase())
+  .superRefine((val, ctx) => {
+    if (!ANSWER_ALLOWED_PATTERN.test(val)) {
+      const disallowed = findDisallowedAnswerCharacters(val).join(' ')
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Answer "${val}" contains characters that aren't letters A–Z (${disallowed}). Fix this word and try again.`,
+      })
+    }
+  })
+
 // List JSON Schema validation (from PRP section 9.1)
 export const ListItemSchema = z.object({
-  answer: z
-    .string()
-    .min(2, 'Answer must be at least 2 characters')
-    .max(20, 'Answer must be at most 20 characters')
-    .transform((val) => val.toUpperCase().replace(/[^A-Z]/g, '')), // A-Z only, uppercase
+  answer: AnswerSchema,
   clue: z
     .string()
     .min(3, 'Clue must be at least 3 characters')
@@ -38,10 +60,7 @@ const DifficultyInputSchema = z.union([
 ])
 
 export const ListItemInputSchema = z.object({
-  answer: z
-    .string()
-    .min(2, 'Answer must be at least 2 characters')
-    .max(20, 'Answer must be at most 20 characters'),
+  answer: AnswerSchema,
   clue: z
     .string()
     .min(3, 'Clue must be at least 3 characters')
@@ -176,8 +195,11 @@ export function validateListJSON(data: unknown) {
   }
 }
 
+// Case is the only permitted normalization. Disallowed characters are a
+// validation failure upstream (AnswerSchema) — stripping them here would
+// silently corrupt user data (#17).
 export function normalizeAnswer(answer: string): string {
-  return answer.toUpperCase().replace(/[^A-Z]/g, '')
+  return answer.toUpperCase()
 }
 
 export function validateAnswerFormat(answer: string): {
@@ -186,24 +208,17 @@ export function validateAnswerFormat(answer: string): {
   issues: string[]
 } {
   const issues: string[] = []
-  let normalized = answer.toUpperCase()
+  const normalized = answer.toUpperCase()
 
-  // Remove non-letter characters and track what was removed
-  const originalLength = normalized.length
-  normalized = normalized.replace(/[^A-Z]/g, '')
-
-  if (normalized.length !== originalLength) {
-    issues.push('Non-letter characters removed')
+  if (!ANSWER_ALLOWED_PATTERN.test(normalized)) {
+    const disallowed = findDisallowedAnswerCharacters(normalized).join(' ')
+    issues.push(`Contains characters that aren't letters A–Z (${disallowed})`)
   }
 
   if (normalized.length < 2) {
     issues.push('Answer too short (minimum 2 letters)')
-    return { valid: false, normalized, issues }
-  }
-
-  if (normalized.length > 20) {
+  } else if (normalized.length > 20) {
     issues.push('Answer too long (maximum 20 letters)')
-    return { valid: false, normalized, issues }
   }
 
   return { valid: issues.length === 0, normalized, issues }

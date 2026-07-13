@@ -174,7 +174,7 @@ export default function ImportListModal({
           </div>
 
           {errors.length > 0 && (
-            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3">
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-3" role="alert">
               <h4 className="mb-1 text-sm font-medium text-red-800">Validation Errors:</h4>
               <ul className="list-inside list-disc text-sm text-red-700">
                 {errors.map((error, index) => (
@@ -188,7 +188,7 @@ export default function ImportListModal({
             <h4 className="mb-1 text-sm font-medium text-blue-800">Expected Format:</h4>
             <ul className="list-inside list-disc text-xs text-blue-700">
               <li>5-150 items for best results (sweet spot: 10-150)</li>
-              <li>Answers: 2-20 characters, A-Z only (auto-converted)</li>
+              <li>Answers: 2-20 characters, letters A-Z only (accents, digits, and punctuation are rejected)</li>
               <li>Clues: 3-200 characters</li>
               <li>Optional: note, difficulty (1-5)</li>
             </ul>

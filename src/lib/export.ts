@@ -168,9 +168,10 @@ function parseJSONImport(content: string) {
         name: String(data.name),
         version: Number(data.version) || 1,
         items: data.items.map((item: RawImportItem) => ({
-          answer: String(item.answer)
-            .toUpperCase()
-            .replace(/[^A-Z]/g, ''),
+          // Uppercase only — disallowed characters must survive to validation so
+          // the import is denied with an error naming the word, not silently
+          // stripped (#17).
+          answer: String(item.answer).toUpperCase(),
           clue: String(item.clue),
           note: item.note ? String(item.note) : undefined,
           difficulty: item.difficulty ? Number(item.difficulty) : undefined,
@@ -213,7 +214,8 @@ function parseCSVImport(content: string) {
 
       if (values[answerIndex] && values[clueIndex]) {
         items.push({
-          answer: values[answerIndex].toUpperCase().replace(/[^A-Z]/g, ''),
+          // Uppercase only — see parseJSONImport (#17).
+          answer: values[answerIndex].toUpperCase(),
           clue: values[clueIndex],
           note: undefined,
           difficulty: undefined,

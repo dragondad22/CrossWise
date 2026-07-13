@@ -17,8 +17,12 @@ Detail how lists are imported, validated, and maintained (create/update).
 ## Step-by-Step (Import)
 1. Client validates JSON with `validateListJSON`.
 2. Client posts to `/api/v1/lists` or `/api/v1/lists/import`.
-3. API normalizes answers and enforces uniqueness.
-4. API creates list + items inside a transaction.
+3. API validates answers against the allowed-character policy (#17): letters
+   A–Z only after uppercasing. Any other character (accent, digit, hyphen,
+   space) **denies the whole import** with a 400 whose details name the
+   offending word — answers are never silently stripped. Uniqueness is
+   enforced on the uppercased values.
+4. API creates list + items inside a transaction (case normalization only).
 5. API returns enriched list data for UI refresh.
 
 ```mermaid
@@ -54,7 +58,8 @@ flowchart TD
 
 ## Failure Modes
 - Invalid JSON format -> 400 with validation errors.
-- Duplicate answers after normalization -> 400.
+- Answer containing a character outside A–Z -> 400 naming the word; nothing is imported (#17).
+- Duplicate answers after uppercasing -> 400.
 - Missing session -> 401.
 
 ## Key Files
