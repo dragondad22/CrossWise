@@ -11,6 +11,7 @@ import EditListModal from '@/components/EditListModal'
 import DeleteListModal from '@/components/DeleteListModal'
 import { Button, buttonClasses } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card'
+import { ErrorBanner } from '@/components/ui/error-banner'
 import { useAutosave } from '@/lib/autosave'
 
 export default function ListsPage() {
@@ -32,6 +33,7 @@ export default function ListsPage() {
     setError,
     topics,
     isLoading,
+    error,
   } = useAppStore()
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
@@ -43,7 +45,7 @@ export default function ListsPage() {
   const [deletingList, setDeletingList] = useState<ListWithItemsAndTopic | null>(null)
   const [isDeletingList, setIsDeletingList] = useState(false)
   const { clearSolveState, stopAutosave } = useAutosave()
-  const { isAuthenticated, isSessionPending } = useRequireSession()
+  const { isAuthenticated } = useRequireSession()
 
   const fetchTopicAndLists = useCallback(
     async (id: string) => {
@@ -383,6 +385,15 @@ export default function ListsPage() {
             <span aria-hidden="true">＋</span> Import list
           </Button>
         </div>
+
+        {error && !isLoading && (
+          <ErrorBanner
+            className="mt-8"
+            message={error}
+            onRetry={() => void fetchTopicAndLists(topicId)}
+            onDismiss={() => setError(null)}
+          />
+        )}
 
         {filteredLists.length === 0 && !isLoading ? (
           <Card className="mt-12">

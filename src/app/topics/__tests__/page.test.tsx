@@ -1,6 +1,6 @@
 import React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import TopicsPage from '../page'
 import { useAppStore } from '@/lib/store'
@@ -76,6 +76,54 @@ describe('TopicsPage auth gate (#82)', () => {
       expect(fetchMock).toHaveBeenCalledWith('/api/v1/topics')
     })
     expect(replaceMock).not.toHaveBeenCalled()
+  })
+
+  it('renders a visible error with retry when the fetch fails (#36)', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 500, text: async () => '' })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ success: true, data: [] }),
+      })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<TopicsPage />)
+    useAppStore.setState({
+      sessionHydrated: true,
+      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+    })
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toContain('HTTP error')
+
+    // Retry refetches and clears the error state.
+    fireEvent.click(screen.getByRole('button', { name: /try again/i }))
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(screen.queryByRole('alert')).toBeNull()
+    })
+  })
+
+  it('shows the empty state (not the error) for an empty successful result', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ success: true, data: [] }),
+      }),
+    )
+
+    render(<TopicsPage />)
+    useAppStore.setState({
+      sessionHydrated: true,
+      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+    })
+
+    expect(await screen.findByText('No topics yet')).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('redirects through login when the session expires mid-visit (401)', async () => {
