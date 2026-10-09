@@ -2,7 +2,6 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 import { POST } from '../route'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
 const { puzzleFindFirst, solveFindUnique, solveCreate, solveUpdate } = vi.hoisted(() => ({
   puzzleFindFirst: vi.fn(),
@@ -30,7 +29,7 @@ vi.mock('@/lib/auth', async () => {
   const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
   return {
     ...actual,
-    getSessionForToken: mockSession,
+    lookupSession: mockSession,
   }
 })
 
@@ -40,7 +39,10 @@ describe('/api/v1/puzzles/:id/solve POST handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSession.mockReset()
-    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
   })
 
   it('returns 404 and scopes the lookup by owner for another user’s puzzle', async () => {
@@ -49,7 +51,7 @@ describe('/api/v1/puzzles/:id/solve POST handler', () => {
     const request = new NextRequest(`http://localhost/api/v1/puzzles/${PUZZLE_ID}/solve`, {
       method: 'POST',
       body: JSON.stringify({ puzzleId: PUZZLE_ID, state: '{}' }),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
     const response = await POST(request, { params: Promise.resolve({ id: PUZZLE_ID }) })
@@ -82,7 +84,7 @@ describe('/api/v1/puzzles/:id/solve POST handler', () => {
         body: JSON.stringify({ puzzleId: PUZZLE_ID, state: JSON.stringify(state) }),
         headers: {
           'content-type': 'application/json',
-          cookie: `${SESSION_COOKIE_NAME}=token-123`,
+          cookie: `alpaca.session_token=token-123`,
         },
       })
 

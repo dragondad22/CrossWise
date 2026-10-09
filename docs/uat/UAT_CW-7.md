@@ -3,6 +3,7 @@
 - Work Item: CW-7 (#7)
 - Feature / Workflow: Password recovery — forgot-password request + token-based reset
 - Environment: local / preview
+- Status: **Superseded by ADR-009 (2026-10-09).** Password recovery now happens on the shared accounts service; CrossWise's `/forgot-password` and `/reset-password` only redirect there. Kept as a record; don't run it.
 
 ## Behavior Under Test
 

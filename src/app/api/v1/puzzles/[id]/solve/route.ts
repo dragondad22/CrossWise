@@ -3,7 +3,7 @@ import { Prisma } from '@prisma/client'
 
 import { prisma } from '@/lib/db'
 import { UpdateSolveStateSchema } from '@/lib/validation'
-import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
+import { requireSession } from '@/lib/api-auth'
 
 // Extract the sync metadata from a serialized solve state. Unparseable or
 // absent values disable the corresponding guard rather than rejecting writes.
@@ -27,23 +27,8 @@ function parseStateMeta(serialized: string): {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: { message: 'Authentication required' } },
-        { status: 401 },
-      )
-    }
-
-    const session = await getSessionForToken(token, { refresh: true })
-
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: { message: 'Authentication required' } },
-        { status: 401 },
-      )
-    }
+    const session = await requireSession(request)
+    if (session.response) return session.response
 
     // First, get the puzzle data
     const puzzle = await prisma.puzzle.findFirst({
@@ -112,23 +97,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { id } = await params
     const body = await request.json()
     const validated = UpdateSolveStateSchema.parse(body)
-    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: { message: 'Authentication required' } },
-        { status: 401 },
-      )
-    }
-
-    const session = await getSessionForToken(token, { refresh: true })
-
-    if (!session) {
-      return NextResponse.json(
-        { success: false, error: { message: 'Authentication required' } },
-        { status: 401 },
-      )
-    }
+    const session = await requireSession(request)
+    if (session.response) return session.response
 
     if (validated.puzzleId !== id) {
       return NextResponse.json(
@@ -195,7 +165,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
-    const completedAt = validated.completed ? existingSolve?.completedAt ?? now : null
+    const completedAt = validated.completed ? (existingSolve?.completedAt ?? now) : null
 
     let solve
 

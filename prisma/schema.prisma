@@ -92,7 +92,8 @@ model User {
   id           String     @id @default(cuid())
   email        String     @unique
   name         String?
-  passwordHash String     @map("password_hash")
+  // Unused since ADR-009 (passwords live in the shared accounts service); dropped in a later contract migration.
+  passwordHash String?    @map("password_hash")
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 

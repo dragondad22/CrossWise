@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { prisma } from '@/lib/db'
-import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
+import { requireSession } from '@/lib/api-auth'
 
 const BulkSolveActionSchema = z.object({
   action: z.enum(['reset', 'delete']),
@@ -11,23 +11,8 @@ const BulkSolveActionSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: { message: 'Authentication required' } },
-        { status: 401 },
-      )
-    }
-
-    const session = await getSessionForToken(token, { refresh: true })
-
-    if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: { message: 'Authentication required' } },
-        { status: 401 },
-      )
-    }
+    const session = await requireSession(request)
+    if (session.response) return session.response
 
     const body = await request.json()
     const { action, solveIds } = BulkSolveActionSchema.parse(body)

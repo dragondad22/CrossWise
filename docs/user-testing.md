@@ -22,8 +22,8 @@ Your organizer will provide one of these options:
 
 | Option | Steps |
 | --- | --- |
-| Hosted link | Click the shared website link, log in with provided test credentials. |
-| Local build | Follow the `docs/setup.md` instructions (requires Node.js). Use `npm run dev` and open `http://localhost:3000`. |
+| Hosted link | Click the shared website link, then sign in or create a Build Your Alpaca account (Google, GitHub, or email). |
+| Local build | Follow the `docs/setup.md` instructions (requires Node.js and the local accounts service). Use `npm run dev -- -p 3001` and open `http://localhost:3001`. |
 
 If you hit problems during setup, note what happened and continue with the parts you can access.
 

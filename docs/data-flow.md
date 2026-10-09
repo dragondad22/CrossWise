@@ -1,21 +1,25 @@
 # Data Flow
 
 ## Authentication & Session Hydration
-- Credentials are posted to `/api/v1/auth/login`. The handler validates with Zod, looks up the user, verifies the bcrypt hash, creates a session row, and returns a JSON payload while setting the `crosswise_session` cookie.
-- Root server layout (`src/app/layout.tsx`) reads the cookie on every request. It resolves the session, passes the sanitized user into `AuthProvider`, and the client store hydrates itself on mount.
+- Sign-in happens on the shared accounts service (ADR-009). `/login` redirects to `https://accounts.buildyouralpaca.com/sign-in` with a return link. After sign-in, the accounts service sets the `__Secure-alpaca.session_token` cookie for `buildyouralpaca.com`, so it reaches CrossWise.
+- Root server layout (`src/app/layout.tsx`) forwards the `alpaca.*` cookies to the accounts service's `/api/auth/get-session` on every request. It creates or updates the local `users` row (id, email, name), passes the user into `AuthProvider`, and the client store hydrates itself on mount.
+- API routes do the same lookup through `requireSession` (`src/lib/api-auth.ts`): 401 when signed out, 503 when the accounts service can't be reached. Full detail: `docs/auth-session-flow.md`.
 
 ```mermaid
 sequenceDiagram
     participant UI as Client UI
-    participant API as Auth API
+    participant Accounts as Accounts service
+    participant CW as CrossWise (layout / API)
     participant DB as Prisma + Database
 
-    UI->>API: POST /api/v1/auth/login { email, password }
-    API->>DB: find user + verify hash
-    API->>DB: create Session(token, expiresAt)
-    API-->>UI: 200 { success, user } + Set-Cookie crosswise_session
-    UI->>UI: useAppStore.setUser(user)
-    Note over UI: Subsequent requests send cookie automatically
+    UI->>Accounts: Sign in (redirect from /login)
+    Accounts-->>UI: Set-Cookie __Secure-alpaca.session_token (buildyouralpaca.com)
+    UI->>CW: Request + alpaca.* cookie
+    CW->>Accounts: GET /api/auth/get-session (3 s timeout)
+    Accounts-->>CW: { user } or null
+    CW->>DB: upsert users row (id, email, name)
+    CW-->>UI: Page with user, or 401 / 503 from API routes
+    UI->>UI: useAppStore.hydrateUser(user)
 ```
 
 ## Topic & List Retrieval
@@ -91,7 +95,7 @@ sequenceDiagram
     Autosave->>Storage: save JSON snapshot
     Autosave->>API: POST /api/v1/puzzles/:id/solve { state, completed? }
     API->>Prisma: upsert solve row
-    API-->>Autosave: 200 OK or 401 (session expired)
+    API-->>Autosave: 200 OK, 401 (signed out) or 503 (accounts service down)
 ```
 
 ## Import / Export Flows

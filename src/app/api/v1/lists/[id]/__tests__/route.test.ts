@@ -2,7 +2,6 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 import { DELETE } from '../route'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
 const { listFindFirst, listDelete } = vi.hoisted(() => ({
   listFindFirst: vi.fn(),
@@ -24,7 +23,7 @@ vi.mock('@/lib/auth', async () => {
   const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
   return {
     ...actual,
-    getSessionForToken: mockSession,
+    lookupSession: mockSession,
   }
 })
 
@@ -32,7 +31,10 @@ describe('/api/v1/lists/:id DELETE handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSession.mockReset()
-    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
   })
 
   it('deletes a list and returns puzzle ids', async () => {
@@ -44,7 +46,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
 
     const request = new NextRequest('http://localhost/api/v1/lists/list-1', {
       method: 'DELETE',
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await DELETE(request, { params: Promise.resolve({ id: 'list-1' }) })
     const payload = await response.json()
@@ -63,7 +65,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
 
     const request = new NextRequest('http://localhost/api/v1/lists/missing', {
       method: 'DELETE',
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await DELETE(request, { params: Promise.resolve({ id: 'missing' }) })
     const payload = await response.json()
@@ -78,7 +80,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
 
     const request = new NextRequest('http://localhost/api/v1/lists/other-users-list', {
       method: 'DELETE',
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await DELETE(request, {
       params: Promise.resolve({ id: 'other-users-list' }),
@@ -95,7 +97,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
   })
 
   it('rejects DELETE requests without authentication', async () => {
-    mockSession.mockResolvedValueOnce(null)
+    mockSession.mockResolvedValueOnce({ user: null, setCookies: [] })
     const request = new NextRequest('http://localhost/api/v1/lists/list-1', { method: 'DELETE' })
     const response = await DELETE(request, { params: Promise.resolve({ id: 'list-1' }) })
     expect(response.status).toBe(401)
@@ -110,7 +112,7 @@ describe('/api/v1/lists/:id DELETE handler', () => {
 
     const request = new NextRequest('http://localhost/api/v1/lists/list-1', {
       method: 'DELETE',
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await DELETE(request, { params: Promise.resolve({ id: 'list-1' }) })
     const payload = await response.json()

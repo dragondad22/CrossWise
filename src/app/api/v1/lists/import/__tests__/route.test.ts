@@ -2,21 +2,15 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 import { POST } from '../route'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
-const {
-  topicFindFirst,
-  topicCreate,
-  listFindFirst,
-  listFindUnique,
-  prismaTransaction,
-} = vi.hoisted(() => ({
-  topicFindFirst: vi.fn(),
-  topicCreate: vi.fn(),
-  listFindFirst: vi.fn(),
-  listFindUnique: vi.fn(),
-  prismaTransaction: vi.fn(),
-}))
+const { topicFindFirst, topicCreate, listFindFirst, listFindUnique, prismaTransaction } =
+  vi.hoisted(() => ({
+    topicFindFirst: vi.fn(),
+    topicCreate: vi.fn(),
+    listFindFirst: vi.fn(),
+    listFindUnique: vi.fn(),
+    prismaTransaction: vi.fn(),
+  }))
 
 const mockSession = vi.hoisted(() => vi.fn())
 
@@ -38,7 +32,7 @@ vi.mock('@/lib/auth', async () => {
   const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
   return {
     ...actual,
-    getSessionForToken: mockSession,
+    lookupSession: mockSession,
   }
 })
 
@@ -55,7 +49,7 @@ const importPayload = {
   ],
 }
 
-const importRequest = (cookie = `${SESSION_COOKIE_NAME}=token-123`) =>
+const importRequest = (cookie = `alpaca.session_token=token-123`) =>
   new NextRequest('http://localhost/api/v1/lists/import', {
     method: 'POST',
     body: JSON.stringify(importPayload),
@@ -69,7 +63,10 @@ describe('/api/v1/lists/import POST handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSession.mockReset()
-    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
   })
 
   // Regression test for #55: the auto-create-Topic path must scope the lookup to the
@@ -80,11 +77,18 @@ describe('/api/v1/lists/import POST handler', () => {
     topicCreate.mockResolvedValueOnce({ id: topicId, name: 'Animals', userId: 'user-1' })
     listFindFirst.mockResolvedValueOnce(null)
 
-    const createdList = { id: 'clist1234567890123456789', topicId, name: 'Wildlife', source: 'UPLOAD' }
+    const createdList = {
+      id: 'clist1234567890123456789',
+      topicId,
+      name: 'Wildlife',
+      source: 'UPLOAD',
+    }
     prismaTransaction.mockImplementationOnce(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback({
         list: { create: vi.fn(async () => createdList) },
-        listItem: { create: vi.fn(async ({ data }: { data: object }) => ({ id: 'item-1', ...data })) },
+        listItem: {
+          create: vi.fn(async ({ data }: { data: object }) => ({ id: 'item-1', ...data })),
+        },
       }),
     )
     listFindUnique.mockResolvedValueOnce({
@@ -110,11 +114,18 @@ describe('/api/v1/lists/import POST handler', () => {
     topicFindFirst.mockResolvedValueOnce({ id: topicId, name: 'Animals', userId: 'user-1' })
     listFindFirst.mockResolvedValueOnce(null)
 
-    const createdList = { id: 'clist1234567890123456789', topicId, name: 'Wildlife', source: 'UPLOAD' }
+    const createdList = {
+      id: 'clist1234567890123456789',
+      topicId,
+      name: 'Wildlife',
+      source: 'UPLOAD',
+    }
     prismaTransaction.mockImplementationOnce(async (callback: (tx: unknown) => Promise<unknown>) =>
       callback({
         list: { create: vi.fn(async () => createdList) },
-        listItem: { create: vi.fn(async ({ data }: { data: object }) => ({ id: 'item-1', ...data })) },
+        listItem: {
+          create: vi.fn(async ({ data }: { data: object }) => ({ id: 'item-1', ...data })),
+        },
       }),
     )
     listFindUnique.mockResolvedValueOnce({
@@ -134,7 +145,7 @@ describe('/api/v1/lists/import POST handler', () => {
   })
 
   it('rejects unauthenticated requests', async () => {
-    mockSession.mockResolvedValueOnce(null)
+    mockSession.mockResolvedValueOnce({ user: null, setCookies: [] })
 
     const response = await POST(importRequest(''))
     expect(response.status).toBe(401)
@@ -148,7 +159,7 @@ describe('/api/v1/lists/import POST handler', () => {
         body: JSON.stringify({ ...importPayload, items }),
         headers: {
           'content-type': 'application/json',
-          cookie: `${SESSION_COOKIE_NAME}=token-123`,
+          cookie: `alpaca.session_token=token-123`,
         },
       })
 

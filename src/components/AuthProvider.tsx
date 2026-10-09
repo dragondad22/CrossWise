@@ -17,5 +17,14 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
     hydrateUser(initialUser)
   }, [hydrateUser, initialUser])
 
+  // The accounts service extends a session each day it is used, but only a
+  // response to the browser can store the extended cookie. Check in once per page
+  // load so someone using CrossWise daily isn't signed out 30 days after sign-in.
+  const userId = initialUser?.id
+  useEffect(() => {
+    if (!userId) return
+    fetch('/api/v1/auth/session', { cache: 'no-store' }).catch(() => {})
+  }, [userId])
+
   return <>{children}</>
 }

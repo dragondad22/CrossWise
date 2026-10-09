@@ -78,14 +78,16 @@ Unique constraint: `(puzzle_id, user_id)` ensures one progressing solve per user
 ### `users`
 | Column | Type | Notes |
 | --- | --- | --- |
-| `id` | `String` (cuid) | Primary key |
+| `id` | `String` | Primary key; the accounts-service user id (ADR-009) |
 | `email` | `String` | Unique, lowercased |
 | `name` | `String?` | Display name |
-| `password_hash` | `String` | Bcrypt hash |
+| `password_hash` | `String?` | Unused since ADR-009; nullable, dropped in a later contract migration |
 | `created_at` | `DateTime` | Default `now()` |
 | `updated_at` | `DateTime` | Auto-updated |
 
 ### `sessions`
+Unused since ADR-009 (sessions live in the accounts service). This table and `password_reset_tokens` are dropped in a later contract migration.
+
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `String` (cuid) | Primary key |
@@ -100,5 +102,6 @@ Unique constraint: `(puzzle_id, user_id)` ensures one progressing solve per user
 
 ## Notable Behaviours
 - All foreign keys cascade on delete; removing a topic deletes lists, puzzles, solves, and sessions associated through the chain.
+- The `users` row is created or updated on a user's first request. The account-deleted webhook deletes it, which cascades to the user's topics, lists, puzzles and solves.
 - Crossword assets are stored as JSON strings; consumers should `JSON.parse` before use (`SolvePage` does this on load).
 - Solver records are optional for anonymous users, enabling read-only puzzle access without authentication if desired.

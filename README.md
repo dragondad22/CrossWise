@@ -11,7 +11,7 @@ CrossWise is a web application that allows you to upload JSON lists of terms and
 - **Smart Generation**: Advanced backtracking algorithm creates connected crossword grids
 - **Interactive Solving**: Full-featured puzzle solver with keyboard and touch navigation
 - **Auto-save**: Progress saved to localStorage on each cell change with resume capability
-- **User Accounts**: Sign in to sync puzzle progress and completion history per player
+- **User Accounts**: Sign in with your Build Your Alpaca account (Google, GitHub, or email) to sync puzzle progress and completion history per player
 - **Export/Import**: Export lists and solve-state backups for sharing or recovery
 
 ### Technical Features
@@ -47,6 +47,7 @@ npm install
 3. Configure environment variables:
 
 - Create/update `.env` with `DATABASE_URL` (PostgreSQL connection string).
+- For local sign-in, also set `ACCOUNTS_URL=http://localhost:3100` and `APP_URL=http://localhost:3001` (see step 8).
 
 4. Set up the database:
 
@@ -54,21 +55,21 @@ npm install
 npm run db:push
 ```
 
-5. Seed with sample data (optional):
+5. Seed with sample data (optional). To put it in your own account, sign in once first (step 8), then:
 
 ```bash
-npm run seed
+SEED_USER_ID=<your user id> SEED_USER_EMAIL=<your email> npm run seed
 ```
 
 6. Start the development server:
 
 ```bash
-npm run dev
+npm run dev -- -p 3001
 ```
 
-7. Open [http://localhost:3000](http://localhost:3000) in your browser
+7. Open [http://localhost:3001](http://localhost:3001) in your browser
 
-8. Sign in with the demo account (`demo@crosswise.dev` / `password123`) or create your own profile from the sign-in page to enable per-user progress tracking.
+8. Sign in. CrossWise uses the shared Build Your Alpaca accounts service. Locally, run it from `accounts/` in the buildyouralpaca repo (port 3100) and add `http://localhost:3001` to its `APP_ORIGINS`. Full steps: `docs/setup.md` → Local Sign-in.
 
 ## 📝 Usage
 
@@ -183,7 +184,8 @@ CrossWise is fully responsive with:
 ## 🔒 Privacy & Security
 
 - **Auth-required solving**: Solve flows require an authenticated session.
-- **PII handling**: Email + password hash are stored for accounts; session cookies power auth.
+- **PII handling**: Sign-in, passwords and sessions live in the shared accounts service at accounts.buildyouralpaca.com. CrossWise stores your user id, email, name, word lists and solve progress.
+- **Account deletion**: Deleting your account at accounts.buildyouralpaca.com also deletes your CrossWise data.
 - **Input Validation**: Server-side validation with Zod
 - **HTTPS Ready**: Secure deployment configuration
 
@@ -195,6 +197,7 @@ CrossWise is fully responsive with:
 2. Set environment variables:
    ```
    DATABASE_URL=your_postgres_connection_string
+   ACCOUNT_WEBHOOK_SECRET=same_value_as_the_accounts_service
    ```
 3. Deploy automatically on git push
 
@@ -224,7 +227,6 @@ CrossWise is fully responsive with:
 
 ## 🔮 Future Enhancements
 
-- **SSO/OAuth**: Add external identity providers
 - **Collaborative Features**: Shared solving sessions
 - **Advanced Export**: PDF and PNG puzzle export
 - **Analytics**: Generation success rates and solving statistics

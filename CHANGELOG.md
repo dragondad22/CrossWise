@@ -7,6 +7,14 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING:** CrossWise now uses the shared Build Your Alpaca account at accounts.buildyouralpaca.com. Sign in with Google, GitHub, or email and password; the same account works in every Build Your Alpaca app. Everyone signs in once more after this release. CrossWise moves to crosswise.buildyouralpaca.com, and the old crosswise.vercel.app address redirects there (#127)
+- Password reset now actually sends an email, and sign-in is rate limited, both handled by the accounts service (#127)
+- If the accounts service is briefly unreachable, CrossWise answers "try again shortly" instead of signing you out, and keeps your local solve progress (#127)
+
+### Added
+- Deleting your account at accounts.buildyouralpaca.com now also deletes your CrossWise topics, lists, puzzles and solve progress (#127)
+
 ## [0.2.0] - 2026-07-13
 
 ### Added

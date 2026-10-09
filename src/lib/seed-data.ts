@@ -1,16 +1,18 @@
 import { prisma } from './db'
-import { hashPassword } from './auth'
 
+// Users sign in through the shared accounts service (ADR-009), so the seed has no
+// password. To see the sample data, sign in locally once, then seed into your own
+// account: SEED_USER_ID=<your user id> SEED_USER_EMAIL=<your email> npm run seed
 export async function seedSampleData() {
   try {
-    const demoPasswordHash = await hashPassword('password123')
+    const email = process.env.SEED_USER_EMAIL ?? 'demo@crosswise.dev'
     const demoUser = await prisma.user.upsert({
-      where: { email: 'demo@crosswise.dev' },
+      where: { email },
       update: {},
       create: {
-        email: 'demo@crosswise.dev',
+        ...(process.env.SEED_USER_ID ? { id: process.env.SEED_USER_ID } : {}),
+        email,
         name: 'Demo User',
-        passwordHash: demoPasswordHash,
       },
     })
 
@@ -247,7 +249,6 @@ export async function seedSampleData() {
 export async function clearAllData() {
   try {
     // Delete in correct order due to foreign key constraints
-    await prisma.session.deleteMany({})
     await prisma.solve.deleteMany({})
     await prisma.puzzle.deleteMany({})
     await prisma.listItem.deleteMany({})

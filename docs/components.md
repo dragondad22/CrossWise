@@ -41,15 +41,17 @@ if (outcome.success) {
 ```
 
 ### Auth Helpers (`src/lib/auth.ts`)
-- `hashPassword` / `verifyPassword` wrap bcryptjs.
-- `createSession`, `getSessionForToken`, `deleteSessionByToken` manage the `Session` model and expiration logic.
-- `sanitizeUser` ensures only non-sensitive fields flow to the client.
+- `lookupSession` forwards the `alpaca.*` cookies to the accounts service's `/api/auth/get-session` (3 s timeout) and returns the user, or throws `AuthUnavailableError` when the service is down (ADR-009).
+- `ensureLocalUser` creates or updates the local `users` row (id, email, name) so topics and solves keep their foreign keys.
+- `signOutOfAccounts` ends the shared session and returns the cookie-clearing headers.
+- `requireSession` (`src/lib/api-auth.ts`) wraps `lookupSession` for API routes: 401 when signed out, 503 when the accounts service is down.
 
 ## API Handlers (selected)
 | Handler | File | Highlights |
 | --- | --- | --- |
-| Login & Register | `src/app/api/v1/auth/login/route.ts`, `src/app/api/v1/auth/register/route.ts` | Zod validation, bcrypt comparison, session cookie issuance. |
-| Session probe | `src/app/api/v1/auth/session/route.ts` | Returns `{ user: null }` without error when unauthenticated for easier client hydration. |
+| Session probe | `src/app/api/v1/auth/session/route.ts` | Returns `{ user: null }` without error when unauthenticated for easier client hydration; passes refreshed accounts cookies to the browser; 503 when the accounts service is down. |
+| Logout | `src/app/api/v1/auth/logout/route.ts` | Signs out of the shared account (all apps) and clears its cookie. |
+| Account-deleted webhook | `src/app/api/v1/internal/account-deleted/route.ts` | Verifies the HMAC signature and 5-minute timestamp, then deletes the user (cascades); idempotent. |
 | Topics CRUD | `src/app/api/v1/topics/[id]/route.ts` | Uses Prisma includes for nested list metadata; handles uniqueness and not-found cases. |
 | List fetch/update | `src/app/api/v1/lists/route.ts`, `src/app/api/v1/lists/[id]/route.ts` | Augments results with `userSolves` when a session exists, prevents duplicate answers post-normalisation, maps numeric difficulty to enum values. |
 | Generate puzzle | `src/app/api/v1/puzzles/generate/route.ts` | Shuffles list items, limits to 150, stores generated grid/numbering/settings JSON strings. |

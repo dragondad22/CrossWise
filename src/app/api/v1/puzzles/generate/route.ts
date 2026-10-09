@@ -2,23 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { GeneratePuzzleSchema, WORD_COUNT_BOUNDS } from '@/lib/validation'
 import { CrosswordGenerator, deriveListSeed } from '@/lib/crossword-generator'
-import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
-
-const unauthorizedResponse = () =>
-  NextResponse.json({ success: false, error: { message: 'Authentication required' } }, { status: 401 })
-
-async function requireSession(request: NextRequest) {
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-  if (!token) return null
-  return getSessionForToken(token, { refresh: true })
-}
+import { requireSession } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
   try {
     const session = await requireSession(request)
-    if (!session?.user) {
-      return unauthorizedResponse()
-    }
+    if (session.response) return session.response
 
     const userId = session.user.id
     const body = await request.json()
@@ -73,8 +62,10 @@ export async function POST(request: NextRequest) {
     // seeded RNG, so {list, seed, wordCount} is fully reproducible.
     const maxWords = validated.wordCount ?? WORD_COUNT_BOUNDS.max
 
-    let best: { result: ReturnType<CrosswordGenerator['generate']>; gridSize: (typeof gridSizes)[0] } | null =
-      null
+    let best: {
+      result: ReturnType<CrosswordGenerator['generate']>
+      gridSize: (typeof gridSizes)[0]
+    } | null = null
     for (const gridSize of gridSizes) {
       const generator = new CrosswordGenerator({
         gridSize,

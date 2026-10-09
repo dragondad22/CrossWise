@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi, afterEach, type MockInstance } fr
 import { NextRequest } from 'next/server'
 
 import { POST } from '../route'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
 const solveUpdateMany = vi.hoisted(() => vi.fn())
 const solveDeleteMany = vi.hoisted(() => vi.fn())
@@ -21,7 +20,7 @@ vi.mock('@/lib/auth', async () => {
   const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
   return {
     ...actual,
-    getSessionForToken: mockSession,
+    lookupSession: mockSession,
   }
 })
 
@@ -29,14 +28,17 @@ describe('/api/v1/solves/bulk POST', () => {
   const url = 'http://localhost/api/v1/solves/bulk'
   const buildHeaders = () =>
     new Headers({
-      cookie: `${SESSION_COOKIE_NAME}=token-123`,
+      cookie: `alpaca.session_token=token-123`,
       'content-type': 'application/json',
     })
   let consoleSpy: MockInstance
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
     consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
@@ -82,7 +84,7 @@ describe('/api/v1/solves/bulk POST', () => {
   })
 
   it('rejects requests without valid authentication', async () => {
-    mockSession.mockResolvedValueOnce(null)
+    mockSession.mockResolvedValueOnce({ user: null, setCookies: [] })
     const request = new NextRequest(url, {
       method: 'POST',
       headers: buildHeaders(),

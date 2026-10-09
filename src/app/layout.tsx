@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { cookies } from 'next/headers'
+import { headers } from 'next/headers'
 import { Inter } from 'next/font/google'
 
-import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
+import { lookupSession } from '@/lib/auth'
 import AuthProvider from '@/components/AuthProvider'
 import AppHeader from '@/components/AppHeader'
 
@@ -17,10 +17,13 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies()
-  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value
-  const session = sessionToken ? await getSessionForToken(sessionToken) : null
-  const initialUser = session?.user ?? null
+  const initialUser = await lookupSession((await headers()).get('cookie'))
+    .then(({ user }) => user)
+    .catch((error) => {
+      // Accounts service down: render signed out rather than failing every page.
+      console.error('Session lookup failed while rendering:', error)
+      return null
+    })
 
   return (
     <html lang="en">

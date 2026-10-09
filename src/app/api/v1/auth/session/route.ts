@@ -1,22 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
+import { AuthUnavailableError, lookupSession } from '@/lib/auth'
+import { authUnavailableResponse } from '@/lib/api-auth'
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-
-  if (!token) {
-    return NextResponse.json({ success: true, data: { user: null } })
+  try {
+    const { user, setCookies } = await lookupSession(request.headers.get('cookie'))
+    const response = NextResponse.json({ success: true, data: { user } })
+    // Pass the accounts service's refreshed session cookie on to the browser.
+    for (const cookie of setCookies) response.headers.append('set-cookie', cookie)
+    return response
+  } catch (error) {
+    if (error instanceof AuthUnavailableError) return authUnavailableResponse()
+    throw error
   }
-
-  const sessionContext = await getSessionForToken(token, { refresh: true })
-
-  if (!sessionContext) {
-    return NextResponse.json({ success: true, data: { user: null } })
-  }
-
-  return NextResponse.json({
-    success: true,
-    data: { user: sessionContext.user },
-  })
 }

@@ -1,6 +1,6 @@
 # ADR-008: Password recovery + email delivery seam
 
-**Status:** Proposed
+**Status:** Superseded by ADR-009 (2026-10-09): password recovery and email now live in the shared accounts service
 **Date:** 2026-07-13
 **Deciders:** dragondad22
 **Related ADRs:** ADR-001 (per-user data ownership — a reset token is bound to its user)
