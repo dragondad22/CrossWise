@@ -7,6 +7,9 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+### Security
+- Updated Next.js to 15.5.27 and sharp to 0.35.5 (plus postcss and source-map-js), fixing a remote-code-execution flaw in image optimization and a page cache-poisoning flaw (#129)
+
 ## [0.2.0] - 2026-07-13
 
 ### Added
