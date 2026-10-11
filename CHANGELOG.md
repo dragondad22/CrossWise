@@ -7,6 +7,9 @@ and this project adheres to SemVer.
 
 ## [Unreleased]
 
+### Security
+- Upgraded to Next.js 16 and Prisma 7, fixing a remote-code-execution flaw in image optimization and a page cache-poisoning flaw; the production dependency scan is clean again (#129)
+
 ## [0.2.0] - 2026-07-13
 
 ### Added

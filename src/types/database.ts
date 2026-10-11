@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client'
+import { Prisma } from '@/generated/prisma/client'
 
 // Database types from Prisma
 export type Topic = Prisma.TopicGetPayload<Prisma.TopicDefaultArgs>
