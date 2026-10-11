@@ -39,7 +39,7 @@ flowchart LR
 ## Technology Stack
 | Layer | Details |
 | --- | --- |
-| Framework | Next.js 15 (App Router) with React 19 and TypeScript |
+| Framework | Next.js 16 (App Router) with React 19 and TypeScript |
 | Styling | Tailwind CSS with custom design tokens and shadcn-inspired primitives |
 | State & UX | Zustand store (`src/lib/store.ts`), custom autosave manager, date-fns utilities |
 | Validation | Zod schemas for API payloads and list import validation |

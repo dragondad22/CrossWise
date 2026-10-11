@@ -77,7 +77,7 @@ This document is the authoritative product + engineering specification for the c
 
 ## System Architecture
 ### Frontend
-- **Framework:** Next.js 15 App Router (`src/app`).
+- **Framework:** Next.js 16 App Router (`src/app`).
 - **State management:** Zustand with persistence (`src/lib/store.ts`) for non-puzzle UI state; puzzle progress is stored per puzzle via autosave.
 - **UI components:** `src/components` + Tailwind CSS.
 - **Auth hydration:** `AuthProvider` receives server-initial user from `app/layout.tsx`.

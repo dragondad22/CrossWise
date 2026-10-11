@@ -46,7 +46,7 @@ describe('POST /api/v1/puzzles/generate', () => {
     vi.mocked(prisma.list.findFirst).mockResolvedValue({
       id: LIST_ID,
       items: listItems,
-    } as Awaited<ReturnType<typeof prisma.list.findFirst>>)
+    } as unknown as Awaited<ReturnType<typeof prisma.list.findFirst>>)
     vi.mocked(prisma.puzzle.create).mockImplementation((async ({
       data,
     }: {
@@ -113,7 +113,7 @@ describe('POST /api/v1/puzzles/generate', () => {
       vi.mocked(prisma.list.findFirst).mockResolvedValue({
         id: LIST_ID,
         items: vocab,
-      } as Awaited<ReturnType<typeof prisma.list.findFirst>>)
+      } as unknown as Awaited<ReturnType<typeof prisma.list.findFirst>>)
     })
 
     it('uses at most the requested number of words and persists the resolved count', async () => {
@@ -196,7 +196,7 @@ describe('POST /api/v1/puzzles/generate', () => {
       vi.mocked(prisma.list.findFirst).mockResolvedValue({
         id: LIST_ID,
         items: bigList,
-      } as Awaited<ReturnType<typeof prisma.list.findFirst>>)
+      } as unknown as Awaited<ReturnType<typeof prisma.list.findFirst>>)
 
       const response = await POST(makeRequest({ listId: LIST_ID, seed: 'classroom' }))
       const result = await response.json()
@@ -217,7 +217,7 @@ describe('POST /api/v1/puzzles/generate', () => {
       vi.mocked(prisma.list.findFirst).mockResolvedValue({
         id: LIST_ID,
         items: bigList,
-      } as Awaited<ReturnType<typeof prisma.list.findFirst>>)
+      } as unknown as Awaited<ReturnType<typeof prisma.list.findFirst>>)
 
       const body = { listId: LIST_ID, seed: 'ladder-seed' }
       const first = await (await POST(makeRequest(body))).json()
@@ -232,7 +232,7 @@ describe('POST /api/v1/puzzles/generate', () => {
       vi.mocked(prisma.list.findFirst).mockResolvedValue({
         id: LIST_ID,
         items: bigList,
-      } as Awaited<ReturnType<typeof prisma.list.findFirst>>)
+      } as unknown as Awaited<ReturnType<typeof prisma.list.findFirst>>)
 
       const response = await POST(
         makeRequest({ listId: LIST_ID, seed: 's', gridSize: { rows: 15, cols: 15 } }),
@@ -255,7 +255,7 @@ describe('POST /api/v1/puzzles/generate', () => {
           { answer: 'AAA', clue: 'First' },
           { answer: 'BBB', clue: 'Second' },
         ],
-      } as Awaited<ReturnType<typeof prisma.list.findFirst>>)
+      } as unknown as Awaited<ReturnType<typeof prisma.list.findFirst>>)
 
       const response = await POST(makeRequest({ listId: LIST_ID, seed: 'no-crossings' }))
       const result = await response.json()
