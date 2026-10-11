@@ -1,7 +1,7 @@
 # Setup & Operations
 
 ## Prerequisites
-- Node.js 18+ (Next.js 15 requirement)
+- Node.js 20.19+ (Prisma 7 requirement; Next.js 16 needs 20.9+)
 - npm (ships with Node)
 - SQLite (bundled with Prisma for local `file:` URLs) or a PostgreSQL instance for production deployments
 
@@ -24,7 +24,7 @@ Initialise the schema locally:
 npm run db:push
 ```
 
-Generate Prisma client typings (runs implicitly during `db:push`, available separately):
+Generate the Prisma client into `src/generated/prisma` (runs on `npm install`; run it again after schema changes, since Prisma 7 `db:push` and `db:migrate` no longer do):
 ```bash
 npm run db:generate
 ```

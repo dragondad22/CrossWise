@@ -69,7 +69,7 @@ describe('TopicsPage auth gate (#82)', () => {
 
     useAppStore.setState({
       sessionHydrated: true,
-      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+      user: { id: 'u1', email: 'user@example.com', name: null },
     })
 
     await waitFor(() => {
@@ -92,7 +92,7 @@ describe('TopicsPage auth gate (#82)', () => {
     render(<TopicsPage />)
     useAppStore.setState({
       sessionHydrated: true,
-      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+      user: { id: 'u1', email: 'user@example.com', name: null },
     })
 
     const alert = await screen.findByRole('alert')
@@ -119,7 +119,7 @@ describe('TopicsPage auth gate (#82)', () => {
     render(<TopicsPage />)
     useAppStore.setState({
       sessionHydrated: true,
-      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+      user: { id: 'u1', email: 'user@example.com', name: null },
     })
 
     expect(await screen.findByText('No topics yet')).toBeTruthy()
@@ -157,7 +157,7 @@ describe('TopicsPage auth gate (#82)', () => {
     render(<TopicsPage />)
     useAppStore.setState({
       sessionHydrated: true,
-      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+      user: { id: 'u1', email: 'user@example.com', name: null },
     })
 
     // Open the confirmation from the card's delete control.
@@ -190,7 +190,7 @@ describe('TopicsPage auth gate (#82)', () => {
 
     useAppStore.setState({
       sessionHydrated: true,
-      user: { id: 'u1', email: 'user@example.com', name: null, createdAt: '' },
+      user: { id: 'u1', email: 'user@example.com', name: null },
     })
 
     await waitFor(() => {

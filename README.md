@@ -144,7 +144,7 @@ prisma/                   # Database schema & migrations
 
 ### Key Technologies
 
-- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS
 - **State Management**: Zustand with persistence
 - **Database**: PostgreSQL with Prisma ORM
 - **Validation**: Zod for runtime type checking

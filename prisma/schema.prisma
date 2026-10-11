@@ -2,12 +2,13 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
+// The connection URL lives in prisma.config.ts (CLI) and src/lib/db.ts (app).
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Topic {
