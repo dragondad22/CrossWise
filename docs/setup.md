@@ -1,7 +1,7 @@
 # Setup & Operations
 
 ## Prerequisites
-- Node.js 20.19+ (Prisma 7 requirement; Next.js 16 needs 20.9+)
+- Node.js 22 (what CI uses; Node 20 is end-of-life and the test suite no longer runs on it)
 - npm (ships with Node)
 - SQLite (bundled with Prisma for local `file:` URLs) or a PostgreSQL instance for production deployments
 
