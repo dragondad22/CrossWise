@@ -2,7 +2,6 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 import { GET } from '../puzzles/route'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
 const { puzzleFindMany } = vi.hoisted(() => ({
   puzzleFindMany: vi.fn(),
@@ -22,7 +21,7 @@ vi.mock('@/lib/auth', async () => {
   const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
   return {
     ...actual,
-    getSessionForToken: mockSession,
+    lookupSession: mockSession,
   }
 })
 
@@ -30,11 +29,14 @@ describe('/api/v1/lists/:id/puzzles auth enforcement (printable export data path
   beforeEach(() => {
     vi.clearAllMocks()
     mockSession.mockReset()
-    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
   })
 
   it('returns 401 for unauthenticated requests', async () => {
-    mockSession.mockResolvedValueOnce(null)
+    mockSession.mockResolvedValueOnce({ user: null, setCookies: [] })
     const request = new NextRequest('http://localhost/api/v1/lists/clist123/puzzles')
 
     const response = await GET(request, { params: Promise.resolve({ id: 'clist123' }) })
@@ -47,7 +49,7 @@ describe('/api/v1/lists/:id/puzzles auth enforcement (printable export data path
     puzzleFindMany.mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/v1/lists/other-users-list/puzzles', {
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await GET(request, {
       params: Promise.resolve({ id: 'other-users-list' }),
@@ -71,7 +73,7 @@ describe('/api/v1/lists/:id/puzzles auth enforcement (printable export data path
     puzzleFindMany.mockResolvedValueOnce(puzzles)
 
     const request = new NextRequest('http://localhost/api/v1/lists/clist123/puzzles', {
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await GET(request, { params: Promise.resolve({ id: 'clist123' }) })
     const payload = await response.json()

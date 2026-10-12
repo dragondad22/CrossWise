@@ -12,7 +12,7 @@ This document is the authoritative product + engineering specification for the c
 - Crossword generation with deterministic seeds.
 - Puzzle solving UI with keyboard + touch navigation.
 - Local autosave + server sync for solve state.
-- User accounts + session cookies for auth.
+- Sign-in through the shared Build Your Alpaca accounts service (ADR-009).
 - REST-style JSON API under `/api/v1/...`.
 
 ### Out of scope / stretch
@@ -57,17 +57,22 @@ This document is the authoritative product + engineering specification for the c
    - When loading a puzzle, conflicts resolve by highest `revision`; the
      `lastSaved` timestamp is only a tiebreaker / legacy fallback.
 
-6. **Auth**
-   - Email/password registration.
-   - Login to create session cookie.
+6. **Auth** (ADR-009)
+   - Sign-in, sign-up, password reset, sign-out and account deletion happen on the shared
+     accounts service at `https://accounts.buildyouralpaca.com` (Google, GitHub, or email +
+     password). Accounts are for ages 13 and up.
+   - `/login`, `/register`, `/forgot-password` and `/reset-password` redirect there, with a
+     return link to the CrossWise page in `next` (same-origin paths only). `/account` redirects
+     to the accounts page; the header's name links to it.
    - Session endpoint to hydrate user on page load.
-   - Logout clears session cookie.
+   - Logout signs out of the shared account (all apps) and clears its cookie.
+   - Deleting the account also deletes the user's CrossWise data (signed webhook).
 
 ### Non-functional requirements
 - Responsive UI: desktop/tablet/mobile.
 - Accessible keyboard navigation and focus management for grid/clues.
 - Fast puzzle generation target: < 2 seconds for 150 words (README claim).
-- Safe storage of passwords (bcrypt hashing).
+- No passwords or session tokens stored in CrossWise; the accounts service holds them.
 - API returns consistent JSON with `success` + `data` or `error`.
 
 ## System Architecture
@@ -80,7 +85,7 @@ This document is the authoritative product + engineering specification for the c
 
 ### Backend / API
 - **Framework:** Next.js API Route Handlers under `src/app/api/v1`.
-- **Auth:** Custom sessions in database, cookie stored in `crosswise_session`.
+- **Auth:** `src/lib/auth.ts` asks the accounts service who the `alpaca.*` session cookie belongs to (`GET {ACCOUNTS_URL}/api/auth/get-session`, 3 s timeout). API routes use `requireSession` from `src/lib/api-auth.ts`.
 - **Validation:** Zod schemas in `src/lib/validation.ts`.
 - **DB access:** Prisma client (`src/lib/db.ts`).
 
@@ -139,41 +144,46 @@ This document is the authoritative product + engineering specification for the c
 - unique: `(puzzleId, userId)`
 
 ### User
-- `id` (cuid, PK)
+- `id` (PK; the accounts-service user id)
 - `email` (unique)
 - `name` (optional)
-- `passwordHash`
+- `passwordHash` (optional, unused since ADR-009)
 - `createdAt`, `updatedAt`
-- relations: `solves[]`, `sessions[]`
+- relations: `topics[]`, `solves[]`
+- Created or updated on a user's first request (id, email, name), so topics and solves keep
+  their foreign keys.
 
-### Session
-- `id` (cuid, PK)
-- `userId` (FK)
-- `token` (unique)
-- `expiresAt`
-- `createdAt`
+### Session, PasswordResetToken (unused)
+- The `sessions` and `password_reset_tokens` tables and `users.password_hash` are unused
+  since ADR-009. A later contract migration drops them (ADR-002).
 
 ## API Specification (v1)
 All endpoints return JSON with `{ success: boolean, data?: ..., error?: ... }` unless noted.
-Authentication: cookie `crosswise_session` required for most endpoints.
+Authentication: the accounts service's session cookie (`__Secure-alpaca.session_token`, set for `buildyouralpaca.com`) is required for most endpoints. Signed out → 401. Accounts service unreachable → 503 with `Retry-After: 30`.
 
 ### Auth
-- `POST /api/v1/auth/register`
-  - Body: `{ email, password, name? }`
-  - Creates user + session. Sets cookie.
-  - Errors: 400 (Zod), 409 (email exists), 500.
-
-- `POST /api/v1/auth/login`
-  - Body: `{ email, password }`
-  - Creates session, sets cookie.
-  - Errors: 400 (Zod), 401 (invalid credentials), 500.
+Sign-in, sign-up and password reset have no CrossWise API; they happen on the accounts service.
 
 - `GET /api/v1/auth/session`
-  - Returns `{ user: AuthUser | null }`.
-  - Does not error on missing session.
+  - Returns `{ user: AuthUser | null }`, looked up from the accounts service.
+  - Does not error on missing session. Passes refreshed session cookies on to the browser.
+  - Errors: 503 when the accounts service is unreachable or answers with an error.
 
 - `POST /api/v1/auth/logout`
-  - Deletes session token, clears cookie.
+  - Signs out of the shared account (all apps) and clears its cookie.
+  - Errors: 503 when the accounts service is unreachable.
+
+### Internal
+- `POST /api/v1/internal/account-deleted`
+  - Called by the accounts service before it deletes an account. No session cookie.
+  - Body: `{ userId }`.
+  - Headers: `x-alpaca-timestamp` (unix seconds) and
+    `x-alpaca-signature: v1=<hex HMAC-SHA256 of "<timestamp>.<body>">`, keyed with
+    `ACCOUNT_WEBHOOK_SECRET`. Timestamps more than 5 minutes off are refused.
+  - Deletes the user; topics, lists, puzzles and solves cascade. Idempotent: a repeat
+    returns 200 with `{ deleted: 0 }`.
+  - Errors: 400 (no `userId`), 401 (bad signature or timestamp), 503 (secret not set).
+  - If CrossWise can't confirm, the accounts service refuses to delete the account.
 
 ### Topics
 - `GET /api/v1/topics`
@@ -298,7 +308,7 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 ## Error Handling Strategy
 - Server API catches errors and returns consistent JSON structure.
 - Zod validation errors return 400 with details.
-- Auth-required endpoints return 401 if no valid session cookie.
+- Auth-required endpoints return 401 if no valid session cookie, and 503 (`Retry-After: 30`) if the accounts service can't be reached.
 - Not found resources return 404.
 - Conflicts return 409 (topic name or list version).
 - Generation failure returns 422 with placed/total/conflicting words.
@@ -306,10 +316,15 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 - Autosave sync handles offline and session expiration gracefully, preferring local persistence.
 
 ## Security & Privacy
-- Passwords hashed with bcrypt (salt rounds = 12).
-- Session tokens stored in DB; cookie is `httpOnly`, `sameSite=lax`, `secure` in production.
-- Session expiration: 7 days, refreshed if <24h left.
-- PII stored: email + optional name + password hash.
+- Passwords, sessions, email confirmation, reset email (Resend) and sign-in rate limits live
+  in the shared accounts service (ADR-009). CrossWise stores no passwords or session tokens.
+- The session cookie `__Secure-alpaca.session_token` is `httpOnly`, `Secure`,
+  `SameSite=Lax`, set for `buildyouralpaca.com`. CrossWise forwards only the `alpaca.*`
+  cookies to the accounts service.
+- The account-deleted webhook is verified with an HMAC-SHA256 signature and a 5-minute
+  timestamp window.
+- PII stored in CrossWise: user id, email, optional name. Account data (password hash,
+  sessions with IP + user agent, profile picture) is in the accounts database.
 
 ## Testing Plan
 ### Current test tooling
@@ -329,7 +344,7 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 1. **API integration tests**
    - Use a test DB and verify full request/response flows (auth, create topic, import list, generate puzzle, save solve).
 2. **Auth edge cases**
-   - Expired session refresh, logout invalidation, multiple sessions.
+   - Accounts service slow or down (503), signed-out requests (401), sign-out across apps.
 3. **Generator robustness**
    - High-conflict word sets, small grid sizes, deterministic seeds.
 4. **Autosave conflict resolution**
@@ -338,7 +353,7 @@ Authentication: cookie `crosswise_session` required for most endpoints.
    - Playwright/Cypress flow: login → topics → list → generate → solve → sync.
 
 ## Configuration
-- **Env:** `DATABASE_URL` for PostgreSQL.
+- **Env:** `DATABASE_URL` for PostgreSQL; `ACCOUNTS_URL` (default `https://accounts.buildyouralpaca.com`); `APP_URL` (default `https://crosswise.buildyouralpaca.com`); `ACCOUNT_WEBHOOK_SECRET` (required for the account-deleted webhook).
 - **Node:** 18+.
 - **Scripts:**
   - `npm run dev` (Next dev server)
@@ -349,7 +364,8 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 - Prisma client is cached in dev to avoid re-instantiation.
 - `prisma` models store JSON as strings; ensure consistent serialization/deserialization.
 - Solve state in DB is stored as JSON string (not structured columns).
-- API endpoints generally assume authenticated users; UI redirects to login when needed.
+- API endpoints generally assume authenticated users; UI redirects to `/login`, which forwards to the accounts service.
+- CrossWise is served at `https://crosswise.buildyouralpaca.com`; `crosswise.vercel.app` permanently redirects there (`next.config.js`).
 
 ## AI Maintenance Instructions
 - **Always update this file (`docs/specs/CROSSWISE_SPEC.md`) when you change:**
@@ -364,6 +380,7 @@ Authentication: cookie `crosswise_session` required for most endpoints.
 ---
 
 ## Change Log
+- 2026-10-09: Sign-in moved to the shared Build Your Alpaca accounts service (ADR-009, #127). Removed login/register/password API routes; added `requireSession`, the 503 path, and the signed account-deleted webhook; `users.password_hash` is now optional and unused.
 - 2026-01-30: Tightened crossword grid sizing to account for gap/padding/border and avoid mobile overflow; cells now use border-box sizing and the grid scales to the available container.
 - 2026-01-30: Adjusted solve page desktop layout to top-align the puzzle grid with the clue list to remove excess vertical spacing while keeping mobile spacing unchanged.
 - 2026-01-30: Updated persistence notes to reflect that `crosswise-store` no longer saves puzzle-scoped state; puzzle progress is stored per-puzzle via autosave keys.

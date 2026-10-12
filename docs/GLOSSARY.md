@@ -55,6 +55,14 @@ Example entry:
   (reserved for auth sessions).
 - **Autosave** — local-first persistence of Solve state; server sync reconciles
   without clobbering newer local state (a `CLAUDE.md` non-negotiable).
+- **Accounts service** — the shared Build Your Alpaca sign-in at
+  `accounts.buildyouralpaca.com` (Better Auth). It owns sign-in, sign-up,
+  passwords, sessions and account deletion for every Build Your Alpaca app;
+  CrossWise only asks it who a session cookie belongs to (ADR-009).
+- **Account-deleted webhook** — `POST /api/v1/internal/account-deleted`, called
+  by the accounts service before it deletes an account. Signed with
+  `ACCOUNT_WEBHOOK_SECRET` (HMAC); deleting the user cascades to their topics,
+  lists, puzzles and solves.
 
 ## Technical terms
 

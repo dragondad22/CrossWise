@@ -2,21 +2,15 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 import { GET, POST } from '../route'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
-const {
-  listFindMany,
-  listFindUnique,
-  solveFindMany,
-  topicFindFirst,
-  prismaTransaction,
-} = vi.hoisted(() => ({
-  listFindMany: vi.fn(),
-  listFindUnique: vi.fn(),
-  solveFindMany: vi.fn(),
-  topicFindFirst: vi.fn(),
-  prismaTransaction: vi.fn(),
-}))
+const { listFindMany, listFindUnique, solveFindMany, topicFindFirst, prismaTransaction } =
+  vi.hoisted(() => ({
+    listFindMany: vi.fn(),
+    listFindUnique: vi.fn(),
+    solveFindMany: vi.fn(),
+    topicFindFirst: vi.fn(),
+    prismaTransaction: vi.fn(),
+  }))
 
 const mockSession = vi.hoisted(() => vi.fn())
 
@@ -40,7 +34,7 @@ vi.mock('@/lib/auth', async () => {
   const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
   return {
     ...actual,
-    getSessionForToken: mockSession,
+    lookupSession: mockSession,
   }
 })
 
@@ -48,7 +42,10 @@ describe('/api/v1/lists route handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSession.mockReset()
-    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
   })
 
   it('fetches lists and attaches user solves when a session exists', async () => {
@@ -81,13 +78,13 @@ describe('/api/v1/lists route handlers', () => {
     ])
 
     const request = new NextRequest('http://localhost/api/v1/lists', {
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await GET(request)
     const payload = await response.json()
 
     expect(response.status).toBe(200)
-    expect(mockSession).toHaveBeenCalledWith('token-123', { refresh: true })
+    expect(mockSession).toHaveBeenCalledWith('alpaca.session_token=token-123')
     expect(solveFindMany).toHaveBeenCalled()
     expect(payload.data[0].userSolves).toHaveLength(1)
   })
@@ -96,7 +93,7 @@ describe('/api/v1/lists route handlers', () => {
     listFindMany.mockRejectedValueOnce(new Error('db down'))
 
     const request = new NextRequest('http://localhost/api/v1/lists', {
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await GET(request)
     const payload = await response.json()
@@ -106,7 +103,7 @@ describe('/api/v1/lists route handlers', () => {
   })
 
   it('rejects GET requests without authentication', async () => {
-    mockSession.mockResolvedValueOnce(null)
+    mockSession.mockResolvedValueOnce({ user: null, setCookies: [] })
     const response = await GET(new NextRequest('http://localhost/api/v1/lists'))
     expect(response.status).toBe(401)
   })
@@ -115,7 +112,12 @@ describe('/api/v1/lists route handlers', () => {
     const topicId = 'ctopic1234567890123456789'
     topicFindFirst.mockResolvedValueOnce({ id: topicId, name: 'Animals' })
 
-    const createdList = { id: 'clist1234567890123456789', topicId, name: 'Wildlife', source: 'UPLOAD' }
+    const createdList = {
+      id: 'clist1234567890123456789',
+      topicId,
+      name: 'Wildlife',
+      source: 'UPLOAD',
+    }
 
     type MockListItemData = {
       listId: string
@@ -131,13 +133,11 @@ describe('/api/v1/lists route handlers', () => {
 
     const listCreateMock = vi.fn(async () => createdList)
 
-    const listItemCreateMock = vi.fn(
-      async ({ data }: { data: MockListItemData }) => {
-        const created: MockListItemRecord = { id: `item-${createdItems.length + 1}`, ...data }
-        createdItems.push(created)
-        return created
-      },
-    )
+    const listItemCreateMock = vi.fn(async ({ data }: { data: MockListItemData }) => {
+      const created: MockListItemRecord = { id: `item-${createdItems.length + 1}`, ...data }
+      createdItems.push(created)
+      return created
+    })
 
     type MockTransactionClient = {
       list: { create: typeof listCreateMock }
@@ -145,7 +145,11 @@ describe('/api/v1/lists route handlers', () => {
     }
 
     prismaTransaction.mockImplementationOnce(
-      async (callback: (client: MockTransactionClient) => Promise<{ list: typeof createdList; items: MockListItemRecord[] }>) => {
+      async (
+        callback: (
+          client: MockTransactionClient,
+        ) => Promise<{ list: typeof createdList; items: MockListItemRecord[] }>,
+      ) => {
         const tx: MockTransactionClient = {
           list: { create: listCreateMock },
           listItem: { create: listItemCreateMock },
@@ -173,7 +177,7 @@ describe('/api/v1/lists route handlers', () => {
     const request = new NextRequest('http://localhost/api/v1/lists', {
       method: 'POST',
       body: JSON.stringify(payload),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
     const response = await POST(request)
@@ -197,7 +201,7 @@ describe('/api/v1/lists route handlers', () => {
         name: 'Wildlife',
         items: [{ answer: 'cat', clue: 'Feline friend' }],
       }),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
     const response = await POST(request)
@@ -218,7 +222,7 @@ describe('/api/v1/lists route handlers', () => {
         name: 'Wildlife',
         items: [{ answer: 'cat', clue: 'Feline friend' }],
       }),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
     const response = await POST(request)
@@ -229,7 +233,7 @@ describe('/api/v1/lists route handlers', () => {
   })
 
   it('rejects POST requests without authentication', async () => {
-    mockSession.mockResolvedValueOnce(null)
+    mockSession.mockResolvedValueOnce({ user: null, setCookies: [] })
     const request = new NextRequest('http://localhost/api/v1/lists', {
       method: 'POST',
       body: JSON.stringify({

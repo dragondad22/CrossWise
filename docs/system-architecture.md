@@ -11,7 +11,10 @@ flowchart TD
 
     subgraph Edge
         CDN[CDN / Static Assets]
-        Auth[Session Cookie<br/>/ Token]
+    end
+
+    subgraph Shared
+        Auth[Accounts service<br/>accounts.buildyouralpaca.com]
     end
 
     subgraph Backend
@@ -26,6 +29,7 @@ flowchart TD
     end
 
     Web --> CDN
+    Web -->|sign in / sign up| Auth
     Web --> API
     Mobile --> API
     Web <--> DeviceStore
@@ -38,6 +42,6 @@ flowchart TD
 ```
 
 ## Interaction Notes
-- Web uses cookie-backed sessions; mobile can reuse the same session cookie (for in-app webviews) or switch to a short-lived token issued by the same auth endpoints.
+- Web signs in on the shared accounts service (ADR-009). Its session cookie is set for `buildyouralpaca.com`, and CrossWise asks the service who the cookie belongs to on each request (`requireSession`). How a mobile client signs in is not decided yet.
 - Both clients cache puzzle data and autosave solve state locally, then sync via the `/api/v1/puzzles/:id/solve` endpoint when online.
 - Background tasks are minimal; route handlers orchestrate validation, persistence, and autosave reconciliation in-process.

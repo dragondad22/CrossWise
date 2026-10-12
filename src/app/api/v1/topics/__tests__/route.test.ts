@@ -2,7 +2,6 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 import { GET, POST } from '../route'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
 
 const { topicFindMany, topicCreate } = vi.hoisted(() => ({
   topicFindMany: vi.fn(),
@@ -24,7 +23,7 @@ vi.mock('@/lib/auth', async () => {
   const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
   return {
     ...actual,
-    getSessionForToken: mockSession,
+    lookupSession: mockSession,
   }
 })
 
@@ -32,7 +31,10 @@ describe('/api/v1/topics route handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSession.mockReset()
-    mockSession.mockResolvedValue({ user: { id: 'user-1' } })
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
   })
 
   it('returns a list of topics on GET', async () => {
@@ -40,7 +42,7 @@ describe('/api/v1/topics route handlers', () => {
     topicFindMany.mockResolvedValueOnce(topics)
 
     const request = new NextRequest('http://localhost/api/v1/topics', {
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await GET(request)
     expect(response.status).toBe(200)
@@ -54,7 +56,7 @@ describe('/api/v1/topics route handlers', () => {
     topicFindMany.mockRejectedValueOnce(new Error('db down'))
 
     const request = new NextRequest('http://localhost/api/v1/topics', {
-      headers: { cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { cookie: `alpaca.session_token=token-123` },
     })
     const response = await GET(request)
     const payload = await response.json()
@@ -77,7 +79,7 @@ describe('/api/v1/topics route handlers', () => {
     const request = new NextRequest('http://localhost/api/v1/topics', {
       method: 'POST',
       body: JSON.stringify(body),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
     const response = await POST(request)
@@ -97,7 +99,7 @@ describe('/api/v1/topics route handlers', () => {
     const request = new NextRequest('http://localhost/api/v1/topics', {
       method: 'POST',
       body: JSON.stringify(invalidBody),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
     const response = await POST(request)
@@ -118,12 +120,10 @@ describe('/api/v1/topics route handlers', () => {
     const request = new NextRequest('http://localhost/api/v1/topics', {
       method: 'POST',
       body: JSON.stringify(body),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
-    topicCreate.mockRejectedValueOnce(
-      new Error('Unique constraint failed on the fields: (`name`)'),
-    )
+    topicCreate.mockRejectedValueOnce(new Error('Unique constraint failed on the fields: (`name`)'))
 
     const response = await POST(request)
     const payload = await response.json()
@@ -142,7 +142,7 @@ describe('/api/v1/topics route handlers', () => {
     const request = new NextRequest('http://localhost/api/v1/topics', {
       method: 'POST',
       body: JSON.stringify(body),
-      headers: { 'content-type': 'application/json', cookie: `${SESSION_COOKIE_NAME}=token-123` },
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
     })
 
     topicCreate.mockRejectedValueOnce(new Error('network error'))
@@ -155,7 +155,7 @@ describe('/api/v1/topics route handlers', () => {
   })
 
   it('rejects unauthorized requests', async () => {
-    mockSession.mockResolvedValueOnce(null)
+    mockSession.mockResolvedValueOnce({ user: null, setCookies: [] })
     const request = new NextRequest('http://localhost/api/v1/topics')
     const response = await GET(request)
     expect(response.status).toBe(401)

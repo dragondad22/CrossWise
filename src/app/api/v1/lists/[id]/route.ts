@@ -3,16 +3,7 @@ import { ZodError } from 'zod'
 
 import { prisma } from '@/lib/db'
 import { UpdateListSchema, normalizeAnswer } from '@/lib/validation'
-import { getSessionForToken, SESSION_COOKIE_NAME } from '@/lib/auth'
-
-const unauthorizedResponse = () =>
-  NextResponse.json({ success: false, error: { message: 'Authentication required' } }, { status: 401 })
-
-async function requireSession(request: NextRequest) {
-  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value
-  if (!token) return null
-  return getSessionForToken(token, { refresh: true })
-}
+import { requireSession } from '@/lib/api-auth'
 
 function mapDifficulty(
   difficulty: number | 'EASY' | 'MEDIUM' | 'HARD' | undefined,
@@ -35,9 +26,7 @@ function mapDifficulty(
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await requireSession(request)
-    if (!session?.user) {
-      return unauthorizedResponse()
-    }
+    if (session.response) return session.response
     const userId = session.user.id
 
     const { id } = await params
@@ -218,9 +207,7 @@ export async function DELETE(
 ) {
   try {
     const session = await requireSession(request)
-    if (!session?.user) {
-      return unauthorizedResponse()
-    }
+    if (session.response) return session.response
 
     const userId = session.user.id
     const { id } = await params

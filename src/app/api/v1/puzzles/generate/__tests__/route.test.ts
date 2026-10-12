@@ -11,13 +11,13 @@ vi.mock('@/lib/db', () => ({
   },
 }))
 
-vi.mock('@/lib/auth', () => ({
-  SESSION_COOKIE_NAME: 'crosswise_session',
-  getSessionForToken: vi.fn(),
-}))
+vi.mock('@/lib/auth', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/auth')>('@/lib/auth')
+  return { ...actual, lookupSession: vi.fn() }
+})
 
 import { prisma } from '@/lib/db'
-import { getSessionForToken } from '@/lib/auth'
+import { lookupSession } from '@/lib/auth'
 
 const LIST_ID = 'clist0000000000000000001'
 
@@ -32,23 +32,26 @@ function makeRequest(body: Record<string, unknown>, { authenticated = true } = {
   return new NextRequest('http://localhost/api/v1/puzzles/generate', {
     method: 'POST',
     body: JSON.stringify(body),
-    headers: authenticated ? { cookie: 'crosswise_session=test-token' } : {},
+    headers: authenticated ? { cookie: 'alpaca.session_token=test-token' } : {},
   })
 }
 
 describe('POST /api/v1/puzzles/generate', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getSessionForToken).mockResolvedValue({
-      user: { id: 'user1' },
-    } as Awaited<ReturnType<typeof getSessionForToken>>)
+    vi.mocked(lookupSession).mockImplementation(async (cookie) => ({
+      user: cookie ? { id: 'user1', email: 'user1@example.com' } : null,
+      setCookies: [],
+    }))
     vi.mocked(prisma.list.findFirst).mockResolvedValue({
       id: LIST_ID,
       items: listItems,
     } as unknown as Awaited<ReturnType<typeof prisma.list.findFirst>>)
-    vi.mocked(prisma.puzzle.create).mockImplementation(
-      (async ({ data }: { data: { seed: string } }) => ({ id: 'puzzle1', ...data })) as never,
-    )
+    vi.mocked(prisma.puzzle.create).mockImplementation((async ({
+      data,
+    }: {
+      data: { seed: string }
+    }) => ({ id: 'puzzle1', ...data })) as never)
   })
 
   it('returns identical puzzles for two calls with the same seed', async () => {
@@ -139,9 +142,7 @@ describe('POST /api/v1/puzzles/generate', () => {
     })
 
     it('uses all items without error when the requested count exceeds the list size', async () => {
-      const response = await POST(
-        makeRequest({ listId: LIST_ID, seed: 's', wordCount: 100 }),
-      )
+      const response = await POST(makeRequest({ listId: LIST_ID, seed: 's', wordCount: 100 }))
       const result = await response.json()
 
       expect(result.success).toBe(true)

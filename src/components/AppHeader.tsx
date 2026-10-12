@@ -41,9 +41,13 @@ export default function AppHeader() {
 
         {user ? (
           <div className="flex items-center gap-4">
-            <span className="hidden text-sm text-muted-foreground sm:inline">
+            <Link
+              href="/account"
+              className="hidden text-sm text-muted-foreground transition-colors hover:text-primary sm:inline"
+              title="Your Build Your Alpaca account"
+            >
               {user.name ? user.name : user.email}
-            </span>
+            </Link>
             <Button variant="ghost" onClick={handleLogout} disabled={isLoggingOut}>
               {isLoggingOut ? 'Signing out…' : 'Sign out'}
             </Button>

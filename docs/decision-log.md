@@ -129,3 +129,31 @@ remains a future, deliberate decision.
   tag + GitHub release for every shipped version.
 
 **Status:** Active
+
+## Decision 4: Accounts are for ages 13 and up
+**Date:** 2026-10-09
+
+**Context:**
+With ADR-009, CrossWise accounts are Build Your Alpaca shared accounts, which collect an
+email address (and name/picture from Google or GitHub). Decision 1 says minors use
+CrossWise. COPPA requires verifiable parental consent before collecting personal
+information from children under 13 (CW-C-005).
+
+**Decision:**
+Accounts are for ages 13 and up. The buildyouralpaca.com privacy policy and terms state
+it (live 2026-10-09), the accounts sign-up page says it, and an under-13 account is
+deleted on request. There is no age verification. Under-13 students would use CrossWise
+without an account once guest solving exists (#101/#108). Approved by dragondad22.
+
+**Rationale:**
+- A parental-consent flow is a large project needing legal review; 13+ matches the
+  minimum age Google and GitHub already require for their own accounts.
+- Keeps the shared accounts service out of COPPA's verifiable-consent scope while the
+  audience is small.
+
+**Impact:**
+- CW-C-005 stays active: DPIA, age-appropriate design and high-privacy defaults still
+  apply to 13–17 year olds.
+- Revisit if CrossWise is marketed to schools for under-13 classes.
+
+**Status:** Active

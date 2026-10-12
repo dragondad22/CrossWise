@@ -18,8 +18,9 @@ Single Next.js app deployed on Vercel — no monorepo tooling.
 These are finalized architectural constraints. Do not re-litigate.
 
 - **User-data isolation**: every query is scoped to the authenticated user; a user can only read/write their own topics, lists, puzzles, and solves.
-- **Password safety**: passwords are bcrypt-hashed — never stored or logged in plaintext.
-- **Session cookies**: `httpOnly`, `sameSite=lax`, `secure` in production; session tokens stored server-side and revoked on logout.
+- **Delegated auth (ADR-009)**: sign-in, passwords and sessions live in the shared accounts service (accounts.buildyouralpaca.com). CrossWise never handles passwords and never stores or issues session tokens; it only forwards the `alpaca.*` cookies to the accounts service to learn who the user is.
+- **One session check**: every API route gets the user from `requireSession` in `src/lib/api-auth.ts` (401 signed out, 503 accounts service down). Don't copy auth code into routes.
+- **Signed deletion webhook**: `POST /api/v1/internal/account-deleted` must verify its HMAC signature and timestamp before deleting anything.
 - **No data loss on autosave**: local autosave must never silently lose solve progress; server sync reconciles without clobbering newer local state.
 - **Deterministic generation**: puzzle generation is seeded and reproducible for a given list + seed.
 
@@ -92,7 +93,7 @@ that apply *because of what a change does*. Full rules + trigger map:
 `ai/STANDARDS/EXTERNAL_STANDARDS_AND_COMPLIANCE.md`. What binds **this** project:
 `docs/compliance/COMPLIANCE_REGISTER.md`.
 
-- Platforms: `Web (Next.js on Vercel)` · Audience: `Students, teachers, and general users — not currently age-gated (minors plausibly access)` · Regulated data: `PII (email, bcrypt password hash, session token, request IP), user content (word lists/clues), solve progress. No payments/health/location.`.
+- Platforms: `Web (Next.js on Vercel)` · Audience: `Students, teachers, and general users — accounts are for ages 13+ (stated by the shared accounts service, not verified); minors plausibly access` · Regulated data: `CrossWise holds PII (user id, email, name, request IP), user content (word lists/clues), solve progress. The shared accounts service holds account data (password hash for email accounts, sessions with IP + user agent, profile picture). No payments/health/location.`.
 - A change that touches a public API, web UI, a mobile release, messaging/UGC, payments, personal data, or data about minors pulls in extra requirements — run `/compliance` to check.
 - If a change fires a trigger that isn't in the register, **stop and surface it** — don't silently absorb or skip the obligation.
 
