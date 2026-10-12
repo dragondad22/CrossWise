@@ -44,7 +44,9 @@ async function callAccounts(path: string, cookies: string, init: RequestInit = {
   }
 }
 
-type AccountsSession = { user?: { id: string; email: string; name?: string | null } } | null
+type AccountsSession = {
+  user?: { id: string; email: string; name?: string | null; emailVerified?: boolean }
+} | null
 
 export interface SessionLookup {
   user: AuthUser | null
@@ -75,7 +77,7 @@ export async function lookupSession(cookieHeader: string | null): Promise<Sessio
     email: body.user.email,
     name: body.user.name || null,
   }
-  await ensureLocalUser(user)
+  await ensureLocalUser(user, { emailVerified: body.user.emailVerified === true })
   return { user, setCookies: response.headers.getSetCookie() }
 }
 
@@ -101,9 +103,26 @@ export function appUrl(): string {
 // row. Remember which rows are current to skip the write on most requests.
 const knownUsers = new Map<string, string>()
 
-export async function ensureLocalUser(user: AuthUser) {
+export async function ensureLocalUser(user: AuthUser, { emailVerified = false } = {}) {
   const fingerprint = `${user.email}\n${user.name ?? ''}`
   if (knownUsers.get(user.id) === fingerprint) return
+
+  // Someone with a CrossWise account from before shared sign-in has a row under
+  // their old id (#134). ADR-009: give that row the accounts id, and the foreign
+  // keys' ON UPDATE CASCADE carries their topics and solves along. Only for a
+  // verified email, so nobody claims data by signing up with someone else's.
+  const existing = await prisma.user.findUnique({
+    where: { email: user.email },
+    select: { id: true },
+  })
+  if (existing && existing.id !== user.id) {
+    if (!emailVerified) {
+      throw new Error(`users row for ${user.id} blocked by an older row with an unverified email`)
+    }
+    // updateMany, so a parallel request that already moved the row is a no-op.
+    await prisma.user.updateMany({ where: { id: existing.id }, data: { id: user.id } })
+    console.info(`Moved CrossWise user ${existing.id} to accounts id ${user.id}`)
+  }
 
   await prisma.user.upsert({
     where: { id: user.id },

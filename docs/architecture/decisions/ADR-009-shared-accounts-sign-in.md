@@ -48,3 +48,10 @@ CrossWise has its own email/password login. Its reset email is never sent in pro
 - 2026-10-09 (#127): the production database had 0 users at cutover, so step 4's import
   did not run. The procedure is kept in the accounts service README for any app that
   moves later.
+- 2026-10-12 (#134): that count came from an empty dev database. Production had users, and
+  their first sign-in looped: the accounts service gave them a new id, and creating a
+  second `users` row with the same email failed. Step 4's rule now runs at sign-in instead
+  of in an import: when a `users` row has the person's email under another id, and the
+  accounts service says the email is verified, CrossWise changes that row's id to the
+  accounts id. Users who were never copied into the accounts database sign up there with
+  the same email (or use Google/GitHub) and keep their data.
