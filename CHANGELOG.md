@@ -15,6 +15,9 @@ and this project adheres to SemVer.
 ### Added
 - Deleting your account at accounts.buildyouralpaca.com now also deletes your CrossWise topics, lists, puzzles and solve progress (#127)
 
+### Fixed
+- Signing in with an account you had before the switch no longer loops between CrossWise and the sign-in page; your topics, lists and solves stay with you (#134)
+
 ### Security
 - Upgraded to Next.js 16 and Prisma 7, fixing a remote-code-execution flaw in image optimization and a page cache-poisoning flaw; the production dependency scan is clean again (#129)
 

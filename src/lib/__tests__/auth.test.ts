@@ -10,7 +10,7 @@ import {
 } from '../auth'
 
 const prismaMocks = vi.hoisted(() => ({
-  user: { upsert: vi.fn() },
+  user: { upsert: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
 }))
 
 vi.mock('../db', () => ({ prisma: prismaMocks }))
@@ -32,6 +32,8 @@ beforeEach(() => {
   vi.stubGlobal('fetch', fetchMock)
   fetchMock.mockReset()
   prismaMocks.user.upsert.mockReset().mockResolvedValue({})
+  prismaMocks.user.findUnique.mockReset().mockResolvedValue(null)
+  prismaMocks.user.updateMany.mockReset().mockResolvedValue({ count: 1 })
   __resetKnownUsers()
   delete process.env.ACCOUNTS_URL
   delete process.env.APP_URL
@@ -39,6 +41,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('accountsCookies', () => {
@@ -115,6 +118,52 @@ describe('lookupSession', () => {
     )
     await lookupSession('alpaca.session_token=abc')
     expect(prismaMocks.user.upsert).toHaveBeenCalledTimes(2)
+  })
+
+  describe('a CrossWise account from before shared sign-in (#134)', () => {
+    beforeEach(() => {
+      vi.spyOn(console, 'info').mockImplementation(() => {})
+      prismaMocks.user.findUnique.mockResolvedValue({ id: 'old-cuid' })
+    })
+
+    it('moves the old row onto the accounts id when the email is verified', async () => {
+      fetchMock.mockResolvedValueOnce(accountsReply(SIGNED_IN))
+
+      const result = await lookupSession('alpaca.session_token=abc')
+
+      expect(result.user?.id).toBe('user-1')
+      expect(prismaMocks.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'ada@example.com' },
+        select: { id: true },
+      })
+      expect(prismaMocks.user.updateMany).toHaveBeenCalledWith({
+        where: { id: 'old-cuid' },
+        data: { id: 'user-1' },
+      })
+      expect(prismaMocks.user.updateMany.mock.invocationCallOrder[0]).toBeLessThan(
+        prismaMocks.user.upsert.mock.invocationCallOrder[0],
+      )
+    })
+
+    it('leaves the old row alone when the email is not verified', async () => {
+      fetchMock.mockResolvedValueOnce(
+        accountsReply({ ...SIGNED_IN, user: { ...SIGNED_IN.user, emailVerified: false } }),
+      )
+
+      await expect(lookupSession('alpaca.session_token=abc')).rejects.toThrow(/unverified email/)
+      expect(prismaMocks.user.updateMany).not.toHaveBeenCalled()
+      expect(prismaMocks.user.upsert).not.toHaveBeenCalled()
+    })
+
+    it('does nothing extra when the row already has the accounts id', async () => {
+      prismaMocks.user.findUnique.mockResolvedValue({ id: 'user-1' })
+      fetchMock.mockResolvedValueOnce(accountsReply(SIGNED_IN))
+
+      await lookupSession('alpaca.session_token=abc')
+
+      expect(prismaMocks.user.updateMany).not.toHaveBeenCalled()
+      expect(prismaMocks.user.upsert).toHaveBeenCalledTimes(1)
+    })
   })
 
   it('stores an empty name as null', async () => {

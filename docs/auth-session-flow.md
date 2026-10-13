@@ -40,7 +40,9 @@ The header's name links to it.
    `GET {ACCOUNTS_URL}/api/auth/get-session`, with a 3 s timeout.
 3. If the service returns a user, CrossWise creates or updates its local `users` row (id,
    email, name) so topics and solves keep their foreign keys. User ids are the
-   accounts-service ids.
+   accounts-service ids. A row from before shared sign-in, with the same email under an
+   old CrossWise id, gets the accounts id instead, if the accounts service says the email
+   is verified; topics and solves follow through ON UPDATE CASCADE (#134).
 4. The root layout (`src/app/layout.tsx`) runs the lookup and passes the user to
    `AuthProvider`, which hydrates the store. If the lookup fails, the layout renders signed
    out and logs the error.
