@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Prisma } from '@/generated/prisma/client'
+import { ZodError } from 'zod'
 
 import { prisma } from '@/lib/db'
 import { UpdateSolveStateSchema } from '@/lib/validation'
@@ -233,6 +234,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       data: { id: solve.id, completedAt: solve.completedAt },
     })
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: 'Validation failed',
+            details: error.issues.map((err) => ({
+              field: err.path.join('.'),
+              message: err.message,
+              code: err.code,
+            })),
+          },
+        },
+        { status: 400 },
+      )
+    }
+
     console.error('Failed to update solve state:', error)
     return NextResponse.json(
       { success: false, error: { message: 'Failed to update solve state' } },

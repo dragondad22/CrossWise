@@ -66,6 +66,31 @@ describe('/api/v1/puzzles/:id/solve POST handler', () => {
     expect(solveUpdate).not.toHaveBeenCalled()
   })
 
+  it('returns 400 with field errors when the POST body is invalid', async () => {
+    const request = new NextRequest(`http://localhost/api/v1/puzzles/${PUZZLE_ID}/solve`, {
+      method: 'POST',
+      body: JSON.stringify({ puzzleId: PUZZLE_ID, state: 123 }),
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
+    })
+
+    const response = await POST(request, { params: Promise.resolve({ id: PUZZLE_ID }) })
+    const payload = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(payload.success).toBe(false)
+    expect(payload.error.message).toBe('Validation failed')
+    expect(payload.error.details.length).toBeGreaterThan(0)
+    for (const detail of payload.error.details) {
+      expect(detail).toEqual({
+        field: expect.any(String),
+        message: expect.any(String),
+        code: expect.any(String),
+      })
+    }
+    expect(solveCreate).not.toHaveBeenCalled()
+    expect(solveUpdate).not.toHaveBeenCalled()
+  })
+
   it('rejects unauthenticated requests', async () => {
     const request = new NextRequest(`http://localhost/api/v1/puzzles/${PUZZLE_ID}/solve`, {
       method: 'POST',

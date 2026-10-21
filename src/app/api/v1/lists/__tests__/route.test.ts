@@ -108,6 +108,30 @@ describe('/api/v1/lists route handlers', () => {
     expect(response.status).toBe(401)
   })
 
+  it('returns 400 with field errors when the POST body is invalid', async () => {
+    const request = new NextRequest('http://localhost/api/v1/lists', {
+      method: 'POST',
+      body: JSON.stringify({ items: [{ answer: 'Lion' }] }),
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
+    })
+
+    const response = await POST(request)
+    const payload = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(payload.success).toBe(false)
+    expect(payload.error.message).toBe('Validation failed')
+    expect(payload.error.details.length).toBeGreaterThan(0)
+    for (const detail of payload.error.details) {
+      expect(detail).toEqual({
+        field: expect.any(String),
+        message: expect.any(String),
+        code: expect.any(String),
+      })
+    }
+    expect(prismaTransaction).not.toHaveBeenCalled()
+  })
+
   it('creates a list with normalized items on POST', async () => {
     const topicId = 'ctopic1234567890123456789'
     topicFindFirst.mockResolvedValueOnce({ id: topicId, name: 'Animals' })

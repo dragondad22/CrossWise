@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 import { prisma } from '@/lib/db'
 import { CreateTopicSchema } from '@/lib/validation'
 import { requireSession } from '@/lib/api-auth'
@@ -71,6 +72,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ success: true, data: topic })
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: 'Validation failed',
+            details: error.issues.map((err) => ({
+              field: err.path.join('.'),
+              message: err.message,
+              code: err.code,
+            })),
+          },
+        },
+        { status: 400 },
+      )
+    }
+
     console.error('Failed to update topic:', error)
 
     if (error instanceof Error && error.message.includes('Record to update not found')) {

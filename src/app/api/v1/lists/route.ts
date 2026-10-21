@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ZodError } from 'zod'
 import { prisma } from '@/lib/db'
 import { CreateListSchema } from '@/lib/validation'
 import { normalizeAnswer } from '@/lib/validation'
@@ -160,6 +161,23 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: completeList }, { status: 201 })
   } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            message: 'Validation failed',
+            details: error.issues.map((err) => ({
+              field: err.path.join('.'),
+              message: err.message,
+              code: err.code,
+            })),
+          },
+        },
+        { status: 400 },
+      )
+    }
+
     console.error('Failed to create list:', error)
     return NextResponse.json(
       { success: false, error: { message: 'Failed to create list' } },

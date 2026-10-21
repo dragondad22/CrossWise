@@ -1,11 +1,12 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
-import { DELETE, GET } from '../route'
+import { DELETE, GET, PUT } from '../route'
 
-const { topicFindFirst, topicDelete } = vi.hoisted(() => ({
+const { topicFindFirst, topicDelete, topicUpdate } = vi.hoisted(() => ({
   topicFindFirst: vi.fn(),
   topicDelete: vi.fn(),
+  topicUpdate: vi.fn(),
 }))
 
 const mockSession = vi.hoisted(() => vi.fn())
@@ -15,6 +16,7 @@ vi.mock('@/lib/db', () => ({
     topic: {
       findFirst: topicFindFirst,
       delete: topicDelete,
+      update: topicUpdate,
     },
   },
 }))
@@ -76,6 +78,41 @@ describe('/api/v1/topics/:id GET handler', () => {
     const request = new NextRequest('http://localhost/api/v1/topics/topic-1')
     const response = await GET(request, { params: Promise.resolve({ id: 'topic-1' }) })
     expect(response.status).toBe(401)
+  })
+})
+
+describe('/api/v1/topics/:id PUT handler', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockSession.mockReset()
+    mockSession.mockImplementation(async (cookie: string | null) => ({
+      user: cookie ? { id: 'user-1', email: 'user-1@example.com' } : null,
+      setCookies: [],
+    }))
+  })
+
+  it('returns 400 with field errors when the PUT body is invalid', async () => {
+    const request = new NextRequest('http://localhost/api/v1/topics/topic-1', {
+      method: 'PUT',
+      body: JSON.stringify({ name: 123 }),
+      headers: { 'content-type': 'application/json', cookie: `alpaca.session_token=token-123` },
+    })
+
+    const response = await PUT(request, { params: Promise.resolve({ id: 'topic-1' }) })
+    const payload = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(payload.success).toBe(false)
+    expect(payload.error.message).toBe('Validation failed')
+    expect(payload.error.details.length).toBeGreaterThan(0)
+    for (const detail of payload.error.details) {
+      expect(detail).toEqual({
+        field: expect.any(String),
+        message: expect.any(String),
+        code: expect.any(String),
+      })
+    }
+    expect(topicUpdate).not.toHaveBeenCalled()
   })
 })
 
