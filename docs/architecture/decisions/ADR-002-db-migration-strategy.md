@@ -62,8 +62,9 @@ exposing data during a migration.
 - Imposes expand/contract discipline on the team; genuinely breaking changes need two
   deploys. CI can *flag* unsafe ops (squawk) but cannot author safe SQL or decide backfill
   rules — those remain human design decisions.
-- `migrate deploy` against a populated DB will fail on a non-backward-compatible migration
-  (by design) — that is the signal to use expand/contract.
+- `migrate deploy` fails only on what Postgres itself rejects. A migration that breaks the running
+  code (a dropped or tightened column, say) can apply cleanly, so squawk, which fails the PR since
+  #138, and review are what catch it — the signal to use expand/contract.
 
 ## 4. Alternatives Considered
 
