@@ -9,6 +9,8 @@ import {
   ImportListSchema,
   ForgotPasswordSchema,
   ResetPasswordSchema,
+  CreateTopicSchema,
+  ListItemSchema,
 } from '../validation'
 
 describe('validation helpers', () => {
@@ -236,5 +238,17 @@ describe('GeneratePuzzleSchema wordCount (#22)', () => {
         .success,
     ).toBe(false)
     expect(GeneratePuzzleSchema.safeParse({ listId: LIST_ID, wordCount: 10.5 }).success).toBe(false)
+  })
+})
+
+describe('length limits count characters, not UTF-16 units (zod 4.5+, #144)', () => {
+  it('counts an emoji as one character', () => {
+    const icon = (value: string) => CreateTopicSchema.safeParse({ name: 'Animals', icon: value }).success
+    expect(icon('🦦'.repeat(10))).toBe(true)
+    expect(icon('🦦'.repeat(11))).toBe(false)
+
+    const clue = (value: string) => ListItemSchema.safeParse({ answer: 'otter', clue: value }).success
+    expect(clue('🦦ab')).toBe(true)
+    expect(clue('🦦a')).toBe(false)
   })
 })
