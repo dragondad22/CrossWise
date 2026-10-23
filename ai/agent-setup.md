@@ -74,18 +74,17 @@ Scaffold with `ai/scripts/new-report.sh <type> <id> <slug>`. Reports land in `te
 - `lib/redact.sh` — strip secrets from artifacts before persisting
 
 ## CI Quality Gates
-GitHub Actions, two workflows:
+Every check is in one script, `scripts/ci.sh` (#138). GitHub runs it on PRs, the dark factory runs
+it in its box, and you run it before a PR. In order: `npm ci`, lint, type check, tests (workers
+capped by `TEST_WORKERS`), build, version sync (`ai/scripts/check-version-sync.sh`), dependency
+scan (`npm audit --audit-level=high --omit=dev` — fails on high/critical runtime vulns per
+`ai/STANDARDS/SECURITY_REVIEW_STANDARD.md`), secret scan (secretlint), squawk on the migrations the
+branch changes (`.squawk.toml`), then `prisma migrate deploy` and `prisma migrate status` against
+the throwaway Postgres in `DATABASE_URL`. The top of the script says how to run it locally.
 
-**On PRs to main:**
-- `pr-validation.yml` → `validate`: build/typecheck, lint, tests, version sync
-  (`ai/scripts/check-version-sync.sh`), dependency scan (`npm audit
-  --audit-level=high --omit=dev` — fails on high/critical runtime vulns per
-  `ai/STANDARDS/SECURITY_REVIEW_STANDARD.md`). On failure, diagnostics upload to
-  the `failure-diagnostics` CI artifact. E2E (Playwright) is stubbed, pending #42.
-- `deploy.yml` → `migrations-check`: squawk lint on `prisma/migrations/**/*.sql`
-  (results posted as a PR comment); applies migrations to an ephemeral Neon
-  branch when `NEON_API_KEY`/`NEON_PROJECT_ID` secrets are set (self-skips with
-  a warning until then).
+**On PRs to main:** `pr-validation.yml` → `validate` runs the script with a read-only token, no
+secrets, and a `postgres:17` service container. On failure, diagnostics upload to the
+`failure-diagnostics` CI artifact. E2E (Playwright) is pending #42.
 
 **On push to main:** `deploy.yml` → `build-test` (lint + test + build) →
 `migrate` (`prisma migrate deploy` against the Dev-environment DB, serialized

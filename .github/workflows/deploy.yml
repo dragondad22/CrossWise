@@ -3,12 +3,10 @@ name: CI + Deploy
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
-  # Push-to-main gate for migrate/deploy. PR validation (build/lint/test, version
-  # sync, dependency scan) runs in pr-validation.yml — not duplicated here.
+  # Push-to-main gate for migrate/deploy. PR checks, migrations included, run in
+  # pr-validation.yml (scripts/ci.sh) — not duplicated here.
   build-test:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -30,95 +28,6 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  # PR-only: prove migrations are safe BEFORE they can reach production.
-  # Lints migration SQL for dangerous ops and applies them to a throwaway Neon branch.
-  migrations-check:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    # squawk posts its lint results as a PR comment; the default token is read-only
-    permissions:
-      contents: read
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          # Depth 2 pulls the PR merge commit's parents, so HEAD^1 is the base
-          # snapshot and diffing against it yields exactly this PR's changes.
-          fetch-depth: 2
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install deps
-        run: npm ci
-
-      # Lint only migrations added/changed by this PR (#72) — linting the whole
-      # tree re-reports already-applied history on every PR and buries new findings.
-      - name: Detect changed migrations
-        id: changed_migrations
-        run: |
-          files=$(git diff --name-only HEAD^1 HEAD -- 'prisma/migrations/**/*.sql' | xargs)
-          echo "files=$files" >> "$GITHUB_OUTPUT"
-          if [ -n "$files" ]; then
-            echo "Changed migration files: $files"
-          else
-            echo "No migration changes in this PR — squawk lint will be skipped."
-          fi
-
-      # Flags unsafe operations (NOT NULL without default, table rewrites, drops, ...)
-      - name: Lint migrations (squawk)
-        if: steps.changed_migrations.outputs.files != ''
-        uses: sbdchd/squawk-action@v1
-        with:
-          files: ${{ steps.changed_migrations.outputs.files }}
-
-      # Only run the ephemeral-DB validation if the Neon secrets are configured.
-      - name: Check Neon secrets
-        id: neon_secrets
-        env:
-          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
-        run: |
-          if [ -n "$NEON_API_KEY" ] && [ -n "$NEON_PROJECT_ID" ]; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::NEON_API_KEY / NEON_PROJECT_ID not set — skipping ephemeral-DB migration validation (squawk lint still ran)."
-          fi
-
-      - name: Create ephemeral Neon branch
-        id: neon
-        if: steps.neon_secrets.outputs.present == 'true'
-        uses: neondatabase/create-branch-action@v5
-        with:
-          project_id: ${{ secrets.NEON_PROJECT_ID }}
-          branch_name: ci-pr-${{ github.event.pull_request.number }}
-          api_key: ${{ secrets.NEON_API_KEY }}
-          username: neondb_owner
-          database: crosswise
-          prisma: 'true'
-
-      - name: Apply + verify migrations on the branch
-        if: steps.neon_secrets.outputs.present == 'true'
-        env:
-          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
-        run: |
-          npx prisma migrate deploy
-          npx prisma migrate status
-
-      - name: Delete ephemeral Neon branch
-        if: always() && steps.neon_secrets.outputs.present == 'true'
-        uses: neondatabase/delete-branch-action@v3
-        with:
-          project_id: ${{ secrets.NEON_PROJECT_ID }}
-          branch: ci-pr-${{ github.event.pull_request.number }}
-          api_key: ${{ secrets.NEON_API_KEY }}
 
   # main-only: apply migrations to production BEFORE the app is deployed.
   migrate:
