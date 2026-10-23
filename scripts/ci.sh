@@ -15,6 +15,9 @@ cd "$(dirname "$0")/.."
 step() { printf '\n==> %s\n' "$1"; }
 fail() { printf 'ci: %s\n' "$1" >&2; exit 1; }
 
+# No telemetry from CI. In the box these calls are refused anyway.
+export NEXT_TELEMETRY_DISABLED=1 CHECKPOINT_DISABLE=1
+
 # Checked before the slow steps. Only the environment counts: prisma.config.ts also reads .env,
 # which may point at a real database.
 db="${DATABASE_URL:-}"
