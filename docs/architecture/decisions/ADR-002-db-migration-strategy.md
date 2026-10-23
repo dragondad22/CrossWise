@@ -5,7 +5,9 @@
 **Accepted:** 2026-06-25
 **Deciders:** Project owner (dragondad22)
 **Related ADRs:** ADR-001 (per-user ownership — the first migration this governs)
-**Related issues:** #34 (first schema change requiring this)
+**Related issues:** #34 (first schema change requiring this); #138 (PR checks on a throwaway Postgres)
+**Amended:** 2026-10-23 (#138): PRs check migrations on a throwaway Postgres in place of a Neon branch,
+so PR CI holds no secrets.
 
 ## 1. Context
 
@@ -27,10 +29,13 @@ exposing data during a migration.
    prompts, never resets) in a **dedicated `migrate` job that gates the app `deploy`**.
    The app is deployed only after the database is migrated, so a failed migration blocks
    the deploy and the old code never serves against a half-migrated schema.
-3. **Pull requests validate migrations on an ephemeral Neon branch**: create a branch DB,
-   run `prisma migrate deploy` + `prisma migrate status` against it, and **lint the
-   migration SQL with squawk** for dangerous operations. A bad migration fails the PR,
-   never production.
+3. **Pull requests validate migrations on a throwaway Postgres**: `scripts/ci.sh` runs
+   `prisma migrate deploy` + `prisma migrate status` against the database in `DATABASE_URL`
+   (a `postgres:17` service container in PR CI, or one beside the dark factory's box), and
+   **lints the migration SQL the PR changes with squawk** for dangerous operations. A bad
+   migration fails the PR, never production. PR CI holds no secrets, so a branch's own
+   workflow can do no harm before review. (Until #138 this used an ephemeral Neon branch,
+   which needed the Neon API key in PR CI.)
 4. **Prod migrations are serialized** via a GitHub Actions concurrency group and are
    **forward-only** (no auto-rollback; roll forward with a new migration, restore from a
    Neon snapshot/branch if needed).
@@ -52,12 +57,14 @@ exposing data during a migration.
 - The app never serves against an un-migrated database.
 
 ### Negative
-- Requires two new CI secrets (`NEON_API_KEY`, `NEON_PROJECT_ID`) for the ephemeral-DB job.
+- A throwaway Postgres is not Neon: a migration that depends on something only Neon has would
+  pass the PR and fail in production. None does today.
 - Imposes expand/contract discipline on the team; genuinely breaking changes need two
   deploys. CI can *flag* unsafe ops (squawk) but cannot author safe SQL or decide backfill
   rules — those remain human design decisions.
-- `migrate deploy` against a populated DB will fail on a non-backward-compatible migration
-  (by design) — that is the signal to use expand/contract.
+- `migrate deploy` fails only on what Postgres itself rejects. A migration that breaks the running
+  code (a dropped or tightened column, say) can apply cleanly, so squawk, which fails the PR since
+  #138, and review are what catch it — the signal to use expand/contract.
 
 ## 4. Alternatives Considered
 
@@ -71,18 +78,19 @@ exposing data during a migration.
 
 ## 5. Implementation Notes
 
-- `.github/workflows/deploy.yml`: add a PR-only `migrations-check` job (squawk lint +
-  ephemeral Neon branch apply + `migrate status`) and a push-to-main `migrate` job
-  (`prisma migrate deploy`, concurrency `db-migrate-prod`) that `deploy` now `needs`.
+- `scripts/ci.sh` (#138): squawk on the PR's changed migrations, then `migrate deploy` +
+  `migrate status` on a throwaway Postgres. `.github/workflows/pr-validation.yml` runs it with
+  a `postgres:17` service container. (Before #138: a PR-only `migrations-check` job in
+  `deploy.yml`, on an ephemeral Neon branch.)
+- `.github/workflows/deploy.yml`: a push-to-main `migrate` job (`prisma migrate deploy`,
+  concurrency `db-migrate-prod`) that `deploy` now `needs`.
 - `package.json`: `db:migrate` (`prisma migrate dev`), `db:migrate:deploy`,
   `db:migrate:status`, `db:reset` (`prisma migrate reset`). `db:push` stays for local
   prototyping only.
-- New secrets required: `NEON_API_KEY`, `NEON_PROJECT_ID`. Until they are set, the
-  ephemeral-DB validation self-skips with a warning (squawk lint still runs).
+- PR checks need no secrets (#138).
 
 ## 6. Follow-Up Actions
 
-- Add the two Neon secrets so the PR validation job is active.
 - For any future migration that touches existing user data, use expand/contract (§2.5);
   do not reset once real users exist.
 - Revisit `db:push` removal entirely if it proves a footgun.
