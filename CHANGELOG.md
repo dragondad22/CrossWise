@@ -20,6 +20,7 @@ and this project adheres to SemVer.
 
 ### Security
 - Upgraded to Next.js 16 and Prisma 7, fixing a remote-code-execution flaw in image optimization and a page cache-poisoning flaw; the production dependency scan is clean again (#129)
+- Upgraded Next.js to 16.4.2 and zod to 4.6.7, fixing two remote-code-execution flaws and a denial-of-service flaw in Next.js and a memory-exhaustion flaw in input validation (#144)
 
 ## [0.2.0] - 2026-07-13
 
