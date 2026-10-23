@@ -278,6 +278,7 @@ Sign-in, sign-up and password reset have no CrossWise API; they happen on the ac
 ## Validation & Normalization Rules
 - **List item answers:** uppercased; must contain only letters A–Z (accents, digits, hyphens, spaces are rejected with an error naming the word — never silently stripped, #17); length 2–20.
 - **Clue length:** 3–200 chars.
+- **How length is counted:** every length limit counts Unicode code points, not UTF-16 units (zod 4.5+, #144): most emoji count as one, while a joined emoji like 👨‍👩‍👧‍👦 counts as seven.
 - **Import list items:** min 5, max 250 (optimal up to 150 for generation).
 - **Difficulty:** accepts numeric 1–5 or string `EASY|MEDIUM|HARD`; mapped to enum.
 - **Topic color:** must match hex `#RRGGBB`.
