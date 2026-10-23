@@ -3,7 +3,8 @@
 # box, and you run it before a PR. It stops at the first failure.
 #
 # DATABASE_URL must point at a throwaway Postgres: the last step applies every migration to it.
-# Locally, for example:
+# Its host must be localhost (GitHub's service container, or your own) or `postgres` (the service
+# beside the dark factory's box). Locally, for example:
 #   docker run --rm -d --name crosswise-ci -p 5433:5432 -e POSTGRES_PASSWORD=ci postgres:17
 #   DATABASE_URL=postgresql://postgres:ci@localhost:5433/postgres bash scripts/ci.sh
 #
@@ -19,20 +20,23 @@ fail() { printf 'ci: %s\n' "$1" >&2; exit 1; }
 export NEXT_TELEMETRY_DISABLED=1 CHECKPOINT_DISABLE=1
 
 # Checked before the slow steps. Only the environment counts: prisma.config.ts also reads .env,
-# which may point at a real database.
-db="${DATABASE_URL:-}"
-[ -n "$db" ] || fail "set DATABASE_URL to a throwaway Postgres (see the top of this script)"
-case "$db" in
-  *neon.tech*) fail "DATABASE_URL points at Neon; this script only migrates a throwaway database" ;;
+# which may point at a real database, but never in place of a value already set.
+[ -n "${DATABASE_URL:-}" ] || fail "set DATABASE_URL to a throwaway Postgres (see the top of this script)"
+host=$(node -e 'try { console.log(new URL(process.env.DATABASE_URL).hostname) } catch { process.exit(1) }') ||
+  fail "DATABASE_URL isn't a URL"
+case "$host" in
+  localhost | 127.0.0.1 | '[::1]' | postgres) ;;
+  *) fail "DATABASE_URL's host is $host; this script only migrates a throwaway database (see the top)" ;;
 esac
 
 base="${CI_BASE:-}"
 if [ -z "$base" ]; then
-  for ref in main origin/main; do
+  for ref in origin/main main; do
     base=$(git merge-base HEAD "$ref" 2>/dev/null) && break
   done
 fi
 [ -n "$base" ] || fail "can't tell where this branch left main; set CI_BASE"
+git rev-parse -q --verify "$base^{commit}" >/dev/null || fail "CI_BASE ($base) isn't a commit here"
 
 step "install"
 npm ci --no-audit --no-fund
@@ -61,7 +65,11 @@ git ls-files -z | xargs -0 npx secretlint --maskSecrets
 step "migration lint"
 # Only the migrations this branch changes: the old ones are already applied. .squawk.toml has the
 # rules that are off; a migration that must break one says so in a `-- squawk-ignore` comment.
-mapfile -t changed < <(git diff --name-only --diff-filter=d "$base" -- 'prisma/migrations/*.sql')
+# Listed to a file first: a failing git inside <(…) wouldn't stop the script.
+list=$(mktemp)
+trap 'rm -f "$list"' EXIT
+git diff -z --name-only --diff-filter=d "$base" -- 'prisma/migrations/*.sql' >"$list"
+mapfile -d '' -t changed <"$list"
 if [ "${#changed[@]}" -eq 0 ]; then
   echo "no migrations changed since $(git rev-parse --short "$base")"
 else
