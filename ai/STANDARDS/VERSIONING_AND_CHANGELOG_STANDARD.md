@@ -177,6 +177,8 @@ mechanical steps (2–3 below). The full sequence:
    always finish it:
    - **Tag the release merge commit** and push it:
      `git tag -a v0.2.0 <merge-sha> -m "v0.2.0 — <highlights>" && git push origin v0.2.0`.
+     **The tag deploys production** (`deploy.yml`, #139), so push it only after Chris has
+     approved the release.
    - **Create the release on `GitHub Issues` / your forge**, body = the
      `## [0.2.0]` changelog section (on GitHub:
      `gh release create v0.2.0 --notes-file <section> --latest`; use

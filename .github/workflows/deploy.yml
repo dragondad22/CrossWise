@@ -1,89 +1,146 @@
-name: CI + Deploy
+# Production deploys (#139, dark-factory decisions 18 and 22). Only a v* tag deploys, once: merges to
+# main deploy nothing, and Vercel's own deploys from main are off (vercel.json). Chris tags a release
+# after approving it (ai/STANDARDS/VERSIONING_AND_CHANGELOG_STANDARD.md). The deploy secrets live only
+# in the Production environment, which only v* tags may use.
+#
+# In order: the migrations production hasn't applied (scripts/release-plan.sh), the deployment to
+# fall back to, a database snapshot if there are pending migrations, migrate, deploy, smoke test.
+# If anything fails after the deploy, the previous deployment comes back, but only when the release
+# is expand-only: old code can't undo a schema change. Any failure opens an issue for Chris.
+
+name: Deploy
 
 on:
   push:
-    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+  issues: write   # the failure issue, and nothing else
 
 jobs:
-  # Push-to-main gate for migrate/deploy. PR checks, migrations included, run in
-  # pr-validation.yml (scripts/ci.sh) — not duplicated here.
-  build-test:
-    if: github.event_name == 'push'
+  release:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install deps
-        run: npm ci
-
-      - name: Lint + test
-        run: npm run lint && npm test
-
-      - name: Build
-        run: npm run build
-
-  # main-only: apply migrations to production BEFORE the app is deployed.
-  migrate:
-    needs: build-test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    environment: Dev
+    environment: Production
+    # One release at a time. A newer tag waiting here replaces an older one that hasn't started:
+    # tags are cut from main, so the newer one holds the older one's changes, and the plan counts
+    # every migration production hasn't applied.
     concurrency:
-      group: db-migrate-prod
+      group: production
       cancel-in-progress: false
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      PRODUCTION_URL: https://crosswise.buildyouralpaca.com
+      VERCEL_CLI: vercel@63.1.2
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - name: Install deps
-        run: npm ci
+      - run: npm ci --no-audit --no-fund
 
-      - name: Apply migrations (prisma migrate deploy)
+      - name: What the release does to the database
+        id: plan
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -X -A -t -v ON_ERROR_STOP=1 -c \
+            'SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL' |
+            bash scripts/release-plan.sh >>"$GITHUB_OUTPUT"
+
+      - name: Note the deployment to fall back to
+        id: previous
+        run: |
+          scope=""
+          case "$VERCEL_ORG_ID" in team_*) scope="?teamId=$VERCEL_ORG_ID" ;; esac
+          id=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID$scope" | jq -r '.targets.production.id // empty')
+          [ -n "$id" ] || { echo "::error::Vercel didn't say which deployment is in production"; exit 1; }
+          echo "id=$id" >>"$GITHUB_OUTPUT"
+
+      # A Neon branch of production (the project's default branch), with no compute: a way back from
+      # a bad migration. Neon's free plan keeps 10 branches; delete old snapshots in the Neon console.
+      - name: Snapshot the database
+        id: snapshot
+        if: steps.plan.outputs.pending != ''
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+          NAME: release-${{ github.ref_name }}-${{ github.run_attempt }}
+        run: |
+          branch=$(curl -fsS -X POST "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches" \
+            -H "Authorization: Bearer $NEON_API_KEY" -H 'Content-Type: application/json' \
+            -d "$(jq -n --arg name "$NAME" '{branch: {name: $name}}')" | jq -r '"\(.branch.name) (\(.branch.id))"')
+          echo "branch=$branch" >>"$GITHUB_OUTPUT"
+
+      - name: Migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma migrate deploy
 
-  deploy:
-    needs: migrate
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    environment: Dev
-    env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      # Staged first, then promoted: promoting also turns the production domains back on after a rollback.
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(npx --yes "$VERCEL_CLI" deploy --prod --skip-domain --yes --token "$VERCEL_TOKEN")
+          echo "url=$url" >>"$GITHUB_OUTPUT"
+          npx --yes "$VERCEL_CLI" promote "$url" --yes --timeout 5m --token "$VERCEL_TOKEN"
+          echo "promoted=true" >>"$GITHUB_OUTPUT"
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+      - name: Smoke test
+        run: bash scripts/smoke.sh "$PRODUCTION_URL"
 
-      - name: Install deps
-        run: npm ci
+      - name: Roll back
+        id: rollback
+        if: failure() && steps.deploy.outputs.url != '' && steps.plan.outputs.expand_only == 'true'
+        env:
+          PREVIOUS: ${{ steps.previous.outputs.id }}
+        run: |
+          npx --yes "$VERCEL_CLI" rollback "$PREVIOUS" --yes --timeout 5m --token "$VERCEL_TOKEN"
+          bash scripts/smoke.sh "$PRODUCTION_URL"
 
-      - name: Deploy to Vercel (Production)
-        uses: amondnet/vercel-action@v25
-        with:
-          # v25 pins Vercel CLI 25.1.0, which Vercel's API now rejects
-          # (requires >= 47.2.2) — always deploy with the current CLI.
-          vercel-version: latest
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: .
+      - name: Tell Chris
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PENDING: ${{ steps.plan.outputs.pending }}
+          EXPAND_ONLY: ${{ steps.plan.outputs.expand_only }}
+          PREVIOUS: ${{ steps.previous.outputs.id }}
+          SNAPSHOT: ${{ steps.snapshot.outputs.branch }}
+          DEPLOYED: ${{ steps.deploy.outputs.url }}
+          PROMOTED: ${{ steps.deploy.outputs.promoted }}
+          ROLLBACK: ${{ steps.rollback.outcome }}
+        run: |
+          if [ -z "$DEPLOYED" ]; then
+            state="It failed before anything was deployed, so production still runs ${PREVIOUS:-the deployment from before}."
+          elif [ "$ROLLBACK" = success ]; then
+            state="It failed after the deploy, and production was rolled back to $PREVIOUS, which passes the smoke test."
+          elif [ "$EXPAND_ONLY" != true ] && [ "$PROMOTED" != true ]; then
+            state="It deployed $DEPLOYED, but promoting it failed, so production most likely still runs $PREVIOUS, on a schema with the release's migrations, which aren't expand-only. Nothing was rolled back. Check which deployment is live in Vercel, then fix forward, or restore the snapshot."
+          elif [ "$EXPAND_ONLY" != true ]; then
+            state="It failed after the deploy and was NOT rolled back: its migrations aren't expand-only, so old code may not run on the new schema. Production is on $DEPLOYED. Fix forward, or restore the snapshot and roll back to $PREVIOUS by hand."
+          else
+            state="It failed after the deploy, and rolling back to $PREVIOUS failed too. Production may be down."
+          fi
+          {
+            echo "$state"
+            echo
+            echo "- Run: $RUN"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Migrations production hadn't applied: ${PENDING:-none} (expand-only: ${EXPAND_ONLY:-unknown})"
+            echo "- Snapshot: ${SNAPSHOT:-none taken}"
+            echo "- Deployment before this release: ${PREVIOUS:-unknown}"
+            echo "- This release's deployment: ${DEPLOYED:-none}"
+          } >body.md
+          cat body.md >>"$GITHUB_STEP_SUMMARY"
+          gh issue create -R "$GITHUB_REPOSITORY" --title "Release $GITHUB_REF_NAME failed" \
+            --label priority:critical --label area:infra --body-file body.md
