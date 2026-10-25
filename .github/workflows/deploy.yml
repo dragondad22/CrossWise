@@ -109,8 +109,10 @@ jobs:
         run: |
           if [ "$(bash scripts/vercel.sh serving)" = "$PREVIOUS" ]; then
             echo "Production already serves $PREVIOUS: nothing to roll back."
+            echo "did=nothing" >>"$GITHUB_OUTPUT"
           else
             bash scripts/vercel.sh rollback "$PREVIOUS"
+            echo "did=rolled-back" >>"$GITHUB_OUTPUT"
           fi
 
       - name: Tell Chris
@@ -123,13 +125,13 @@ jobs:
           PREVIOUS: ${{ steps.previous.outputs.id }}
           SNAPSHOT: ${{ steps.snapshot.outputs.branch }}
           DEPLOYED: ${{ steps.deploy.outputs.id }}
-          ROLLBACK: ${{ steps.rollback.outcome }}
+          ROLLBACK: ${{ steps.rollback.outputs.did }}
         run: |
           # Asked of Vercel now, not worked out from which steps ran.
           serving=$(bash scripts/vercel.sh serving 2>/dev/null || echo unknown)
           if [ -n "$PREVIOUS" ] && [ "$serving" = "$PREVIOUS" ]; then
             state="Production still serves the deployment from before this release ($PREVIOUS)."
-            [ "$ROLLBACK" = success ] && state="$state It was rolled back to it."
+            [ "$ROLLBACK" = rolled-back ] && state="$state It was rolled back to it."
             [ -n "$PENDING" ] && [ "$EXPAND_ONLY" != true ] &&
               state="$state But the release's migrations may have run, and they aren't expand-only: check the old code works on the new schema."
           elif [ -n "$DEPLOYED" ] && [ "$serving" = "$DEPLOYED" ]; then

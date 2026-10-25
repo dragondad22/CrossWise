@@ -17,12 +17,15 @@ case "${VERCEL_ORG_ID:-}" in team_*) scope="teamId=$VERCEL_ORG_ID" ;; esac
 domain="${PRODUCTION_URL#https://}"
 domain="${domain%%/*}"
 
-# api <method> <path>: prints the response body. An HTTP error fails, with Vercel's message.
+# api <method> <path>: prints the response body. An HTTP error fails, with Vercel's message. A POST
+# sends an empty JSON body, which Vercel requires; each request gives up after 30 seconds.
 api() {
-  local method="$1" path="$2" sep='?' body status
+  local method="$1" path="$2" sep='?' body status data=()
   [[ "$path" == *\?* ]] && sep='&'
+  [ "$method" = POST ] && data=(-H 'Content-Type: application/json' --data '{}')
   body=$(mktemp)
-  status=$(curl -sS -o "$body" -w '%{http_code}' -X "$method" -H "Authorization: Bearer $VERCEL_TOKEN" \
+  status=$(curl -sS --connect-timeout 10 --max-time 30 -o "$body" -w '%{http_code}' -X "$method" \
+    -H "Authorization: Bearer $VERCEL_TOKEN" "${data[@]}" \
     "${VERCEL_API:-https://api.vercel.com}$path${scope:+$sep$scope}") || status=000
   if [ "${status:0:1}" != 2 ]; then
     echo "vercel: $method $path answered $status: $(jq -r '.error.message // empty' "$body" 2>/dev/null)" >&2
@@ -42,7 +45,8 @@ point() {
     promote) api POST "/v10/projects/$VERCEL_PROJECT_ID/promote/$id" >/dev/null ;;
     rollback) api POST "/v1/projects/$VERCEL_PROJECT_ID/rollback/$id" >/dev/null ;;
   esac
-  for _ in $(seq 1 60); do
+  local deadline=$((SECONDS + 300))
+  while [ "$SECONDS" -lt "$deadline" ]; do
     if [ "$(serving 2>/dev/null || true)" = "$id" ]; then
       echo "vercel: $domain serves $id"
       return 0
