@@ -7,7 +7,7 @@
 **Related ADRs:** ADR-001 (per-user ownership — the first migration this governs)
 **Related issues:** #34 (first schema change requiring this); #138 (PR checks on a throwaway Postgres)
 **Amended:** 2026-10-23 (#138): PRs check migrations on a throwaway Postgres in place of a Neon branch,
-so PR CI holds no secrets.
+so PR CI holds no secrets. 2026-10-25 (#139): migrations run when a `v*` tag deploys, not on every merge.
 
 ## 1. Context
 
@@ -83,7 +83,11 @@ exposing data during a migration.
   a `postgres:17` service container. (Before #138: a PR-only `migrations-check` job in
   `deploy.yml`, on an ephemeral Neon branch.)
 - `.github/workflows/deploy.yml`: a push-to-main `migrate` job (`prisma migrate deploy`,
-  concurrency `db-migrate-prod`) that `deploy` now `needs`.
+  concurrency `db-migrate-prod`) that `deploy` now `needs`. Since #139 it runs on a `v*` tag
+  instead: a Neon snapshot branch first when the release has migrations, then migrate, then
+  deploy. The app is rolled back on its own only when the release's migrations are expand-only
+  (`scripts/release-plan.sh`), which §2.4's "forward-only" still holds to: the schema is never
+  rolled back.
 - `package.json`: `db:migrate` (`prisma migrate dev`), `db:migrate:deploy`,
   `db:migrate:status`, `db:reset` (`prisma migrate reset`). `db:push` stays for local
   prototyping only.

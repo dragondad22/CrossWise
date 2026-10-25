@@ -86,13 +86,15 @@ the throwaway Postgres in `DATABASE_URL`. The top of the script says how to run 
 secrets, and a `postgres:17` service container. On failure, diagnostics upload to the
 `failure-diagnostics` CI artifact. E2E (Playwright) is pending #42.
 
-**On push to main:** `deploy.yml` → `build-test` (lint + test + build) →
-`migrate` (`prisma migrate deploy` against the Dev-environment DB, serialized
-via the `db-migrate-prod` concurrency group) → `deploy` (Vercel `--prod`). A
-failed migration blocks the deploy.
+**On a `v*` tag:** `deploy.yml` → `release`, in the `Production` environment, which only `v*`
+tags may use (#139). It works out the release's migrations (`scripts/release-plan.sh`), notes the
+production deployment to fall back to, takes a Neon snapshot branch if there are migrations, runs
+`prisma migrate deploy`, deploys to Vercel, and runs `scripts/smoke.sh` on production. If anything
+fails after the deploy, it rolls back to the previous deployment, but only when the release is
+expand-only; otherwise it stops and says so. A merge to main deploys nothing: Vercel's own deploys
+from main are off (`vercel.json`), and PRs still get Vercel previews.
 
-All gates block merge/deploy; none are advisory. Branch protection is not yet
-configured, so gates are enforced by convention (don't merge red).
+`main` requires the `validate` check, and nothing else.
 
 ## One-Time Setup
 1. Bootstrap is complete — the starter-kit placeholders are filled for CrossWise. The `bootstrap/` directory is the kit's staging area (token reference, staged modules, `KIT_VERSION` upgrade marker) — keep it; it is not one-time scaffolding.
