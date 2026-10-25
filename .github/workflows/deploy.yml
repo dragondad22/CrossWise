@@ -93,6 +93,7 @@ jobs:
           url=$(npx --yes "$VERCEL_CLI" deploy --prod --skip-domain --yes --token "$VERCEL_TOKEN")
           echo "url=$url" >>"$GITHUB_OUTPUT"
           npx --yes "$VERCEL_CLI" promote "$url" --yes --timeout 5m --token "$VERCEL_TOKEN"
+          echo "promoted=true" >>"$GITHUB_OUTPUT"
 
       - name: Smoke test
         run: bash scripts/smoke.sh "$PRODUCTION_URL"
@@ -116,12 +117,15 @@ jobs:
           PREVIOUS: ${{ steps.previous.outputs.id }}
           SNAPSHOT: ${{ steps.snapshot.outputs.branch }}
           DEPLOYED: ${{ steps.deploy.outputs.url }}
+          PROMOTED: ${{ steps.deploy.outputs.promoted }}
           ROLLBACK: ${{ steps.rollback.outcome }}
         run: |
           if [ -z "$DEPLOYED" ]; then
             state="It failed before anything was deployed, so production still runs ${PREVIOUS:-the deployment from before}."
           elif [ "$ROLLBACK" = success ]; then
             state="It failed after the deploy, and production was rolled back to $PREVIOUS, which passes the smoke test."
+          elif [ "$EXPAND_ONLY" != true ] && [ "$PROMOTED" != true ]; then
+            state="It deployed $DEPLOYED, but promoting it failed, so production most likely still runs $PREVIOUS, on a schema with the release's migrations, which aren't expand-only. Nothing was rolled back. Check which deployment is live in Vercel, then fix forward, or restore the snapshot."
           elif [ "$EXPAND_ONLY" != true ]; then
             state="It failed after the deploy and was NOT rolled back: its migrations aren't expand-only, so old code may not run on the new schema. Production is on $DEPLOYED. Fix forward, or restore the snapshot and roll back to $PREVIOUS by hand."
           else
