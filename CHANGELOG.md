@@ -10,6 +10,7 @@ and this project adheres to SemVer.
 ### Changed
 - **BREAKING:** CrossWise now uses the shared Build Your Alpaca account at accounts.buildyouralpaca.com. Sign in with Google, GitHub, or email and password; the same account works in every Build Your Alpaca app. Everyone signs in once more after this release. CrossWise moves to crosswise.buildyouralpaca.com, and the old crosswise.vercel.app address redirects there (#127)
 - Password reset now actually sends an email, and sign-in is rate limited, both handled by the accounts service (#127)
+- Length limits on clues, names and the topic icon now count most emoji as one character instead of two (#144)
 - If the accounts service is briefly unreachable, CrossWise answers "try again shortly" instead of signing you out, and keeps your local solve progress (#127)
 
 ### Added
@@ -20,6 +21,7 @@ and this project adheres to SemVer.
 
 ### Security
 - Upgraded to Next.js 16 and Prisma 7, fixing a remote-code-execution flaw in image optimization and a page cache-poisoning flaw; the production dependency scan is clean again (#129)
+- Upgraded Next.js to 16.4.2 and zod to 4.6.7, fixing two remote-code-execution flaws and a denial-of-service flaw in Next.js and a memory-exhaustion flaw in input validation (#144)
 
 ## [0.2.0] - 2026-07-13
 
