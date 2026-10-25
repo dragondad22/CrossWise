@@ -87,12 +87,13 @@ secrets, and a `postgres:17` service container. On failure, diagnostics upload t
 `failure-diagnostics` CI artifact. E2E (Playwright) is pending #42.
 
 **On a `v*` tag:** `deploy.yml` → `release`, in the `Production` environment, which only `v*`
-tags may use (#139). It works out the release's migrations (`scripts/release-plan.sh`), notes the
-production deployment to fall back to, takes a Neon snapshot branch if there are migrations, runs
-`prisma migrate deploy`, deploys to Vercel, and runs `scripts/smoke.sh` on production. If anything
-fails after the deploy, it rolls back to the previous deployment, but only when the release is
-expand-only; otherwise it stops and says so. A merge to main deploys nothing: Vercel's own deploys
-from main are off (`vercel.json`), and PRs still get Vercel previews.
+tags may use (#139). It lists the migrations production hasn't applied (`scripts/release-plan.sh`),
+notes the production deployment to fall back to, takes a Neon snapshot branch if any migration is
+pending, runs `prisma migrate deploy`, deploys to Vercel, and runs `scripts/smoke.sh` on production.
+If anything fails after the deploy, it rolls back to the previous deployment, but only when the
+pending migrations are all expand-only. Any failure opens a `priority:critical` issue saying what
+state production is in. A merge to main deploys nothing: Vercel's own deploys from main are off
+(`vercel.json`), and PRs still get Vercel previews.
 
 `main` requires the `validate` check, and nothing else.
 

@@ -84,8 +84,8 @@ exposing data during a migration.
   `deploy.yml`, on an ephemeral Neon branch.)
 - `.github/workflows/deploy.yml`: a push-to-main `migrate` job (`prisma migrate deploy`,
   concurrency `db-migrate-prod`) that `deploy` now `needs`. Since #139 it runs on a `v*` tag
-  instead: a Neon snapshot branch first when the release has migrations, then migrate, then
-  deploy. The app is rolled back on its own only when the release's migrations are expand-only
+  instead: a Neon snapshot branch first when production has migrations pending, then migrate,
+  then deploy. The app is rolled back on its own only when those migrations are expand-only
   (`scripts/release-plan.sh`), which §2.4's "forward-only" still holds to: the schema is never
   rolled back.
 - `package.json`: `db:migrate` (`prisma migrate dev`), `db:migrate:deploy`,
