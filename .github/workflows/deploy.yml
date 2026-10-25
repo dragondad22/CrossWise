@@ -3,10 +3,10 @@
 # after approving it (ai/STANDARDS/VERSIONING_AND_CHANGELOG_STANDARD.md). The deploy secrets live only
 # in the Production environment, which only v* tags may use.
 #
-# In order: what the release changes in the database (scripts/release-plan.sh), the deployment to
-# fall back to, a database snapshot if the release has migrations, migrate, deploy, smoke test. If
-# anything fails after the deploy, the previous deployment comes back, but only when the release is
-# expand-only: old code can't undo a schema change, so otherwise the job stops and says so.
+# In order: the migrations production hasn't applied (scripts/release-plan.sh), the deployment to
+# fall back to, a database snapshot if there are pending migrations, migrate, deploy, smoke test.
+# If anything fails after the deploy, the previous deployment comes back, but only when the release
+# is expand-only: old code can't undo a schema change. Any failure opens an issue for Chris.
 
 name: Deploy
 
@@ -16,11 +16,15 @@ on:
 
 permissions:
   contents: read
+  issues: write   # the failure issue, and nothing else
 
 jobs:
   release:
     runs-on: ubuntu-latest
     environment: Production
+    # One release at a time. A newer tag waiting here replaces an older one that hasn't started:
+    # tags are cut from main, so the newer one holds the older one's changes, and the plan counts
+    # every migration production hasn't applied.
     concurrency:
       group: production
       cancel-in-progress: false
@@ -34,7 +38,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # every tag, to find the one before this release
           persist-credentials: false
 
       - uses: actions/setup-node@v4
@@ -44,9 +47,14 @@ jobs:
 
       - run: npm ci --no-audit --no-fund
 
-      - name: What the release changes in the database
+      - name: What the release does to the database
         id: plan
-        run: bash scripts/release-plan.sh "$GITHUB_REF_NAME" >>"$GITHUB_OUTPUT"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          psql "$DATABASE_URL" -X -A -t -v ON_ERROR_STOP=1 -c \
+            'SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL' |
+            bash scripts/release-plan.sh >>"$GITHUB_OUTPUT"
 
       - name: Note the deployment to fall back to
         id: previous
@@ -57,21 +65,21 @@ jobs:
             "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID$scope" | jq -r '.targets.production.id // empty')
           [ -n "$id" ] || { echo "::error::Vercel didn't say which deployment is in production"; exit 1; }
           echo "id=$id" >>"$GITHUB_OUTPUT"
-          echo "Production before this release: $id" >>"$GITHUB_STEP_SUMMARY"
 
-      # A Neon branch of production, named after the tag, with no compute: a way back from a bad
-      # migration. Neon's free plan keeps 10 branches; delete old snapshots in the Neon console.
+      # A Neon branch of production (the project's default branch), with no compute: a way back from
+      # a bad migration. Neon's free plan keeps 10 branches; delete old snapshots in the Neon console.
       - name: Snapshot the database
-        if: steps.plan.outputs.migrations != ''
+        id: snapshot
+        if: steps.plan.outputs.pending != ''
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
           NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
-          SNAPSHOT: release-${{ github.ref_name }}-${{ github.run_attempt }}
+          NAME: release-${{ github.ref_name }}-${{ github.run_attempt }}
         run: |
-          curl -fsS -X POST "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches" \
+          branch=$(curl -fsS -X POST "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches" \
             -H "Authorization: Bearer $NEON_API_KEY" -H 'Content-Type: application/json' \
-            -d "{\"branch\": {\"name\": \"$SNAPSHOT\"}}" |
-            jq -r '"Database snapshot: Neon branch \(.branch.name) (\(.branch.id))"' | tee -a "$GITHUB_STEP_SUMMARY"
+            -d "$(jq -n --arg name "$NAME" '{branch: {name: $name}}')" | jq -r '"\(.branch.name) (\(.branch.id))"')
+          echo "branch=$branch" >>"$GITHUB_OUTPUT"
 
       - name: Migrate
         env:
@@ -85,23 +93,50 @@ jobs:
           url=$(npx --yes "$VERCEL_CLI" deploy --prod --skip-domain --yes --token "$VERCEL_TOKEN")
           echo "url=$url" >>"$GITHUB_OUTPUT"
           npx --yes "$VERCEL_CLI" promote "$url" --yes --timeout 5m --token "$VERCEL_TOKEN"
-          echo "Deployed and promoted: $url" >>"$GITHUB_STEP_SUMMARY"
 
       - name: Smoke test
         run: bash scripts/smoke.sh "$PRODUCTION_URL"
 
       - name: Roll back
-        if: failure() && steps.deploy.outputs.url != ''
+        id: rollback
+        if: failure() && steps.deploy.outputs.url != '' && steps.plan.outputs.expand_only == 'true'
         env:
-          EXPAND_ONLY: ${{ steps.plan.outputs.expand_only }}
           PREVIOUS: ${{ steps.previous.outputs.id }}
-          DEPLOYED: ${{ steps.deploy.outputs.url }}
         run: |
-          if [ "$EXPAND_ONLY" != true ]; then
-            msg="The release failed after it deployed, and its migrations aren't expand-only, so it was not rolled back: old code may not run on the new schema. Production is on $DEPLOYED. Fix forward, or restore the snapshot branch and roll back to $PREVIOUS by hand."
-            echo "::error::$msg"; echo "$msg" >>"$GITHUB_STEP_SUMMARY"; exit 1
-          fi
           npx --yes "$VERCEL_CLI" rollback "$PREVIOUS" --yes --timeout 5m --token "$VERCEL_TOKEN"
           bash scripts/smoke.sh "$PRODUCTION_URL"
-          msg="The release failed after it deployed, so production was rolled back to $PREVIOUS."
-          echo "::error::$msg"; echo "$msg" >>"$GITHUB_STEP_SUMMARY"
+
+      - name: Tell Chris
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PENDING: ${{ steps.plan.outputs.pending }}
+          EXPAND_ONLY: ${{ steps.plan.outputs.expand_only }}
+          PREVIOUS: ${{ steps.previous.outputs.id }}
+          SNAPSHOT: ${{ steps.snapshot.outputs.branch }}
+          DEPLOYED: ${{ steps.deploy.outputs.url }}
+          ROLLBACK: ${{ steps.rollback.outcome }}
+        run: |
+          if [ -z "$DEPLOYED" ]; then
+            state="It failed before anything was deployed, so production still runs ${PREVIOUS:-the deployment from before}."
+          elif [ "$ROLLBACK" = success ]; then
+            state="It failed after the deploy, and production was rolled back to $PREVIOUS, which passes the smoke test."
+          elif [ "$EXPAND_ONLY" != true ]; then
+            state="It failed after the deploy and was NOT rolled back: its migrations aren't expand-only, so old code may not run on the new schema. Production is on $DEPLOYED. Fix forward, or restore the snapshot and roll back to $PREVIOUS by hand."
+          else
+            state="It failed after the deploy, and rolling back to $PREVIOUS failed too. Production may be down."
+          fi
+          {
+            echo "$state"
+            echo
+            echo "- Run: $RUN"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Migrations production hadn't applied: ${PENDING:-none} (expand-only: ${EXPAND_ONLY:-unknown})"
+            echo "- Snapshot: ${SNAPSHOT:-none taken}"
+            echo "- Deployment before this release: ${PREVIOUS:-unknown}"
+            echo "- This release's deployment: ${DEPLOYED:-none}"
+          } >body.md
+          cat body.md >>"$GITHUB_STEP_SUMMARY"
+          gh issue create -R "$GITHUB_REPOSITORY" --title "Release $GITHUB_REF_NAME failed" \
+            --label priority:critical --label area:infra --body-file body.md

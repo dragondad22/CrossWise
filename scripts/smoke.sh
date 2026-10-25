@@ -24,7 +24,7 @@ round() {
   if [ "${got%% *}" = 200 ]; then echo "ok    /api/health"; else echo "FAIL  /api/health answered ${got%% *}"; ok=1; fi
   got=$(answer "$base/login")
   case "$got" in
-    30[1278]" $accounts/sign-in"*) echo "ok    /login sends you to $accounts" ;;
+    30[1278]" $accounts/sign-in" | 30[1278]" $accounts/sign-in?"*) echo "ok    /login sends you to $accounts" ;;
     *) echo "FAIL  /login answered '$got', not a redirect to $accounts/sign-in"; ok=1 ;;
   esac
   return "$ok"
