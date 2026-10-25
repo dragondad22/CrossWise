@@ -1,0 +1,21 @@
+# squawk lints the migrations a branch changes (scripts/ci.sh). Every Prisma migration trips the
+# rules below, and none of them fits an app this size:
+# - prefer-robust-stmts: Prisma applies each migration once, so IF NOT EXISTS adds nothing.
+# - prefer-timestamp-tz: Prisma's DateTime is a timestamp without a time zone.
+# - require-statement-timeout, require-lock-timeout, constraint-missing-not-valid,
+#   adding-foreign-key-constraint, require-concurrent-index-creation,
+#   require-concurrent-index-deletion: these keep long locks off big tables. CrossWise's tables
+#   are small. And Prisma sends a migration as one batch, which Postgres runs as one transaction,
+#   where CONCURRENTLY can't run (hence assume_in_transaction).
+# The rest stay on: they catch changes that break the code still running (ADR-002 §2.5).
+assume_in_transaction = true
+excluded_rules = [
+  "prefer-robust-stmts",
+  "prefer-timestamp-tz",
+  "require-statement-timeout",
+  "require-lock-timeout",
+  "constraint-missing-not-valid",
+  "adding-foreign-key-constraint",
+  "require-concurrent-index-creation",
+  "require-concurrent-index-deletion",
+]
