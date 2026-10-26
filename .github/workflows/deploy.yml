@@ -6,7 +6,8 @@
 # In order: the migrations production hasn't applied (scripts/release-plan.sh), the deployment to
 # fall back to, a database snapshot if there are pending migrations, migrate, deploy, smoke test.
 # If anything fails after the deploy, the previous deployment comes back, but only when the release
-# is expand-only: old code can't undo a schema change. Any failure opens an issue for Chris.
+# is expand-only: old code can't undo a schema change. Any failure opens an issue for Chris, saying
+# which deployment production serves. Vercel is driven through scripts/vercel.sh, its REST API (#149).
 
 name: Deploy
 
@@ -59,11 +60,7 @@ jobs:
       - name: Note the deployment to fall back to
         id: previous
         run: |
-          scope=""
-          case "$VERCEL_ORG_ID" in team_*) scope="?teamId=$VERCEL_ORG_ID" ;; esac
-          id=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
-            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID$scope" | jq -r '.targets.production.id // empty')
-          [ -n "$id" ] || { echo "::error::Vercel didn't say which deployment is in production"; exit 1; }
+          id=$(bash scripts/vercel.sh serving)
           echo "id=$id" >>"$GITHUB_OUTPUT"
 
       # A Neon branch of production (the project's default branch), with no compute: a way back from
@@ -86,26 +83,37 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma migrate deploy
 
-      # Staged first, then promoted: promoting also turns the production domains back on after a rollback.
+      # Built as a production deployment that no domain points at yet. Promoting it moves the domain,
+      # and turns the domain's automatic moves back on after a rollback.
       - name: Deploy
         id: deploy
         run: |
           url=$(npx --yes "$VERCEL_CLI" deploy --prod --skip-domain --yes --token "$VERCEL_TOKEN")
           echo "url=$url" >>"$GITHUB_OUTPUT"
-          npx --yes "$VERCEL_CLI" promote "$url" --yes --timeout 5m --token "$VERCEL_TOKEN"
-          echo "promoted=true" >>"$GITHUB_OUTPUT"
+          id=$(bash scripts/vercel.sh id "$url")
+          echo "id=$id" >>"$GITHUB_OUTPUT"
+
+      - name: Promote
+        env:
+          DEPLOYMENT: ${{ steps.deploy.outputs.id }}
+        run: bash scripts/vercel.sh promote "$DEPLOYMENT"
 
       - name: Smoke test
         run: bash scripts/smoke.sh "$PRODUCTION_URL"
 
       - name: Roll back
         id: rollback
-        if: failure() && steps.deploy.outputs.url != '' && steps.plan.outputs.expand_only == 'true'
+        if: failure() && steps.deploy.outputs.id != '' && steps.plan.outputs.expand_only == 'true'
         env:
           PREVIOUS: ${{ steps.previous.outputs.id }}
         run: |
-          npx --yes "$VERCEL_CLI" rollback "$PREVIOUS" --yes --timeout 5m --token "$VERCEL_TOKEN"
-          bash scripts/smoke.sh "$PRODUCTION_URL"
+          if [ "$(bash scripts/vercel.sh serving)" = "$PREVIOUS" ]; then
+            echo "Production already serves $PREVIOUS: nothing to roll back."
+            echo "did=nothing" >>"$GITHUB_OUTPUT"
+          else
+            bash scripts/vercel.sh rollback "$PREVIOUS"
+            echo "did=rolled-back" >>"$GITHUB_OUTPUT"
+          fi
 
       - name: Tell Chris
         if: failure()
@@ -116,20 +124,24 @@ jobs:
           EXPAND_ONLY: ${{ steps.plan.outputs.expand_only }}
           PREVIOUS: ${{ steps.previous.outputs.id }}
           SNAPSHOT: ${{ steps.snapshot.outputs.branch }}
-          DEPLOYED: ${{ steps.deploy.outputs.url }}
-          PROMOTED: ${{ steps.deploy.outputs.promoted }}
-          ROLLBACK: ${{ steps.rollback.outcome }}
+          DEPLOYED: ${{ steps.deploy.outputs.id }}
+          ROLLBACK: ${{ steps.rollback.outputs.did }}
         run: |
-          if [ -z "$DEPLOYED" ]; then
-            state="It failed before anything was deployed, so production still runs ${PREVIOUS:-the deployment from before}."
-          elif [ "$ROLLBACK" = success ]; then
-            state="It failed after the deploy, and production was rolled back to $PREVIOUS, which passes the smoke test."
-          elif [ "$EXPAND_ONLY" != true ] && [ "$PROMOTED" != true ]; then
-            state="It deployed $DEPLOYED, but promoting it failed, so production most likely still runs $PREVIOUS, on a schema with the release's migrations, which aren't expand-only. Nothing was rolled back. Check which deployment is live in Vercel, then fix forward, or restore the snapshot."
-          elif [ "$EXPAND_ONLY" != true ]; then
-            state="It failed after the deploy and was NOT rolled back: its migrations aren't expand-only, so old code may not run on the new schema. Production is on $DEPLOYED. Fix forward, or restore the snapshot and roll back to $PREVIOUS by hand."
+          # Asked of Vercel now, not worked out from which steps ran.
+          serving=$(bash scripts/vercel.sh serving 2>/dev/null || echo unknown)
+          if [ -n "$PREVIOUS" ] && [ "$serving" = "$PREVIOUS" ]; then
+            state="Production still serves the deployment from before this release ($PREVIOUS)."
+            [ "$ROLLBACK" = rolled-back ] && state="$state It was rolled back to it."
+            [ -n "$PENDING" ] && [ "$EXPAND_ONLY" != true ] &&
+              state="$state But the release's migrations may have run, and they aren't expand-only: check the old code works on the new schema."
+          elif [ -n "$DEPLOYED" ] && [ "$serving" = "$DEPLOYED" ]; then
+            if [ "$EXPAND_ONLY" != true ]; then
+              state="Production serves this release ($DEPLOYED), which failed its checks. It wasn't rolled back: its migrations aren't expand-only, so old code may not run on the new schema. Fix forward, or restore the snapshot and roll back by hand."
+            else
+              state="Production serves this release ($DEPLOYED), which failed its checks, and rolling back to $PREVIOUS failed. Roll back by hand in Vercel."
+            fi
           else
-            state="It failed after the deploy, and rolling back to $PREVIOUS failed too. Production may be down."
+            state="Production serves $serving, which is neither the deployment from before nor this release. Check Vercel by hand."
           fi
           {
             echo "$state"
