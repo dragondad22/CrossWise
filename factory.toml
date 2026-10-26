@@ -49,11 +49,13 @@ trusted = ["dragondad22"]        # only these logins' label events queue work
 
 [protected.machinery]            # never run from a branch; changes stop before push
 # Everything that decides what a check runs or how strictly: config under every name the tools
-# look for, so a rename can't dodge it. The factory adds package-manager config for every project.
+# look for, so a rename can't dodge it, and the .env files Next loads (not .env.example). The factory
+# adds package-manager config for every project.
 paths = ["scripts/ci.sh", ".github/**", ".claude/**", "vitest.config.*", "vitest.setup.*", "vitest.workspace.*",
          "vite.config.*", "eslint.config.*", ".eslintignore", "tsconfig.json", "next.config.*", "postcss.config.*",
-         ".postcssrc*", "tailwind.config.*", "prisma.config.*", ".config/prisma.*", ".squawk.toml", ".secretlintrc*",
-         ".secretlintignore",
+         ".postcssrc*", "tailwind.config.*", "prisma.config.*", ".config/prisma.*", ".babelrc*", "babel.config.*",
+         "**/.browserslistrc", "**/browserslist", ".env", ".env.local", ".env.development*", ".env.production*",
+         ".env.test*", ".squawk.toml", ".secretlintrc*", ".secretlintignore",
          "ai/scripts/check-version-sync.sh", "ai/scripts/version-files.txt"]   # ci.sh's version sync, until #141 moves it
 package_json_scripts = true      # package.json's scripts, and every field that isn't plain description
 
