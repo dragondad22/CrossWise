@@ -10,6 +10,9 @@
 #
 # CI_BASE is the commit this branch is checked against: squawk lints the migrations changed since
 # then. By default, the point where the branch left main.
+#
+# CI_JUNIT, when set, is where the tests also write a JUnit report. The dark factory sets it, and
+# reads the report to see that the tests really ran.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -48,7 +51,8 @@ step "type check"
 npx tsc --noEmit
 
 step "tests"
-npm test -- ${TEST_WORKERS:+--maxWorkers="$TEST_WORKERS"}
+npm test -- ${TEST_WORKERS:+--maxWorkers="$TEST_WORKERS"} \
+  ${CI_JUNIT:+--reporter=default --reporter=junit --outputFile.junit="$CI_JUNIT"}
 
 step "build"
 npm run build

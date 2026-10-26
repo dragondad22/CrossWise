@@ -1,0 +1,72 @@
+# How the dark factory builds, checks and ships CrossWise (dark-factory docs/formats.md §1, #140).
+# The factory reads this file from main, never from a branch, and it is itself a risky path: a
+# change to it merges only with Chris's OK on the exact diff. Unknown keys are an error. Anything not
+# set here comes from the profile.
+
+[project]
+name = "crosswise"
+repo = "dragondad22/CrossWise"
+visibility = "public"            # public: hosted CI stays, intake is locked to trusted labelers
+profile = "web-app-bya"          # dark-factory library/profiles/web-app-bya.toml
+home = "hosted"                  # hosted | installed | both (map 09)
+
+[docs]                           # the coordinator's memory
+design = "docs/system-architecture.md"
+code_design = "docs/modules.md"
+decisions = "docs/decision-log.md"
+adrs = "docs/architecture/decisions/"
+spec = "docs/specs/CROSSWISE_SPEC.md"
+
+[commands]
+ci = "scripts/ci.sh"             # the one CI script; PR validation runs it too (#138)
+smoke = "scripts/smoke.sh"       # takes a base URL; deploy.yml runs it after every release (#139)
+junit = "junit.xml"              # the tests' report, which ci.sh writes to $CI_JUNIT (set below)
+
+[sandbox]
+image = "node:22-bookworm"       # matches CI's Node; Claude Code and Codex are added on top
+# What the egress proxy lets builders and self-checks reach, all on 443: npm, Prisma's engines
+# (`prisma generate` in `npm ci`), and Next's Google fonts (`next build`). Found in M1.
+registry = ["registry.npmjs.org", "binaries.prisma.sh", "fonts.googleapis.com", "fonts.gstatic.com"]
+
+[sandbox.env]                    # plain settings, never secrets: `docker inspect` shows them
+DATABASE_URL = "postgresql://postgres@postgres:5432/crosswise"   # the service below
+CI_JUNIT = "/out/junit.xml"      # where ci.sh's tests leave [commands] junit
+CHECKPOINT_DISABLE = "1"         # Prisma's telemetry off
+NEXT_TELEMETRY_DISABLED = "1"    # Next's telemetry off
+
+# ci.sh ends by migrating this throwaway database. The box reaches it by its name, and ci.sh only
+# migrates a database on localhost or `postgres`. It takes no password: only the box can reach it.
+[[sandbox.services]]
+name = "postgres"
+image = "postgres:17"
+memory_gb = 1
+cpus = 1
+env = { POSTGRES_HOST_AUTH_METHOD = "trust", POSTGRES_DB = "crosswise" }
+
+[intake]
+label = "factory"
+trusted = ["dragondad22"]        # only these logins' label events queue work
+
+[protected.machinery]            # never run from a branch; changes stop before push
+# Everything that decides what a check runs or how strictly: config under every name the tools
+# look for, so a rename can't dodge it. The factory adds package-manager config for every project.
+paths = ["scripts/ci.sh", ".github/**", ".claude/**", "vitest.config.*", "vitest.setup.*", "vitest.workspace.*",
+         "vite.config.*", "eslint.config.*", ".eslintignore", "tsconfig.json", "next.config.*", ".squawk.toml",
+         ".secretlintrc*", ".secretlintignore"]
+package_json_scripts = true      # package.json's scripts, and every field that isn't plain description
+
+[protected.risky]                # may be pushed and checked; merge needs a diff-bound approval
+paths = ["prisma/migrations/**", "prisma/schema.prisma", "src/lib/auth/**", "vercel.json",
+         "docs/decision-log.md", "docs/architecture/decisions/**", "factory.toml",
+         "scripts/smoke.sh", "scripts/release-plan.sh", "scripts/vercel.sh"]
+
+[limits]
+merges_per_day = 3
+
+[release]
+trigger = "tag"                  # a v* tag deploys production (#139)
+production_url = "https://crosswise.buildyouralpaca.com"
+db_snapshot = "neon-branch"      # taken before a release with pending migrations
+
+[concerns]
+extra = ["children's data"]      # from 06's "some apps" list; decision 1 treats users as possibly minors
