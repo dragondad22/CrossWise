@@ -51,12 +51,16 @@ trusted = ["dragondad22"]        # only these logins' label events queue work
 # Everything that decides what a check runs or how strictly: config under every name the tools
 # look for, so a rename can't dodge it. The factory adds package-manager config for every project.
 paths = ["scripts/ci.sh", ".github/**", ".claude/**", "vitest.config.*", "vitest.setup.*", "vitest.workspace.*",
-         "vite.config.*", "eslint.config.*", ".eslintignore", "tsconfig.json", "next.config.*", ".squawk.toml",
-         ".secretlintrc*", ".secretlintignore"]
+         "vite.config.*", "eslint.config.*", ".eslintignore", "tsconfig.json", "next.config.*", "postcss.config.*",
+         "tailwind.config.*", "prisma.config.*", ".squawk.toml", ".secretlintrc*", ".secretlintignore",
+         "ai/scripts/check-version-sync.sh", "ai/scripts/version-files.txt"]   # ci.sh's version sync, until #141 moves it
 package_json_scripts = true      # package.json's scripts, and every field that isn't plain description
 
 [protected.risky]                # may be pushed and checked; merge needs a diff-bound approval
-paths = ["prisma/migrations/**", "prisma/schema.prisma", "src/lib/auth/**", "vercel.json",
+# Sign-in and account deletion (ADR-009): the session check, the auth routes, and the signed webhook
+# that deletes a user's data.
+paths = ["prisma/migrations/**", "prisma/schema.prisma", "src/lib/auth.ts", "src/lib/api-auth.ts",
+         "src/lib/accounts-redirect.ts", "src/app/api/v1/auth/**", "src/app/api/v1/internal/**", "vercel.json",
          "docs/decision-log.md", "docs/architecture/decisions/**", "factory.toml",
          "scripts/smoke.sh", "scripts/release-plan.sh", "scripts/vercel.sh"]
 
