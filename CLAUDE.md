@@ -7,8 +7,8 @@ A web app that turns vocabulary and term lists into shareable, auto-generated cr
 
 - `src/app`: Next.js App Router pages, and the REST API under `src/app/api/v1`
 - `src/components`: React UI · `src/lib`: puzzle generation, autosave, sign-in, the Zustand store
-- `src/lib/validation.ts`: the API's Zod schemas, the one source of request and response shapes; `src/types/api.ts`
-  derives the types from them. Don't hand-write request types.
+- `src/lib/validation.ts`: the API's Zod schemas, the one source of request shapes; `src/types/api.ts` derives the
+  request types from them (don't hand-write those) and declares the response types.
 - `prisma/`: the schema and migrations (PostgreSQL on Neon) · `tests/` and co-located `__tests__/`: Vitest
 
 ## Commands
@@ -39,9 +39,10 @@ npm run db:migrate    # author a migration (prisma migrate dev); never db:push a
 - A PR that changes what users see adds a line under `## [Unreleased]` in `CHANGELOG.md` and updates the docs it
   touches. Every data view has loading, empty and error states; destructive actions ask first.
 - `docs/GLOSSARY.md` names things. A decision goes in `docs/decision-log.md` or an ADR, with Chris's OK, before code.
-- Releases: `bash scripts/release.sh minor` (or `patch`) in a release PR. After Chris approves and merges it, its
-  merge commit gets an annotated `v*` tag, which deploys production (`.github/workflows/deploy.yml`). Merges alone
-  deploy nothing.
+- Releases: `bash scripts/release.sh minor` (or `patch`) in a release PR. After Chris approves and merges it, tag its
+  merge commit (`git tag -a vX.Y.Z <sha>`) and push the tag: the push deploys production
+  (`.github/workflows/deploy.yml`). Once it passes, publish the GitHub release from the version's CHANGELOG section
+  (`gh release create vX.Y.Z --notes-file …`). Every shipped version has both. Merges alone deploy nothing.
 - The dark factory builds here too: `factory.toml` says how, and the `factory` label queues an issue.
 
 Source of truth, in order: `prisma/schema.prisma`, the ADRs in `docs/architecture/decisions/`, `docs/decision-log.md`,
