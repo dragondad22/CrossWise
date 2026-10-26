@@ -56,7 +56,7 @@ paths = ["scripts/ci.sh", ".github/**", ".claude/**", "vitest.config.*", "vitest
          ".postcssrc*", "tailwind.config.*", "prisma.config.*", ".config/prisma.*", ".babelrc*", "babel.config.*",
          "**/.browserslistrc", "**/browserslist", ".env", ".env.local", ".env.development*", ".env.production*",
          ".env.test*", ".squawk.toml", ".secretlintrc*", ".secretlintignore",
-         "ai/scripts/check-version-sync.sh", "ai/scripts/version-files.txt"]   # ci.sh's version sync, until #141 moves it
+         "scripts/check-version-sync.sh", "scripts/version-files.txt"]   # ci.sh's version sync
 package_json_scripts = true      # package.json's scripts, and every field that isn't plain description
 
 [protected.risky]                # may be pushed and checked; merge needs a diff-bound approval

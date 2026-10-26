@@ -1,14 +1,13 @@
 # Compliance Register — CrossWise
 
-The obligations that actually bind **this** project, derived from
-`ai/STANDARDS/EXTERNAL_STANDARDS_AND_COMPLIANCE.md`. The standard is the generic
-catalog; this file is the project-specific source of truth for what applies, who
-owns it, and whether it's met.
+The obligations that actually bind **this** project: the source of truth for what
+applies, who owns it, and whether it's met.
 
 - **Update this** whenever platforms, audience, regulated data, or features change.
 - Each row records a **Verified** date — when the live official source was last checked
   (store policies and child-safety law change frequently; an old date is a risk).
-- `/compliance` reads this file to decide which obligations a change triggers.
+- Check a change against it when it touches a public API, the UI, personal data, or
+  data about minors.
 
 ## Project profile
 

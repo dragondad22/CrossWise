@@ -5,9 +5,7 @@ labels: type:bug
 ---
 
 <!-- Title: clean imperative or defect statement, under 72 chars — severity and
-     flow (testing / uat / security-review / performance) are labels, not prefixes.
-     Full shape + label rules: ai/TEMPLATES/GITHUB_ISSUE_TEMPLATE.md and
-     ai/STANDARDS/GITHUB_ISSUES.md -->
+     flow (testing / uat / security-review / performance) are labels, not prefixes. -->
 
 # Summary
 <short description>
@@ -29,8 +27,7 @@ labels: type:bug
 ## Actual Behavior
 
 ## Evidence
-- Report: `testing-reports/<report-file>.md`
-- Artifacts: `testing-reports/artifacts/<artifact-dir>`
+- Report, logs or screenshots: attach them, or link the CI run
 
 ## Impact
 

@@ -1,6 +1,6 @@
 # Production deploys (#139, dark-factory decisions 18 and 22). Only a v* tag deploys, once: merges to
 # main deploy nothing, and Vercel's own deploys from main are off (vercel.json). Chris tags a release
-# after approving it (ai/STANDARDS/VERSIONING_AND_CHANGELOG_STANDARD.md). The deploy secrets live only
+# after approving it (CLAUDE.md, "Releases"). The deploy secrets live only
 # in the Production environment, which only v* tags may use.
 #
 # In order: the migrations production hasn't applied (scripts/release-plan.sh), the deployment to

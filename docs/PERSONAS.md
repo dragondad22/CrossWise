@@ -1,4 +1,3 @@
-<!-- Generic template from the Claude starter kit. Seeded by /bootstrap from the inception audience answers; extended by feature interviews. -->
 # Personas — CrossWise
 
 The central persona registry: every persona this project designs for, defined
