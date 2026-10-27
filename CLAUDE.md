@@ -31,6 +31,12 @@ npm run db:migrate    # author a migration (prisma migrate dev); never db:push a
 - Users may be minors (13+, not verified). `docs/compliance/COMPLIANCE_REGISTER.md` says what that binds.
 - Migrations are expand/contract (ADR-002): don't drop or tighten what running code still uses in the same release.
 
+## The standard
+
+Every change meets the shared minimum standard, which lives once, in the dark factory, not here. On Sanctuary this
+loads it: @/mnt/DATA/source/personal/dark-factory/library/standard.md
+Elsewhere (the factory's box, another machine) that file isn't there; CI and the factory's review still check it.
+
 ## Working here
 
 - GitHub issues are the task list. Branch `<type>/<issue#>-<slug>`; PRs squash-merge, titled in Conventional
