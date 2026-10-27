@@ -11,8 +11,11 @@ export async function POST(request: NextRequest) {
   }
   const form = await request.formData().catch(() => null)
   const next = form?.get('next')
+  const here = new URL(request.url)
+  const target = new URL(sanitizeNextPath(typeof next === 'string' ? next : null), here)
+  // Never off this preview, whatever the path turned out to be.
   const response = NextResponse.redirect(
-    new URL(sanitizeNextPath(typeof next === 'string' ? next : null), request.url),
+    target.origin === here.origin ? target : new URL('/topics', here),
     303,
   )
   response.cookies.set(PREVIEW_COOKIE, '1', {

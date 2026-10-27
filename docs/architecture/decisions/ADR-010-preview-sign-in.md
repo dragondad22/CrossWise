@@ -38,9 +38,10 @@ costs Vercel Pro plus a $100/month add-on.
    passwords. Each branch gets its own database there, `preview_<branch>_<hash>`, so PRs with migrations don't
    affect each other.
 4. **Built by Vercel's build.** `vercel.json` runs `scripts/vercel-build.sh`. On a preview with the test
-   sign-in on, it first runs `scripts/preview-db.ts`: create the branch's database if needed, drop preview
-   databases no build has touched for 14 days, apply the branch's migrations, and add the sample topics and
-   lists for the test user. Production builds only build; its migrations stay in `deploy.yml`.
+   sign-in on, it first runs `scripts/preview-db.ts`: drop preview databases no build has touched for 14 days,
+   create the branch's database if needed, apply the branch's migrations, and add the sample topics and lists
+   for the test user. A lock on the preview project lets only one build do this at a time. Production builds
+   only build; its migrations stay in `deploy.yml`.
 5. **Nothing from production in Preview.** Preview variables reach PR code, so Vercel's Preview environment
    holds only `DATABASE_URL` (the preview project) and `PREVIEW_SIGN_IN=1`.
 
@@ -57,7 +58,8 @@ costs Vercel Pro plus a $100/month add-on.
   checked locally with the accounts service before release (`docs/setup.md`, "Local Sign-in").
 - Production code carries the test sign-in, switched off. Two settings, Vercel's own `VERCEL_ENV` and a
   Preview-only variable, plus the release smoke test, keep it off.
-- Preview databases share one Neon project on the free plan (0.5 GB). The 14-day clean-up keeps it small.
+- Preview databases share one Neon project on the free plan (0.5 GB). The 14-day clean-up keeps it small; a
+  preview older than that needs a redeploy to get its database back.
 
 ## 4. Alternatives Considered
 - **Local, one command** (`npm run dev:all` with the accounts service in Docker). Real sign-in, but every check

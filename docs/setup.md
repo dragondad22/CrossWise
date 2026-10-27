@@ -66,7 +66,8 @@ No checkout or terminal needed (ADR-010).
 - Previews sit behind your Vercel login.
 - A preview never uses the real sign-in. You're one test user, with sample topics and lists.
 - Each branch has its own database in the `crosswise-preview` Neon project, with the branch's migrations applied
-  when the preview builds. Databases no build has touched for 14 days are dropped.
+  when the preview builds. Databases no build has touched for 14 days are dropped; redeploy an older preview to
+  get its database back.
 - Vercel's Preview environment holds only `DATABASE_URL` (the `crosswise-preview` project's direct connection
   string) and `PREVIEW_SIGN_IN=1`. Preview variables reach PR code, so nothing from production goes there.
 - A change to CrossWise's sign-in code needs the real sign-in: check it locally with the accounts service (Local

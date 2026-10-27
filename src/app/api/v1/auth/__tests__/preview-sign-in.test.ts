@@ -40,12 +40,15 @@ describe('POST /api/v1/auth/preview-sign-in', () => {
     expect(cookie).toMatch(/Secure/i)
   })
 
-  it.each(['//evil.example/x', 'https://evil.example/', undefined])(
-    'never sends you to another site (%s)',
-    async (next) => {
-      Object.assign(process.env, { VERCEL_ENV: 'preview', PREVIEW_SIGN_IN: '1' })
-      const response = await post(next)
-      expect(response.headers.get('location')).toBe('https://crosswise-abc-chris.vercel.app/topics')
-    },
-  )
+  it.each([
+    '//evil.example/x',
+    'https://evil.example/',
+    '/\t/evil.example/x',
+    '/\n/evil.example',
+    undefined,
+  ])('never sends you to another site (%s)', async (next) => {
+    Object.assign(process.env, { VERCEL_ENV: 'preview', PREVIEW_SIGN_IN: '1' })
+    const response = await post(next)
+    expect(response.headers.get('location')).toBe('https://crosswise-abc-chris.vercel.app/topics')
+  })
 })
