@@ -1,6 +1,6 @@
 # Database: dev
 
-Prisma models map to snake_case tables via `@@map` attributes. Local development uses SQLite (`file:./dev.db`); production can target PostgreSQL with the same schema.
+Prisma models map to snake_case tables via `@@map` attributes. The database is PostgreSQL everywhere: Neon in production, and your own Neon branch or local Postgres in development (`docs/setup.md`).
 
 ```mermaid
 erDiagram

@@ -46,13 +46,14 @@ npm install
 
 3. Configure environment variables:
 
-- Create/update `.env` with `DATABASE_URL` (PostgreSQL connection string).
+- Copy `.env.example` to `.env` and set `DATABASE_URL` to a PostgreSQL database of your own: a Neon branch of the
+  crosswise project (never the primary branch) or a local Postgres. `docs/setup.md` shows both.
 - For local sign-in, also set `ACCOUNTS_URL=http://localhost:3100` and `APP_URL=http://localhost:3001` (see step 8).
 
-4. Set up the database:
+4. Set up the database (applies the migrations):
 
 ```bash
-npm run db:push
+npm run db:migrate
 ```
 
 5. Seed with sample data (optional). To put it in your own account, sign in once first (step 8), then:
@@ -160,7 +161,8 @@ prisma/                   # Database schema & migrations
 - `npm run seed` - Add sample data
 - `npm run seed:clear` - Clear all data
 - `npm run seed:reset` - Reset and reseed data
-- `npm run db:push` - Push Prisma schema to database
+- `npm run db:migrate` - Apply migrations, or author one after a schema change
+- `bash scripts/ci.sh` - Every check, as CI runs it
 - `npm run db:studio` - Open Prisma Studio
 
 ### Testing the Generation Algorithm
@@ -191,31 +193,9 @@ CrossWise is fully responsive with:
 
 ## 🚀 Deployment
 
-### Vercel (Recommended)
-
-1. Connect your GitHub repository to Vercel
-2. Set environment variables:
-   ```
-   DATABASE_URL=your_postgres_connection_string
-   ACCOUNT_WEBHOOK_SECRET=same_value_as_the_accounts_service
-   ```
-3. Deploy automatically on git push
-
-### Manual Deployment
-
-1. Build the application:
-   ```bash
-   npm run build
-   ```
-2. Set up PostgreSQL database
-3. Run migrations:
-   ```bash
-   npx prisma migrate deploy
-   ```
-4. Start the application:
-   ```bash
-   npm start
-   ```
+Production runs on Vercel at https://crosswise.buildyouralpaca.com and deploys only from a `v*` release tag
+(`.github/workflows/deploy.yml`): migrations, then the deploy, then a smoke test, with a rollback. Merges to `main`
+deploy nothing. `docs/setup.md` → Deployment Notes has the details.
 
 ## 🎓 Educational Use Cases
 
