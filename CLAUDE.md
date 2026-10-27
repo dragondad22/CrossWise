@@ -49,6 +49,7 @@ Elsewhere (the factory's box, another machine) that file isn't there; CI and the
   merge commit (`git tag -a vX.Y.Z <sha>`) and push the tag: the push deploys production
   (`.github/workflows/deploy.yml`). Once it passes, publish the GitHub release from the version's CHANGELOG section
   (`gh release create vX.Y.Z --notes-file …`). Every shipped version has both. Merges alone deploy nothing.
+- To check a change, open the PR's Vercel preview and sign in as the test user (ADR-010, `docs/setup.md`).
 - The dark factory builds here too: `factory.toml` says how, and the `factory` label queues an issue.
 
 Source of truth, in order: `prisma/schema.prisma`, the ADRs in `docs/architecture/decisions/`, `docs/decision-log.md`,

@@ -46,8 +46,8 @@ npm install
 
 3. Configure environment variables:
 
-- Copy `.env.example` to `.env` and set `DATABASE_URL` to a PostgreSQL database of your own: a Neon branch of the
-  crosswise project (never the primary branch) or a local Postgres. `docs/setup.md` shows both.
+- Copy `.env.example` to `.env` and set `DATABASE_URL` to a local Postgres of your own (`docs/setup.md` shows how),
+  never the crosswise Neon project or a branch of it.
 - For local sign-in, also set `ACCOUNTS_URL=http://localhost:3100` and `APP_URL=http://localhost:3001` (see step 8).
 
 4. Set up the database (applies the migrations):

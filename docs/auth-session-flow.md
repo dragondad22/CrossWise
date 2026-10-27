@@ -34,6 +34,13 @@ user state. Sign-in lives in the shared Build Your Alpaca accounts service (ADR-
 `/account` redirects to the accounts page (account settings, sign-in methods, deletion).
 The header's name links to it.
 
+## Previews (ADR-010)
+On a Vercel preview with `PREVIEW_SIGN_IN=1`, none of the above happens. CrossWise never calls the
+accounts service. The redirect pages go to `/preview-sign-in`, whose button
+(`POST /api/v1/auth/preview-sign-in`) sets `crosswise_preview_user=1` and signs you in as the
+test user `preview-test-user`. `lookupSession` returns that user for the cookie, and nobody
+without it; logout clears it. Anywhere else, both answer 404.
+
 ## Session lookup
 1. Every request to `crosswise.buildyouralpaca.com` carries the shared cookie.
 2. `lookupSession` in `src/lib/auth.ts` forwards only the `alpaca.*` cookies to
