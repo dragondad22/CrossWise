@@ -29,7 +29,8 @@ Apply the migrations to your database (and, after a schema change, author a new 
 ```bash
 npm run db:migrate
 ```
-Start over with an empty database, replayed migrations and the seed (your own database only):
+Start over with an empty database and the migrations replayed (your own database only; run `npm run seed` after
+it for sample data):
 ```bash
 npm run db:reset
 ```
@@ -46,7 +47,8 @@ SEED_USER_ID=<your user id> SEED_USER_EMAIL=<your email> npm run seed
 ```
 Without these, the seed creates a `demo@crosswise.dev` user that no one can sign in as.
 
-Other seed script options:
+Other seed script options. **They delete every user's data in the database `DATABASE_URL` points at, without
+asking:** check it's your own development database first.
 ```bash
 npm run seed:clear   # Delete all data
 npm run seed:reset   # Clear then reseed

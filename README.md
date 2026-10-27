@@ -26,8 +26,8 @@ CrossWise is a web application that allows you to upload JSON lists of terms and
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
+- Node.js 22 (what CI uses)
+- npm
 
 ### Installation
 
@@ -159,8 +159,8 @@ prisma/                   # Database schema & migrations
 - `npm run start` - Start production server
 - `npm run lint` - Run ESLint
 - `npm run seed` - Add sample data
-- `npm run seed:clear` - Clear all data
-- `npm run seed:reset` - Reset and reseed data
+- `npm run seed:clear` - Delete all data in `DATABASE_URL`'s database (your own development database only)
+- `npm run seed:reset` - Delete all data, then reseed (the same warning)
 - `npm run db:migrate` - Apply migrations, or author one after a schema change
 - `bash scripts/ci.sh` - Every check, as CI runs it
 - `npm run db:studio` - Open Prisma Studio
@@ -194,8 +194,9 @@ CrossWise is fully responsive with:
 ## 🚀 Deployment
 
 Production runs on Vercel at https://crosswise.buildyouralpaca.com and deploys only from a `v*` release tag
-(`.github/workflows/deploy.yml`): migrations, then the deploy, then a smoke test, with a rollback. Merges to `main`
-deploy nothing. `docs/setup.md` → Deployment Notes has the details.
+(`.github/workflows/deploy.yml`): migrations, then the deploy, then a smoke test. If the release fails after it
+deploys, the app rolls back on its own only when its migrations are expand-only; the database is never rolled back.
+Merges to `main` deploy nothing. `docs/setup.md` → Deployment Notes has the details.
 
 ## 🎓 Educational Use Cases
 
