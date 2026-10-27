@@ -1,7 +1,7 @@
 # specs — feature specs
 
 Journey-first feature specifications: one document per feature
-(`SPEC-<DOMAIN>-NNN`, template: `ai/TEMPLATES/FEATURE_SPEC_TEMPLATE.md`), two
+(`SPEC-<DOMAIN>-NNN`), two
 layers in one file, ordered by audience:
 
 - **Journey layer** (top) — persona (by name, from `docs/PERSONAS.md`), goal,
@@ -11,9 +11,7 @@ layers in one file, ordered by audience:
 - **Technical layer** — preconditions, data touchpoints, business rules,
   edge cases — for the AI, developers, and UAT.
 
-Specs are a generated founding artifact of a feature interview — derived from
-its `Final:` fields with `Source:` Q-ID provenance (see
-`ai/STANDARDS/INTERVIEW_STANDARD.md`). They outrank UAT docs in the
+They outrank UAT docs in the
 source-of-truth precedence when they exist.
 
 Quality mechanisms (why v1 "workflow docs" rotted, designed against):

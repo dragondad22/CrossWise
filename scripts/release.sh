@@ -5,7 +5,7 @@
 # Does NOT touch git — it edits files and prints the suggested commit + tag
 # commands for a human to review and run.
 #
-# The set of version files lives in ai/scripts/version-files.txt (one path per
+# The set of version files lives in scripts/version-files.txt (one path per
 # line, relative to the repo root; blank lines and `#` comments ignored). The
 # kit ships with just `VERSION`. The FIRST listed file is the source of truth
 # for the current version. Each file is bumped according to its extension:
@@ -15,10 +15,10 @@
 #   *               -> raw string: the whole file becomes the new version
 #
 # Usage:
-#   ai/scripts/release.sh                          # recommend a bump from [Unreleased], then stop
-#   ai/scripts/release.sh <major|minor|patch>      # bump relative to the current version
-#   ai/scripts/release.sh <X.Y.Z>                  # set an explicit version
-#   ai/scripts/release.sh <bump> --date YYYY-MM-DD # override the release date (default: today)
+#   scripts/release.sh                          # recommend a bump from [Unreleased], then stop
+#   scripts/release.sh <major|minor|patch>      # bump relative to the current version
+#   scripts/release.sh <X.Y.Z>                  # set an explicit version
+#   scripts/release.sh <bump> --date YYYY-MM-DD # override the release date (default: today)
 #
 # Bump rubric (pre-1.0; mechanical, from which [Unreleased] subsections have entries):
 #   only Fixed/Security                       -> patch
@@ -26,9 +26,9 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CHANGELOG="$ROOT_DIR/CHANGELOG.md"
-VERSION_FILES_LIST="$ROOT_DIR/ai/scripts/version-files.txt"
+VERSION_FILES_LIST="$ROOT_DIR/scripts/version-files.txt"
 
 BUMP=""
 DATE="$(date +%F)"
@@ -77,14 +77,14 @@ if [ -z "$BUMP" ]; then
   esac
   echo ""
   echo "  (MAJOR / 1.0.0 is never auto-recommended pre-1.0 — it is a deliberate decision.)"
-  echo "  Re-run with the bump type to perform the cut, e.g.: ai/scripts/release.sh ${RECO/none/minor}"
+  echo "  Re-run with the bump type to perform the cut, e.g.: scripts/release.sh ${RECO/none/minor}"
   exit 0
 fi
 
 # --- Precondition: the configured version files must already agree ---------------------
-if ! "$ROOT_DIR/ai/scripts/check-version-sync.sh" >/dev/null; then
+if ! "$ROOT_DIR/scripts/check-version-sync.sh" >/dev/null; then
   echo "ABORT: version files are out of sync — resolve drift before cutting a release." >&2
-  "$ROOT_DIR/ai/scripts/check-version-sync.sh" || true
+  "$ROOT_DIR/scripts/check-version-sync.sh" || true
   exit 1
 fi
 

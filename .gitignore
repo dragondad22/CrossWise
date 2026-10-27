@@ -50,7 +50,5 @@ coverage/
 
 # Non-public documents
 .np-docs/
-# Quality report artifacts (kit)
-testing-reports/artifacts/
 test-results/
 .claude/worktrees/

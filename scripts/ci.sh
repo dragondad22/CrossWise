@@ -58,7 +58,7 @@ step "build"
 npm run build
 
 step "version sync"
-bash ai/scripts/check-version-sync.sh
+bash scripts/check-version-sync.sh
 
 step "dependency audit"
 npm audit --audit-level=high --omit=dev

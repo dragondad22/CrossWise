@@ -67,8 +67,8 @@ specified in **ADR-003** (planned).
   specific user, or treat pre-existing data as seed/demo content).
 - Touches many call sites: every topics/lists/puzzles query, the import route, and
   the seed scripts (`scripts/`, `src/lib/seed-data.ts`).
-- Dropping the global unique constraint changes existing DB constraints — needs the
-  Impact Analysis (consumer sweep) gate in `ai/CHECKLISTS/coding.md`.
+- Dropping the global unique constraint changes existing DB constraints — needs a
+  consumer sweep: every write path that relies on it.
 
 ## 4. Alternatives Considered
 

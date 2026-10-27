@@ -35,14 +35,6 @@ non-obvious. _Avoid_: aliases.`
 
 ## Domain terms
 
-<!-- Seeded by /bootstrap from the inception interview (domain answers,
-non-negotiables vocabulary); grows via the recording rules. Role terms
-(volunteer, admin, …) cross-link to their entry in docs/PERSONAS.md.
-Example entry:
-- **Animal record** — the canonical row for one animal in the shelter, the
-  record of truth for its status. _Avoid_: bare "record" (ambiguous: service
-  record, music record). -->
-
 - **Topic** — the top-level organizing unit: a named group of word lists with
   optional description, color, and icon. _Avoid_: "category" (not a repo term).
 - **List** — a word/term list under a Topic; the input a puzzle is generated
@@ -103,16 +95,6 @@ Example entry:
   or API) through a full user flow, as opposed to unit/integration tests.
 - **ERD (Entity-Relationship Diagram)** — the canonical picture of the data
   model; updated in the same PR as any schema change.
-- **Runbook** — a step-by-step operational how-to (restore a backup, rotate a
-  secret, find errors in logs). Lives in `docs/runbooks/`.
-- **Module (kit sense)** — optional starter-kit content staged dormant under
-  `bootstrap/modules/` and installed when its trigger fires (first schema file,
-  first UI code, …). _Avoid_: confusing with language/package modules.
-- **KIT_VERSION** — `bootstrap/KIT_VERSION`, the marker recording which
-  starter-kit version scaffolded this project and which modules are installed.
-- **Q-ID** — an inception/epic interview question id; short in its own file
-  (`Q-ARCH-03`), always qualified in cross-references (`000/Q-ARCH-03`). See
-  `ai/STANDARDS/INTERVIEW_STANDARD.md`.
 - **Non-negotiables** — this project's never-re-litigate architectural
   constraints, listed in `CLAUDE.md`; changing one requires a recorded decision,
   not a conversation.

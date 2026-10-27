@@ -12,8 +12,7 @@
       "Bash(npx prisma:*)",
       "Bash(npx vitest:*)",
       "Bash(npm audit:*)",
-      "Bash(ai/scripts/*)",
-      "Bash(bash ai/scripts/*)"
+      "Bash(bash scripts/*)"
     ]
   },
   "hooks": {

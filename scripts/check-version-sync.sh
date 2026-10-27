@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # check-version-sync.sh — Verify every version-tracking file carries the same semver.
 #
-# The list of files lives in ai/scripts/version-files.txt (one path per line,
+# The list of files lives in scripts/version-files.txt (one path per line,
 # relative to the repo root; blank lines and `#` comments are ignored). The kit
 # ships with just `VERSION`; add package.json / pubspec.yaml / etc. as needed.
 #
@@ -9,13 +9,13 @@
 #   *.json  -> jq '.version'   (falls back to a regex if jq is missing)
 #   *       -> first X.Y.Z found in the trimmed file contents
 #
-# Usage: ai/scripts/check-version-sync.sh
+# Usage: scripts/check-version-sync.sh
 # Exits 0 when all listed files agree; non-zero (printing the drift) otherwise.
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-VERSION_FILES_LIST="$ROOT_DIR/ai/scripts/version-files.txt"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+VERSION_FILES_LIST="$ROOT_DIR/scripts/version-files.txt"
 
 if [ ! -f "$VERSION_FILES_LIST" ]; then
   echo "ABORT: missing $VERSION_FILES_LIST (list of version files, one per line)." >&2
@@ -73,5 +73,5 @@ if [ "$mismatch" -eq 0 ] && [ -n "$REFERENCE" ]; then
 fi
 
 echo "DRIFT: version files are out of sync — they must all carry the same semver." >&2
-echo "Fix with a lockstep release (ai/scripts/release.sh) or correct the stray file." >&2
+echo "Fix with a lockstep release (scripts/release.sh) or correct the stray file." >&2
 exit 1
