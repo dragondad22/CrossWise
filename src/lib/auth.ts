@@ -1,4 +1,5 @@
 import { prisma } from './db'
+import { PREVIEW_COOKIE, previewMode, previewUser } from './preview'
 import type { AuthUser } from '@/types/auth'
 
 // Sign-in lives in the shared Build Your Alpaca accounts service (ADR-009). Its
@@ -61,6 +62,13 @@ export interface SessionLookup {
  * 503 instead of treating the user as signed out.
  */
 export async function lookupSession(cookieHeader: string | null): Promise<SessionLookup> {
+  // A preview never asks the accounts service (ADR-010).
+  if (previewMode()) {
+    const user = previewUser(cookieHeader)
+    if (user) await ensureLocalUser(user, { emailVerified: true })
+    return { user, setCookies: [] }
+  }
+
   const cookies = accountsCookies(cookieHeader)
   if (!cookies) return { user: null, setCookies: [] }
 
@@ -83,6 +91,8 @@ export async function lookupSession(cookieHeader: string | null): Promise<Sessio
 
 /** Ends the accounts session and returns the cookie-clearing headers. */
 export async function signOutOfAccounts(cookieHeader: string | null): Promise<string[]> {
+  if (previewMode())
+    return [`${PREVIEW_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`]
   const cookies = accountsCookies(cookieHeader)
   if (!cookies) return []
   const response = await callAccounts('/api/auth/sign-out', cookies, {

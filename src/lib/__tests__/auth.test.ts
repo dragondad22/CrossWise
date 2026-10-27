@@ -8,6 +8,7 @@ import {
   lookupSession,
   signOutOfAccounts,
 } from '../auth'
+import { PREVIEW_USER } from '../preview'
 
 const prismaMocks = vi.hoisted(() => ({
   user: { upsert: vi.fn(), findUnique: vi.fn(), updateMany: vi.fn() },
@@ -210,5 +211,52 @@ describe('signOutOfAccounts', () => {
       cookie: 'alpaca.session_token=abc',
       origin: 'https://crosswise.buildyouralpaca.com',
     })
+  })
+})
+
+describe('in a preview with the test sign-in on (ADR-010)', () => {
+  beforeEach(() => Object.assign(process.env, { VERCEL_ENV: 'preview', PREVIEW_SIGN_IN: '1' }))
+  afterEach(() => {
+    delete process.env.VERCEL_ENV
+    delete process.env.PREVIEW_SIGN_IN
+  })
+
+  it('signs in the test user from the preview cookie, without asking the accounts service', async () => {
+    const result = await lookupSession(
+      'crosswise_preview_user=1; __Secure-alpaca.session_token=real',
+    )
+    expect(result).toEqual({ user: PREVIEW_USER, setCookies: [] })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(prismaMocks.user.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: PREVIEW_USER.id } }),
+    )
+  })
+
+  it('never passes a real accounts cookie on: without the preview cookie, nobody is signed in', async () => {
+    await expect(lookupSession('__Secure-alpaca.session_token=real')).resolves.toEqual({
+      user: null,
+      setCookies: [],
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('signs out by clearing the preview cookie, without asking the accounts service', async () => {
+    const cookies = await signOutOfAccounts(
+      'crosswise_preview_user=1; __Secure-alpaca.session_token=real',
+    )
+    expect(cookies).toEqual([expect.stringMatching(/^crosswise_preview_user=; .*Max-Age=0/)])
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('stays off in production, even with PREVIEW_SIGN_IN=1 and the preview cookie', async () => {
+    process.env.VERCEL_ENV = 'production'
+    fetchMock.mockResolvedValueOnce(accountsReply(null))
+    await expect(
+      lookupSession('crosswise_preview_user=1; alpaca.session_token=x'),
+    ).resolves.toEqual({
+      user: null,
+      setCookies: [],
+    })
+    expect(fetchMock).toHaveBeenCalledOnce()
   })
 })

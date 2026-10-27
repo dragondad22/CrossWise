@@ -31,6 +31,13 @@ describe('sanitizeNextPath (#78)', () => {
     expect(sanitizeNextPath('/\\evil.com')).toBe('/topics')
   })
 
+  it('rejects tabs and newlines, which URL parsers drop to make //', () => {
+    for (const next of ['/\t/evil.com', '/\n/evil.com', '/\r/evil.com', '/topics\n']) {
+      expect(sanitizeNextPath(next)).toBe('/topics')
+    }
+    expect(new URL('/\t/evil.com', 'https://crosswise.example').host).toBe('evil.com')
+  })
+
   it('rejects absolute and scheme-based URLs', () => {
     expect(sanitizeNextPath('https://evil.com')).toBe('/topics')
     expect(sanitizeNextPath('javascript:alert(1)')).toBe('/topics')

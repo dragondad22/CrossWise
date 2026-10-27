@@ -2,7 +2,7 @@
 
 CrossWise
 
-**Updated:** 2026-10-09
+**Updated:** 2026-10-27
 
 This index tracks all architectural decisions for CrossWise:
 - Completed ADRs
@@ -24,6 +24,7 @@ Status labels: **Proposed** | **Accepted** | **Rejected** | **Superseded**
 | ADR-007 | Solve sync and reconciliation contract | Proposed | `ADR-007-solve-sync-reconciliation.md` |
 | ADR-008 | Password recovery + email delivery seam | Superseded by ADR-009 | `ADR-008-password-recovery-email-seam.md` |
 | ADR-009 | Use Build Your Alpaca shared accounts for sign-in | Accepted | `ADR-009-shared-accounts-sign-in.md` |
+| ADR-010 | Previews sign in as a test user, on a database of their own | Accepted | `ADR-010-preview-sign-in.md` |
 
 ---
 

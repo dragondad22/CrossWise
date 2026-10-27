@@ -57,4 +57,25 @@ describe('redirectToAccounts', () => {
     expect(url.origin + url.pathname).toBe('http://localhost:3100/forgot-password')
     expect(url.searchParams.get('redirect')).toBe('http://localhost:3000/solve/p1')
   })
+
+  it('sends a preview to its test sign-in instead (ADR-010)', () => {
+    Object.assign(process.env, { VERCEL_ENV: 'preview', PREVIEW_SIGN_IN: '1' })
+    const target = (...args: Parameters<typeof redirectToAccounts>) => {
+      try {
+        redirectToAccounts(...args)
+      } catch {
+        // redirect() throws to stop rendering, as in Next.js.
+      }
+      return redirect.mock.lastCall![0]
+    }
+    try {
+      for (const page of ['sign-in', 'sign-up', '', 'forgot-password'] as const) {
+        expect(target(page, '/topics/abc')).toBe('/preview-sign-in?next=%2Ftopics%2Fabc')
+      }
+      expect(target('sign-in', '//evil.example/x')).toBe('/preview-sign-in?next=%2Ftopics')
+    } finally {
+      delete process.env.VERCEL_ENV
+      delete process.env.PREVIEW_SIGN_IN
+    }
+  })
 })

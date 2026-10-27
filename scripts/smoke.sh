@@ -4,6 +4,7 @@
 #   - the home page answers 200
 #   - /api/health answers 200: the app is up and reaches its database
 #   - /login sends you to the accounts service to sign in
+#   - the previews' test sign-in isn't there: its page and its route answer 404 (ADR-010)
 # A new deployment can take a few seconds to take over the domain, so a failed round is tried
 # again, up to SMOKE_TRIES times (default 6), 10 seconds apart.
 set -euo pipefail
@@ -13,8 +14,11 @@ base="${base%/}"
 accounts="${SMOKE_ACCOUNTS_URL:-https://accounts.buildyouralpaca.com}"
 tries="${SMOKE_TRIES:-6}"
 
-# Prints "<status> <redirect URL>" for a GET, without following redirects; "000" if it never answered.
-answer() { curl -sS -o /dev/null --max-time 20 -w '%{http_code} %{redirect_url}' "$1" 2>/dev/null || true; }
+# Prints "<status> <redirect URL>" for a GET (or the method given second), without following
+# redirects; "000" if it never answered.
+answer() {
+  curl -sS -o /dev/null --max-time 20 -X "${2:-GET}" -w '%{http_code} %{redirect_url}' "$1" 2>/dev/null || true
+}
 
 round() {
   local ok=0 got
@@ -27,6 +31,11 @@ round() {
     30[1278]" $accounts/sign-in" | 30[1278]" $accounts/sign-in?"*) echo "ok    /login sends you to $accounts" ;;
     *) echo "FAIL  /login answered '$got', not a redirect to $accounts/sign-in"; ok=1 ;;
   esac
+  for check in "GET /preview-sign-in" "POST /api/v1/auth/preview-sign-in"; do
+    got=$(answer "$base${check#* }" "${check%% *}")
+    if [ "${got%% *}" = 404 ]; then echo "ok    $check: no test sign-in"
+    else echo "FAIL  $check answered ${got%% *}, not 404: the previews' test sign-in is on"; ok=1; fi
+  done
   return "$ok"
 }
 
