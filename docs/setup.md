@@ -3,18 +3,21 @@
 ## Prerequisites
 - Node.js 22 (what CI uses; Node 20 is end-of-life and the test suite no longer runs on it)
 - npm (ships with Node)
-- SQLite (bundled with Prisma for local `file:` URLs) or a PostgreSQL instance for production deployments
+- A PostgreSQL database of your own. The schema is PostgreSQL only; production runs on Neon. Use a Neon branch of
+  the crosswise project (Neon console → Branches → New branch, e.g. `dev`), never the primary branch, which holds
+  real users' data. Or run Postgres locally:
+  `docker run -d --name crosswise-db -p 5432:5432 -e POSTGRES_PASSWORD=dev postgres:17`
 
 ## Environment Variables
 | Variable | Description | Default |
 | --- | --- | --- |
-| `DATABASE_URL` | Prisma connection string. `file:` URLs target SQLite; replace with a PostgreSQL URL for production. | `file:./dev.db` |
+| `DATABASE_URL` | PostgreSQL connection string for your own database (above), read by Prisma and the app. | none |
 | `ACCOUNTS_URL` | Shared accounts service that handles sign-in (ADR-009). | `https://accounts.buildyouralpaca.com` |
 | `APP_URL` | CrossWise's own public URL; the accounts service sends users back here. | `https://crosswise.buildyouralpaca.com` |
 | `ACCOUNT_WEBHOOK_SECRET` | Shared with the accounts service; verifies the account-deleted webhook. Required for account deletion to work. | none |
 
-1. Copy/adjust `.env` as needed.
-2. For PostgreSQL, use the canonical format: `postgresql://USER:PASSWORD@HOST:PORT/DB?schema=public`.
+1. Copy `.env.example` to `.env` and fill it in. `.env` is gitignored.
+2. The connection string's form is `postgresql://USER:PASSWORD@HOST:PORT/DB`, with `?sslmode=require` for Neon.
 
 ## Installation
 ```bash
@@ -22,10 +25,16 @@ npm install
 ```
 
 ## Database Management
-Initialise the schema locally:
+Apply the migrations to your database (and, after a schema change, author a new one: ADR-002):
 ```bash
-npm run db:push
+npm run db:migrate
 ```
+Start over with an empty database and the migrations replayed (your own database only; run `npm run seed` after
+it for sample data):
+```bash
+npm run db:reset
+```
+Don't use `npm run db:push` on any shared database: it skips the migration history (ADR-002).
 
 Generate the Prisma client into `src/generated/prisma` (runs on `npm install`; run it again after schema changes, since Prisma 7 `db:push` and `db:migrate` no longer do):
 ```bash
@@ -38,7 +47,8 @@ SEED_USER_ID=<your user id> SEED_USER_EMAIL=<your email> npm run seed
 ```
 Without these, the seed creates a `demo@crosswise.dev` user that no one can sign in as.
 
-Other seed script options:
+Other seed script options. **They delete every user's data in the database `DATABASE_URL` points at, without
+asking:** check it's your own development database first.
 ```bash
 npm run seed:clear   # Delete all data
 npm run seed:reset   # Clear then reseed
@@ -59,6 +69,12 @@ npm run dev -- -p 3001
 Build for production:
 ```bash
 npm run build
+```
+
+Run every check, as CI does, before opening a PR. It needs `DATABASE_URL` pointing at a throwaway Postgres on
+`localhost`, because its last step applies every migration (the top of `scripts/ci.sh` shows how):
+```bash
+bash scripts/ci.sh
 ```
 
 Run the production server locally:
@@ -93,7 +109,14 @@ Sign out with the header's "Sign out" (`POST /api/v1/auth/logout`). It signs you
 - Versioning via the `v1` segment lets you evolve future APIs without breaking existing clients.
 
 ## Deployment Notes
-- Vercel-friendly; ensure `DATABASE_URL` is configured for the target environment (PostgreSQL recommended).
-- Set `ACCOUNT_WEBHOOK_SECRET` (the same value as on the accounts service). Production serves CrossWise at `https://crosswise.buildyouralpaca.com`; `crosswise.vercel.app` permanently redirects there (`next.config.js`).
-- When switching providers, run `npx prisma migrate deploy` (or `prisma db push`) against the new database before booting the app.
+- Production runs on Vercel at `https://crosswise.buildyouralpaca.com`; `crosswise.vercel.app` permanently redirects
+  there (`next.config.js`). Its database is the primary branch of the crosswise Neon project.
+- **Only a `v*` tag deploys production** (`.github/workflows/deploy.yml`, #139). A merge to `main` deploys nothing;
+  each PR gets a Vercel preview. The release steps are in `CLAUDE.md`.
+- A tag deploy takes a Neon snapshot branch if migrations are pending, runs `prisma migrate deploy`, deploys, and
+  runs `scripts/smoke.sh` on production. If that fails, it rolls back to the previous deployment when the migrations
+  are expand-only, and opens a `priority:critical` issue either way.
+- The deploy's own secrets are in the GitHub `Production` environment, which only `v*` tags can use. The app's
+  settings (`DATABASE_URL`, `ACCOUNT_WEBHOOK_SECRET`, …) are in the Vercel project's environment variables.
+- `GET /api/health` answers 200 when the app reaches its database.
 - The generator and autosave logic run entirely in user space—no background workers required.
